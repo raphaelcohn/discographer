@@ -410,6 +410,7 @@ function readMachineConfig()
 
 function prepareMachineMinimalAppliance()
 {
+	echo $PATH
 	YUM0="$configMachinePath" YUM1="$cacheMachinePath" supermin --prepare "${machinePackageNames[@]}" --packager-config "$configMachineYumConfigFile" -o "$cacheMachineMinimalAppliancePath"
 	
 	# Should include the init script as /init
