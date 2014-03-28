@@ -216,8 +216,10 @@ function parseCommandLine()
 		exitError "Please specify at least one machine"
 	fi
 	
-	declare -ag machines=("$@")
+	machines=("$@")
 }
+
+declare -a machines=()
 
 function setConfigPath()
 {
@@ -264,6 +266,10 @@ function setPaths()
 
 function determineDistribution()
 {
+	if [ -f /etc/centos-release ]; then
+		readonly pathName="centos"
+		return 0
+	fi
 	if [ -f /etc/lsb_release ]; then
 		source /etc/lsb_release
 		readonly pathName="$DISTRIB_ID"
