@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+function parseCommandLineArguments()
+{
+	
+}
+
+function main()
+{
+	parseCommandLineArguments "$@"
+}
+
+main "$@"
