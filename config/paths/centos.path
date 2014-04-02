@@ -1,5 +1,4 @@
 function packageManager()
 {
-	sudo -p "Please enter your password for sudo to run apt-get update: " apt-get --quiet --yes update
-	sudo -p "Please enter your password for sudo to run apt-get install: " apt-get --quiet --yes install "$@"
+	sudo -p "Please enter your password for sudo to run yum install: " yum install "$@"
 }

@@ -6,12 +6,12 @@
 #pluginpath=/usr/share/yum-plugins
 #pluginconfpath=/etc/yum/pluginconf.d
 
-cachedir=$YUM1/yum/cache
-persistdir=$YUM1/yum/persist
-logfile=$YUM1/yum/log
-reposdir=$YUM0/yum/repositories
-pluginpath=$YUM0/yum/plugins
-pluginconfpath=$YUM0/yum/plugins
+cachedir=${cacheMachinePath}/yum/cache
+persistdir=${cacheMachinePath}/yum/persist
+logfile=${cacheMachinePath}/yum/log
+reposdir=${configMachinePath}/yum/repositories
+pluginpath=${configMachinePath}/yum/plugins
+pluginconfpath=${configMachinePath}/yum/plugins
 
 keepcache=1
 debuglevel=2

@@ -95,6 +95,21 @@ function purebash_basename()
 	echo "${1##*/}"
 }
 
+# Original solution used heredocuments, which were then sourced; this does not work when /tmp is readonly,
+# even if TMPDIR is set elsewhere, as debian / ubuntu bash uses a hardcoded /tmp
+# http://stackoverflow.com/questions/1609423/using-sed-to-expand-environment-variables-inside-files
+function createSedScriptOfEnvironmentVariableSubstitutions()
+{
+	env | sed 's/[\%]/\\&/g;s/\([^=]*\)=\(.*\)/s%${\1}%\2%g/'
+}
+
+function templateFile()
+{
+	set +e
+	cat "$1" | sed -f <(createSedScriptOfEnvironmentVariableSubstitutions)
+	set -e
+}
+
 function setDebugging()
 {
 	# is set -x on?
@@ -373,17 +388,17 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
-	configMachineYumConfigFile="$configMachinePath"/yum/yum.conf
-	if [ ! -f "$configMachineYumConfigFile" ]; then
-		informationMessage FAIL "Machine $machine missing machine yum.conf file $configMachineYumConfigFile"
+	configMachineYumConfigTemplateFile="$configMachinePath"/yum/yum.conf.template
+	if [ ! -f "$configMachineYumConfigTemplateFile" ]; then
+		informationMessage FAIL "Machine $machine missing machine yum.conf.template file $configMachineYumConfigTemplateFile"
 		exit 1
 	fi
 	if [ ! -d "$configMachinePath"/yum/plugins ]; then
-		informationMessage FAIL "Machine $machine missing machine folder $configMachineYumConfigFile/plugins"
+		informationMessage FAIL "Machine $machine missing machine folder $configMachineYumConfigTemplateFile/plugins"
 		exit 1
 	fi
 	if [ ! -d "$configMachinePath"/yum/repositories ]; then
-		informationMessage FAIL "Machine $machine missing machine folder $configMachineYumConfigFile/repositories"
+		informationMessage FAIL "Machine $machine missing machine folder $configMachineYumConfigTemplateFile/repositories"
 		exit 1
 	fi
 	
@@ -391,7 +406,8 @@ function prepareMachinePaths()
 	mkdir -m 0755 -p "$cacheMachinePath"
 	mkdir -m 0755 -p "$cacheMachinePath"/yum
 	mkdir -m 0755 -p "$cacheMachinePath"/yum/cache
-	mkdir -m 0755 -p "$cacheMachinePath"/yum/log
+	touch "$cacheMachinePath"/yum/log
+	chmod 0755 "$cacheMachinePath"/yum/log
 	mkdir -m 0755 -p "$cacheMachinePath"/yum/persist
 	
 	cacheMachineMinimalAppliancePath="$cacheMachinePath"/minimal-appliance
@@ -411,9 +427,16 @@ function readMachineConfig()
 	done < <(cat "$configMachinePackagesPath")
 }
 
+function fillInMachineYumConfTemplate()
+{
+	temporaryFileToRemoveOnExit
+	configMachineYumConfigFile="$TMP_FILE"
+	configMachinePath="$configMachinePath" cacheMachinePath="$cacheMachinePath" templateFile "$configMachineYumConfigTemplateFile" >"$configMachineYumConfigFile"
+}
+
 function prepareMachineMinimalAppliance()
 {
-	YUM0="$configMachinePath" YUM1="$cacheMachinePath" supermin --prepare "${machinePackageNames[@]}" --packager-config "$configMachineYumConfigFile" -o "$cacheMachineMinimalAppliancePath"
+	supermin --prepare "${machinePackageNames[@]}" --packager-config "$configMachineYumConfigFile" -o "$cacheMachineMinimalAppliancePath"
 	
 	# Should include the init script as /init
 	pushd "$configMachinePath" 1>/dev/null 2>/dev/null
@@ -472,7 +495,7 @@ function installAdditionalRootFileSystem()
 
 function buildMachineBuiltAppliance()
 {
-	YUM0="$configMachinePath" YUM1="$cacheMachinePath" supermin --build \
+	supermin --build \
 		--format ext2 \
 		--copy-kernel \
 		--host-cpu "$(uname -m)" \
@@ -503,6 +526,7 @@ function buildMachines()
 	do
 		prepareMachinePaths
 		readMachineConfig
+		fillInMachineYumConfTemplate
 		prepareMachineMinimalAppliance
 		installDeviceNodes
 		installAdditionalRootFileSystem
