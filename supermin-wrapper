@@ -439,9 +439,15 @@ function prepareMachineMinimalAppliance()
 	supermin --prepare "${machinePackageNames[@]}" --packager-config "$configMachineYumConfigFile" -o "$cacheMachineMinimalAppliancePath"
 	
 	# Should include the init script as /init
-	pushd "$configMachinePath" 1>/dev/null 2>/dev/null
+	temporaryFolderToRemoveOnExit
+	local initFolder="$TMP_FILE"
+	
+	# Copied, as might be a symlink
+	cp "$configMachinePath"/init "$initFolder"
+	pushd "$initFolder" 1>/dev/null 2>/dev/null
 		tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/init.tar.gz init
 	popd 1>/dev/null 2>/dev/null
+	rm "$initFolder"/init
 }
 
 function installDeviceNodes()
@@ -495,12 +501,15 @@ function installAdditionalRootFileSystem()
 
 function buildMachineBuiltAppliance()
 {
+	cacheMachineLockFilePath="$cacheMachinePath"/"$(id -u)".supermin.lock
+	touch "$cacheMachineLockFilePath"
+	
 	supermin --build \
 		--format ext2 \
 		--copy-kernel \
 		--host-cpu "$(uname -m)" \
 		--if-newer \
-		--lock /run/user/"$(id -u)"/supermin.lock \
+		--lock "$cacheMachineLockFilePath" \
 		-o "$cacheMachineBuiltAppliancePath" \
 		"$cacheMachineMinimalAppliancePath"
 }
