@@ -259,9 +259,6 @@ function setPaths()
 	
 	readonly machinesPath="$configPath"/machines
 	mkdir -m 0755 -p "$machinesPath"
-	
-	# Used by supermin
-	readonly lockFilePath="$0"
 }
 
 function determineDistribution()
@@ -416,7 +413,6 @@ function readMachineConfig()
 
 function prepareMachineMinimalAppliance()
 {
-	echo $PATH
 	YUM0="$configMachinePath" YUM1="$cacheMachinePath" supermin --prepare "${machinePackageNames[@]}" --packager-config "$configMachineYumConfigFile" -o "$cacheMachineMinimalAppliancePath"
 	
 	# Should include the init script as /init
@@ -440,7 +436,7 @@ function installDeviceNodes()
 	while IFS=' ' read -r devicePath deviceType deviceMode deviceMajor deviceMinor
 	do
 		parentPath="$(purebash_dirname "$devicePath")"
-		mkdir -m 0755 -p "${installPath}$parentPath"
+		fakeroot mkdir -m 0755 -p "${installPath}$parentPath"
 		
 		completePath="${installPath}$devicePath"
 		if [ -e "$completePath" ]; then
@@ -456,21 +452,21 @@ function installDeviceNodes()
 				informationMessage FAIL "$configMachineDevicesPath contains a FIFO definition $devicePath with a device major"
 			fi
 			
-			sudo -p "Creating a device node requires sudo. Your password: " mknod --mode="$deviceMode" "$completePath" "$deviceType"
+			fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType"
 		else
-			sudo -p "Creating a device node requires sudo. Your password: " mknod --mode="$deviceMode" "$completePath" "$deviceType" "$deviceMajor" "$deviceMinor"
+			fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType" "$deviceMajor" "$deviceMinor"
 		fi
 	done < <(cat "$configMachineDevicesPath")
 	
 	pushd "$installPath" 1>/dev/null 2>/dev/null
-		tar --create --gzip --file "$cacheMachineBuiltAppliancePath"/zzz-devices.tar.gz *
+		fakeroot tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/zzz-devices.tar.gz *
 	popd 1>/dev/null 2>/dev/null
 }
 
 function installAdditionalRootFileSystem()
 {
 	pushd "$configMachineRootPath" 1>/dev/null 2>/dev/null
-		tar --create --gzip --file "$cacheMachineBuiltAppliancePath"/zzz-root.tar.gz *
+		fakeroot tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/zzz-root.tar.gz *
 	popd 1>/dev/null 2>/dev/null
 }
 
@@ -481,7 +477,7 @@ function buildMachineBuiltAppliance()
 		--copy-kernel \
 		--host-cpu "$(uname -m)" \
 		--if-newer \
-		--lock "$lockFilePath" \
+		--lock /run/user/"$(id -u)"/supermin.lock \
 		-o "$cacheMachineBuiltAppliancePath" \
 		"$cacheMachineMinimalAppliancePath"
 }
@@ -507,9 +503,9 @@ function buildMachines()
 	do
 		prepareMachinePaths
 		readMachineConfig
+		prepareMachineMinimalAppliance
 		installDeviceNodes
 		installAdditionalRootFileSystem
-		prepareMachineMinimalAppliance
 		buildMachineBuiltAppliance
 		informMachineBuilt
 	done
