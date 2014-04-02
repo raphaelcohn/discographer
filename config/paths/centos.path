@@ -1,4 +1,4 @@
 function packageManager()
 {
-	sudo -p "Please enter your password for sudo to run yum install: " yum install "$@"
+	sudo -p "Please enter your password for sudo to run yum install: " yum install -y "$@"
 }
