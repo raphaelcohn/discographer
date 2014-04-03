@@ -377,6 +377,46 @@ function verifyHostSystemRequirementsUsingDependencyChecks()
 	export PATH="$ourPath"
 }
 
+function determineKnownMachines()
+{
+	knownMachines=()
+	pushd "$machinesPath" 1>/dev/null 2>/dev/null
+		local knownMachine
+		for knownMachine in *
+		do
+			if [ ! -e "$knownMachine" ]; then
+				continue
+			fi
+			knownMachines+=("$knownMachine")
+		done
+	popd 1>/dev/null 2>/dev/null
+}
+
+function cleanUpCache()
+{
+	pushd "$cachePath" 1>/dev/null 2>/dev/null
+		local cachedMachine
+		for cachedMachine in *
+		do
+			if [ ! -d "$cachedMachine" ]; then
+				continue
+			fi
+			local -i found=0
+			local knownMachine
+			for knownMachine in "${knownMachines[@]}"
+			do
+				if [ "$knownMachine" = "$cachedMachine" ]; then
+					found=1
+					break
+				fi
+			done
+			if [ $found -eq 0 ]; then
+				rm -rf "$cachedMachine"
+			fi
+		done
+	popd 1>/dev/null 2>/dev/null
+}
+
 function prepareMachinePaths()
 {
 	configMachinePath="$machinesPath"/"$machine"
@@ -614,6 +654,9 @@ function main()
 	setPaths
 	determineDistribution
 	verifyHostSystemRequirementsUsingDependencyChecks
+	
+	determineKnownMachines
+	cleanUpCache
 	buildMachines
 }
 
