@@ -385,7 +385,7 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
-	configMachinePackagesPath="$configMachinePath"/packages.txt
+	configMachinePackagesPath="$configMachinePath"/packages
 	if [ ! -f "$configMachinePackagesPath" ]; then
 		informationMessage FAIL "Machine $machine missing machine packages file $configMachinePackagesPath"
 		exit 1
