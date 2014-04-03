@@ -568,7 +568,7 @@ function executeGeneratorScripts()
 		local generatorScriptlet
 		for generatorScriptlet in *.generator-scriptlet
 		do
-			if [ -e "$generatorScriptlet"]; then
+			if [ -e "$generatorScriptlet" ]; then
 				source "$generatorScriptlet"
 			fi
 		done
@@ -594,7 +594,7 @@ function installAdditionalRootFileSystem()
 
 function buildMachineBuiltAppliance()
 {
-	cacheMachineLockFilePath="$cacheMachinePath"/"$(id -u)".supermin.lock
+	cacheMachineLockFilePath="$cacheMachinePath"/supermin."$(id -u)".lock
 	touch "$cacheMachineLockFilePath"
 	
 	if [ "$optionChroot" = "yes" ]; then

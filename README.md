@@ -157,4 +157,4 @@ A yum log is contained in `${cachePath}/${machine}/yum/log`.
 
 ### Clearing the cache
 
-The wrapper uses a cache per machine. To remove the cache for a machine, delete the folder `${cachePath}/${machine}`. To remove the entire cache, delete `${cachePath}`. Please note that lock files (`USER_ID.supermin.lock`) are in `${cachePath}`, so it can only be safely removed if no instances of supermin (and by implication, supermin-wrapper), are running. The supermin-wrapper will automatically delete machines from the cache that are not defined in `${configPath}/machines`.
+The wrapper uses a cache per machine. To remove the cache for a machine, delete the folder `${cachePath}/${machine}`. To remove the entire cache, delete `${cachePath}`. Please note that lock files (`supermin.UID.lock`) are in `${cachePath}`, so it can only be safely removed if no instances of supermin (and by implication, supermin-wrapper), are running. The supermin-wrapper will automatically delete machines from the cache that are not defined in `${configPath}/machines`.
