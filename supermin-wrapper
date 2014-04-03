@@ -140,28 +140,38 @@ function exitError()
 function exitHelp()
 {
 	echo -n -E "Usage: ${ourName} -h
-Usage: ${ourName} [-c configPath] [-s cachePath] [-p pathsPath] [-o option] -- machines...
+Usage: ${ourName} [-v] [-c configPath] [-s cachePath] [-p pathsPath] [-o option] -- machines...
 
-Defaults
-    configPath         ${configPath}
-    cachePath          ${cachePath}
-    pathsPath          ${pathsPath}
-    option             See below
+Argument-less Switches
+    -h  show this help
+    -v  be more verbose
 
-A path is used to define the location of essential programs used during initial bootstrapping. It also defines a packageManager
-to automatically install any missing dependencies. The PATH variable is reset to the location of these programs.
+Argumented Switches
+    Argument              Default
+    -c configPath         ${configPath}
+    -s cachePath          ${cachePath}
+    -p pathsPath          ${pathsPath}
+    -o option             See below
+    --                    End of arguments
+
+Variable Arguments
+    machines              A list of machine names in configPath/machines/
 
 Options
 For options, prefix with either 'yes-' to turn it on
-or 'no-' to turn it off. For example, to turn on 'verbose' :-
+or 'no-' to turn it off. For example, to turn on 'chroot' :-
 
-    ${ourName} -o yes-verbose
+    ${ourName} -o yes-chroot
 
 -o may be repeated as necessary. Options are evaluated in left-to-right order.
 Last setting wins.
 
 Options are as follows:-   Default
-    verbose                ${optionVerbose}
+    chroot                 ${optionChroot}
+
+Notes
+A path is used to define the location of essential programs used during initial bootstrapping. It also defines a packageManager
+to automatically install any missing dependencies. The PATH variable is reset to the location of these programs.
 " 1>&2
 	exit $1
 }
@@ -171,18 +181,23 @@ function parseCommandLine()
 	configPath="${crudeOurPath}/config"
 	cachePath="$configPath"/cache
 	pathsPath="$configPath"/paths
+	optionChroot="no"
 	optionVerbose="no"
 	
 	local OPTERR=1
 	local OPTIND=1
 	local OPTARG
 	local option
-	while getopts :hc:s:p:o: option
+	while getopts :hvc:s:p:o: option
 	do
 		case "$option" in
 			
 			h)
 				exitHelp 2
+			;;
+			
+			v)
+				optionVerbose="yes"
 			;;
 			
 			c)
@@ -204,12 +219,12 @@ function parseCommandLine()
 			
 				case "$OPTARG" in
 					
-					no-verbose)
-						optionVerbose="no"
+					no-chroot)
+						optionChroot="no"
 					;;
 					
-					yes-verbose)
-						optionVerbose="yes"
+					yes-chroot)
+						optionChroot="yes"
 					;;
 					
 					*)
@@ -388,6 +403,12 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
+	configMachineGeneratorScriptletsPath="$configMachinePath"/generator-scriptlets
+	if [ ! -d "$configMachineGeneratorScriptletsPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine generator-scriptlets folder $configMachineGeneratorScriptletsPath"
+		exit 1
+	fi
+	
 	configMachineRootOverlaysPath="$configMachinePath"/root-overlays
 	if [ ! -d "$configMachineRootOverlaysPath" ]; then
 		informationMessage FAIL "Machine $machine missing machine root-overlays folder $configMachineRootOverlaysPath"
@@ -498,6 +519,22 @@ function installDeviceNodes()
 	popd 1>/dev/null 2>/dev/null
 }
 
+function executeGeneratorScripts()
+{
+	generatedRootOverlaysPath="$configMachineRootOverlaysPath"/generated
+	mkdir -m 0755 -p "$generatedRootOverlaysPath"
+	
+	pushd "$configMachineGeneratorScriptletsPath" 1>/dev/null 2>/dev/null
+		local generatorScriptlet
+		for generatorScriptlet in *.generator-scriptlet
+		do
+			if [ -e "$generatorScriptlet"]; then
+				source "$generatorScriptlet"
+			fi
+		done
+	popd 1>/dev/null 2>/dev/null
+}
+
 function installAdditionalRootFileSystem()
 {
 	local overlay
@@ -520,8 +557,14 @@ function buildMachineBuiltAppliance()
 	cacheMachineLockFilePath="$cacheMachinePath"/"$(id -u)".supermin.lock
 	touch "$cacheMachineLockFilePath"
 	
+	if [ "$optionChroot" = "yes" ]; then
+		applianceFormat="chroot"
+	else
+		applianceFormat="ext2"
+	fi
+	
 	supermin${superminVerbosity} --build \
-		--format ext2 \
+		--format "$applianceFormat" \
 		--copy-kernel \
 		--host-cpu "$(uname -m)" \
 		--if-newer \
@@ -532,7 +575,7 @@ function buildMachineBuiltAppliance()
 
 function informMachineBuilt()
 {
-	informationMessage INFO "Run with  qemu-kvm -m 512 -kernel kernel -initrd initrd -append 'vga=773 selinux=0' -drive file=root,format=raw,if=virtio"
+	informationMessage INFO "Run with  qemu-kvm -m 512 -kernel $cacheMachineBuiltAppliancePath/kernel -initrd $cacheMachineBuiltAppliancePath/initrd -append 'vga=773 selinux=0' -drive file=$cacheMachineBuiltAppliancePath/root,format=raw,if=virtio"
 }
 
 function buildMachines()
@@ -553,6 +596,7 @@ function buildMachines()
 		readMachineConfig
 		fillInMachineYumConfTemplate
 		prepareMachineMinimalAppliance
+		executeGeneratorScripts
 		installDeviceNodes
 		installAdditionalRootFileSystem
 		buildMachineBuiltAppliance
@@ -574,6 +618,3 @@ function main()
 }
 
 main "$@"
-
-# TODO: Template-possible root file system
-# TODO: Generation of root file system content (eg hostname)

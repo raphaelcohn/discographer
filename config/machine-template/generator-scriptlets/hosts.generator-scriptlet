@@ -1,0 +1,9 @@
+
+mkdir -m 0755 -p "$generatedRootOverlaysPath"/etc
+
+cat >"$generatedRootOverlaysPath"/etc/hosts <<-EOF
+	127.0.0.1	localhost ${machine}
+	::1	localhost ${machine}
+	fe80::1%lo0	localhost ${machine}
+	255.255.255.255	broadcasthost
+EOF
