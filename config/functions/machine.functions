@@ -1,6 +1,54 @@
 declare -a machines=()
 declare -a machineFunctions=()
 
+function verifyMachineNameIsValidDnsLabel()
+{
+	local -ir hostnameLength=${#machine}
+	if [ $hostnameLength -lt 2 ]; then
+		informationMessage FAIL "machine name must be at least 2 characters"
+		exit 1
+	fi
+	
+	if [ $hostnameLength -gt 63 ]; then
+		informationMessage FAIL "machine name must be no more than 63 characters"
+		exit 1
+	fi
+	
+	case "${machine:0:1}" in
+		
+		[0-9]|-)
+			informationMessage FAIL "machine name must not start with a number or hyphen"
+			exit 1
+		;;
+		
+		*)
+			:
+		;;
+		
+	esac
+	
+	local convertedHostname
+	convertedHostname="$(printf "$machine" | tr -d 'A-Z')"
+	if [ ${#convertedHostname} != $hostnameLength ]; then
+		informationMessage FAIL "machine name must not contain upper case"
+		exit 1
+	fi
+	
+	convertedHostname="$(printf "$machine" | tr -d '.')"
+	if [ ${#convertedHostname} != $hostnameLength ]; then
+		informationMessage FAIL "machine name must not contain a domain name (ie period)"
+		exit 1
+	fi
+	
+	# Delete anything not in abc...
+	convertedHostname="$(printf "$machine" | tr -d -C 'abcdefghijklmnopqrstuvwxyz0123456789-')"
+	if [ ${#convertedHostname} != $hostnameLength ]; then
+		informationMessage FAIL "machine name must consist of a-z, 0-9 or hyphen"
+		exit 1
+	fi
+}
+machineFunctions+=(verifyMachineNameIsValidDnsLabel)
+
 function prepareMachinePaths()
 {
 	configMachinePath="$machinesPath"/"$machine"
@@ -75,7 +123,7 @@ machineFunctions+=(prepareMachinePaths)
 
 function cleanUpMachinesCache()
 {
-	pushd "$cachePath" 1>/dev/null 2>/dev/null
+	pushd "$cacheMachineGroupPath" 1>/dev/null 2>/dev/null
 		local cachedMachine
 		for cachedMachine in *
 		do
@@ -134,11 +182,22 @@ function yumDownloaderWrapper()
 		local yumVerbosity=""
 	fi
 	
-	temporaryFileToRemoveOnExit
-	configMachineYumConfigFile="$TMP_FILE"
-	yum${yumVerbosity} --config="$configMachineYumConfigFile" --color=never --assumeyes --cacheonly --installroot="$cacheMachineRpmInstallRootPath"
+	autoMachineRootOverlaysPath="$configMachineRootOverlaysPath"/auto
+	mkdir -m 0755 -p "$autoMachineRootOverlaysPath"
+	
+	#yum${yumVerbosity} --config="$configMachineYumConfigFile" --color=never --assumeyes --cacheonly --installroot="$cacheMachineRpmInstallRootPath"
+	
+	pushd "$cacheMachinePath"/yum/cache 1>/dev/null 2>/dev/null
+		
+		local rpmFile
+		for rpmFile in *.rpm
+		do
+			rpm2cpio "$rpmFile" | (cd "$autoMachineRootOverlaysPath" && cpio --quiet -id)
+		done
+		
+	popd 1>/dev/null 2>/dev/null
 }
-machineFunctions+=(yumDownloaderWrapper)
+#machineFunctions+=(yumDownloaderWrapper)
 
 function prepareMachineMinimalAppliance()
 {
@@ -157,10 +216,10 @@ function prepareMachineMinimalAppliance()
 }
 machineFunctions+=(prepareMachineMinimalAppliance)
 
-function executeGeneratorScriptlets()
+function sourceMachineGeneratorScriptlets()
 {
-	generatedRootOverlaysPath="$configMachineRootOverlaysPath"/generated
-	mkdir -m 0755 -p "$generatedRootOverlaysPath"
+	generatedMachineRootOverlaysPath="$configMachineRootOverlaysPath"/generated
+	mkdir -m 0755 -p "$generatedMachineRootOverlaysPath"
 	
 	pushd "$configMachineGeneratorScriptletsPath" 1>/dev/null 2>/dev/null
 		local generatorScriptlet
@@ -173,10 +232,13 @@ function executeGeneratorScriptlets()
 		done
 	popd 1>/dev/null 2>/dev/null
 }
-machineFunctions+=(executeGeneratorScriptlets)
+machineFunctions+=(sourceMachineGeneratorScriptlets)
 
 function installDeviceNodes()
 {
+	local -r namePrefix="$1"
+	local -r devicesFilePath="$2"
+	
 	temporaryFolderToRemoveOnExit
 	local installPath="$TMP_FILE"
 	
@@ -210,31 +272,56 @@ function installDeviceNodes()
 		else
 			fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType" "$deviceMajor" "$deviceMinor"
 		fi
-	done < <(cat "$configMachineDevicesPath")
+	done < <(cat "$devicesFilePath")
 	
 	pushd "$installPath" 1>/dev/null 2>/dev/null
-		fakeroot tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/zzz-devices.tar.gz *
+		fakeroot tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/"$namePrefix"-devices.tar.gz *
 	popd 1>/dev/null 2>/dev/null
 }
-machineFunctions+=(installDeviceNodes)
 
-function installAdditionalRootFileSystem()
+function installMachineGroupDeviceNodes()
 {
+	installDeviceNodes "zza" "$configMachineGroupDevicesPath"
+}
+machineFunctions+=(installMachineGroupDeviceNodes)
+
+function installMachineDeviceNodes()
+{
+	installDeviceNodes "zzz" "$configMachineDevicesPath"
+}
+machineFunctions+=(installMachineDeviceNodes)
+
+function installRootOverlay()
+{
+	local -r namePrefix="$1"
+	local -r rootOverlaysPath="$2"
+	
 	local overlay
-	for overlay in "$configMachineRootOverlaysPath"/*
+	for overlay in "$rootOverlaysPath"/*
 	do
 		if [ ! -e "$overlay" ]; then
 			continue
 		fi
 		
 		pushd "$overlay" 1>/dev/null 2>/dev/null
-			local tarball="$cacheMachineMinimalAppliancePath"/zzz.root-overlay."$(purebash_basename "$overlay")".tar.gz
+			local tarball="$cacheMachineMinimalAppliancePath"/"$namePrefix".root-overlay."$(purebash_basename "$overlay")".tar.gz
 			# if '*' expands to no files (* excludes .gitignore, etc, ie all files starting with a dot) then tar will fail, hence the || rm -f "$tarball"
 			fakeroot tar --create --gzip --file "$tarball" * 1>/dev/null 2>/dev/null || rm -f "$tarball"
 		popd 1>/dev/null 2>/dev/null
 	done
 }
-machineFunctions+=(installAdditionalRootFileSystem)
+
+function installMachineGroupRootOverlay()
+{
+	installRootOverlay "zza" "$configMachineGroupRootOverlaysPath"
+}
+machineFunctions+=(installMachineGroupRootOverlay)
+
+function installMachineRootOverlay()
+{
+	installRootOverlay "zzz" "$configMachineRootOverlaysPath"
+}
+machineFunctions+=(installMachineRootOverlay)
 
 function buildMachineBuiltAppliance()
 {

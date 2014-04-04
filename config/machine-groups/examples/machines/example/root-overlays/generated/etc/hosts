@@ -1,4 +1,0 @@
-127.0.0.1	localhost localhost.localdomain example
-::1	localhost6 localhost6.localdomain6 example
-fe80::1%lo0	localhost6 localhost6.localdomain6 example
-255.255.255.255	broadcasthost

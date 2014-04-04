@@ -12,6 +12,18 @@ function prepareMachineGroupPaths()
 	cacheMachineGroupPath="$cachePath"/"$machineGroup"
 	mkdir -m 0755 -p "$cacheMachineGroupPath"
 	
+	configMachineGroupDevicesPath="$configMachineGroupDevicesPath"/devices
+	if [ ! -f "$configMachineGroupDevicesPath" ]; then
+		informationMessage FAIL "Machine-group $machineGroup missing machine-group devices file $configMachineGroupDevicesPath"
+		exit 1
+	fi
+	
+	configMachineGroupRootOverlaysPath="$configMachineGroupPath"/root-overlays
+	if [ ! -d "$configMachineGroupRootOverlaysPath" ]; then
+		informationMessage FAIL "Machine-group $machineGroup missing machine-group root-overlays folder $configMachineGroupRootOverlaysPath"
+		exit 1
+	fi
+	
 	machinesPath="$configMachineGroupPath"/machines
 	if [ ! -d "$machinesPath" ]; then
 		informationMessage FAIL "Missing machine-group machines path $machinesPath"
@@ -19,6 +31,32 @@ function prepareMachineGroupPaths()
 	fi
 }
 machineGroupFunctions+=(prepareMachineGroupPaths)
+
+function cleanUpMachineGroupsCache()
+{
+	pushd "$cachePath" 1>/dev/null 2>/dev/null
+		local cachedMachineGroup
+		for cachedMachineGroup in *
+		do
+			if [ ! -d "$cachedMachineGroup" ]; then
+				continue
+			fi
+			local -i found=0
+			local knownMachineGroup
+			for knownMachineGroup in "${knownMachineGroups[@]}"
+			do
+				if [ "$knownMachineGroup" = "$cachedMachineGroup" ]; then
+					found=1
+					break
+				fi
+			done
+			if [ $found -eq 0 ]; then
+				rm -rf "$cachedMachineGroup"
+			fi
+		done
+	popd 1>/dev/null 2>/dev/null
+}
+machineFunctions+=(cleanUpMachinesCache)
 
 declare -a knownMachines=()
 function determineKnownMachines()
@@ -36,6 +74,24 @@ function determineKnownMachines()
 	popd 1>/dev/null 2>/dev/null
 }
 machineGroupFunctions+=(determineKnownMachines)
+
+function sourceMachineGroupGeneratorScriptlets()
+{
+	generatedMachineGroupRootOverlaysPath="$configMachineGroupRootOverlaysPath"/generated
+	mkdir -m 0755 -p "$generatedMachineGroupRootOverlaysPath"
+	
+	pushd "$generatedMachineGroupRootOverlaysPath" 1>/dev/null 2>/dev/null
+		local generatorScriptlet
+		for generatorScriptlet in *.generator-scriptlet
+		do
+			if [ -e "$generatorScriptlet" ]; then
+				informationMessage INFO "Sourcing generator-scriptlet $generatorScriptlet"
+				source "$generatorScriptlet"
+			fi
+		done
+	popd 1>/dev/null 2>/dev/null
+}
+machineGroupFunctions+=(sourceMachineGroupGeneratorScriptlets)
 
 function configureSuperminVerbosity()
 {
@@ -61,10 +117,32 @@ function buildMachines()
 }
 machineGroupFunctions+=(buildMachines)
 
-function buildMachineGroups()
+function setMachineGroupsPath()
 {
 	readonly machineGroupsPath="$configPath"/machine-groups
 	mkdir -m 0755 -p "$machineGroupsPath"
+}
+
+declare -a knownMachineGroups=()
+function determineKnownMachineGroups()
+{
+	knownMachineGroups=()
+	pushd "$machineGroupsPath" 1>/dev/null 2>/dev/null
+		local knownMachineGroup
+		for knownMachineGroup in *
+		do
+			if [ ! -e "$knownMachineGroup" ]; then
+				continue
+			fi
+			knownMachineGroups+=("$knownMachineGroup")
+		done
+	popd 1>/dev/null 2>/dev/null
+}
+
+function buildMachineGroups()
+{
+	setMachineGroupsPath
+	determineKnownMachineGroups
 	
 	local machineGroup
 	local machineGroupFunction
@@ -72,9 +150,6 @@ function buildMachineGroups()
 	do
 		for machineGroupFunction in "${machineGroupFunctions[@]}"
 		do
-			echo "execute generator scriptlets for machine-group!!!!!!"
-			exit 50
-			
 			$machineGroupFunction
 		done
 	done
