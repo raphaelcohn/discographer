@@ -1,0 +1,48 @@
+function initialiseTraps()
+{
+	addNextTrapHandler removeFilesOnExit
+}
+
+function runOnTrap()
+{
+	local trapHandler
+	for trapHandler in "${trapHandlers[@]}"
+	do
+		$trapHandler
+	done
+}
+
+function addNextTrapHandler()
+{
+	local trapHandler="$1"
+	trap runOnTrap 0 HUP INT QUIT ILL ABRT FPE SEGV PIPE TERM EXIT
+	trapHandlers+=("$trapHandler")
+}
+
+function removeLastTrapHandler()
+{
+	unset trapHandlers[$((${#trapHandlers[*]}-1))]
+}
+
+function removeFilesOnExit()
+{
+	rm -rf -- "${filesToRemoveOnExit[@]}"
+}
+
+function addFileToRemoveOnExit()
+{
+	local -r fileToRemove="$1"
+	filesToRemoveOnExit+=("$fileToRemove")
+}
+
+function temporaryFileToRemoveOnExit()
+{
+	TMP_FILE="$(mktemp -t "$ourName".XXXXXXXXXXXX)"
+	filesToRemoveOnExit+=("$TMP_FILE")
+}
+
+function temporaryFolderToRemoveOnExit()
+{
+	TMP_FILE="$(mktemp -t -d "$ourName".XXXXXXXXXXXX)"
+	filesToRemoveOnExit+=("$TMP_FILE")
+}

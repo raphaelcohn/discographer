@@ -1,0 +1,11 @@
+
+mkdir -m 0755 -p "$generatedRootOverlaysPath"/etc/sysconfig
+
+# Could we source this from somewhere?
+local domain="slc.co.uk"
+
+cat >"$generatedRootOverlaysPath"/etc/sysconfig/network <<-EOF
+	NETWORKING=yes
+	NETWORKING_IPV6=no
+	HOSTNAME=${machine}.${domain}
+EOF

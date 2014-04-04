@@ -38,7 +38,7 @@ A machine is defined as a set of RPM packages. The packages to install are in a 
     bash
     coreutils
 
-Will install the packages `bash` and `coreutils`, and all their dependencies. The package `setup` is always installed regardless.
+Will install the packages `bash` and `coreutils`, and all their dependencies. The package `setup` is always installed regardless (Contents listed at <http://pkgs.org/centos-6/centos-i386/setup-2.8.14-20.el6_4.1.noarch.rpm.html>).
 
 The `packages` file may be a symlink. The source of these packages is controlled by Yum and Repository Configuration (see below).
 
@@ -135,9 +135,9 @@ Machine images are created in a folder at `${cachePath}/${machine}/built-applian
     initrd
     root
 
-The file `root` is an ext2 raw disk image (ie `dd`-friendly), and can be inspected by mounting it loopback (sudo mount -o loop -t ext2 `${cachePath}/${machine}/built-appliance/root` `/mnt/my/path`). The `kernel` and `initrd` are simply copied from the build machine. They are not built. These files can be used without further ado by QEMU: `qemu-kvm -m 512 -kernel `${cachePath}/${machine}/built-appliance/kernel` -initrd `${cachePath}/${machine}/built-appliance/initrd` -append 'vga=773 selinux=0' -drive file=`${cachePath}/${machine}/built-appliance/root`,format=raw,if=virtio`
+The file `root` is an ext2 raw disk image (ie `dd`-friendly), and can be inspected by mounting it loopback (`sudo mount -o loop -t ext2 ${cachePath}/${machine}/built-appliance/root `/mnt/my/path`). The `kernel` and `initrd` are simply copied from the build machine. They are not built. These files can be used without further ado by QEMU: `qemu-kvm -m 512 -kernel `${cachePath}/${machine}/built-appliance/kernel` -initrd `${cachePath}/${machine}/built-appliance/initrd` -append 'vga=773 selinux=0' -drive file=`${cachePath}/${machine}/built-appliance/root`,format=raw,if=virtio`
 
-If the command-line option `-o yes-chroot` is used, then instead the folder `${configPath}/machines/${machine}/built-appliance` will contain a complete root file system on the current disk.
+If the command-line option `-o yes-chroot` is used, then instead the folder `${configPath}/machines/${machine}/built-appliance` will contain a complete root file system on the current disk. This option doesn't work if running as root, apparently because of a bug in supermin (to do with option specified to tar).
 
 
 ### Intermediate Files
@@ -158,3 +158,17 @@ A yum log is contained in `${cachePath}/${machine}/yum/log`.
 ### Clearing the cache
 
 The wrapper uses a cache per machine. To remove the cache for a machine, delete the folder `${cachePath}/${machine}`. To remove the entire cache, delete `${cachePath}`. Please note that lock files (`supermin.UID.lock`) are in `${cachePath}`, so it can only be safely removed if no instances of supermin (and by implication, supermin-wrapper), are running. The supermin-wrapper will automatically delete machines from the cache that are not defined in `${configPath}/machines`.
+
+
+# TODO
+
+* Support `SUPERMIN_KERNEL`, and `SUPERMIN_MODULES` environment variables.
+* Groups of machines
+* Group of machine generator scripts
+* Specify DNS domain
+* Do not copy host files
+* Override / remove stuff in packages (eg /etc/hosts)
+* Patch lines 551-554 to be more verbose about file copying: https://github.com/libguestfs/supermin/blob/master/src/ext2fs-c.c
+* supermin ONLY does yumdownloader & rpm2cpio!!!
+* CLEAN UP cache for machine-groups
+

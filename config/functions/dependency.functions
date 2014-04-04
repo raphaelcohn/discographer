@@ -1,0 +1,103 @@
+declare -a dependencyFunctions=()
+
+function ensureWeAreRunningBash4()
+{
+	if [ ${BASH_VERSINFO[0]} != "4" ]; then
+		exitError "$ourName: You are not running bash 4."
+	fi
+}
+dependencyFunctions+=(ensureWeAreRunningBash4)
+
+function determineDistribution()
+{
+	if [ -f /etc/centos-release ]; then
+		readonly pathName="centos"
+		return 0
+	fi
+	if [ -f /etc/redhat-release ]; then
+		readonly pathName="redhat"
+		return 0
+	fi
+	if [ -f /etc/lsb_release ]; then
+		source /etc/lsb_release
+		readonly pathName="$DISTRIB_ID"
+		return 0
+	fi
+	
+	readonly pathName="debian"
+}
+dependencyFunctions+=(determineDistribution)
+
+function verifyHostSystemRequirementsUsingDependencyChecks()
+{
+	declare -a dependencies=()
+	
+	readonly pathNames="$pathsPath"/"$pathName"
+	if [ ! -d "$pathNames" ]; then
+		exitError "path name $pathNames does not exist or is not a directory"
+	fi
+	
+	# Installs the packageManager function
+	readonly pathNamesFunction="$pathNames"/package-manager.functions
+	if [ ! -f "$pathNamesFunction" ]; then
+		exitError "path name functions $pathNamesFunction does not exist or is not a directory"
+	fi
+	source "$pathNamesFunction"
+	
+	declare -a installPackages=()
+	local packagePath
+	local packageName
+	local symlink
+	local ourPath=""
+	for packagePath in "$pathNames"/*
+	do
+		if [ ! -d "$packagePath" ]; then
+			continue
+		fi
+		if [ -z "$ourPath" ]; then
+			ourPath="$packagePath"
+		else
+			ourPath="$ourPath":"$packagePath"
+		fi
+		packageName="$(purebash_basename "$packagePath")"
+		
+		# Do not check dependencies that are already installed
+		if [ "$packageName" = "zzz-built-in" ]; then
+			continue
+		fi
+		
+		for symlink in "$packagePath"/*
+		do
+			if [ -L "$symlink" ]; then
+				# Not perfect; might point to non-exec but extant file
+				if [ ! -x "$symlink" ]; then
+					installPackages+=("$packageName")
+					informationMessage WARN "Uninstalled package $packageName"
+					break
+				fi
+			fi
+		done
+	done
+	
+	if [ ${#installPackages[@]} -ne 0 ]; then
+		informationMessage TASK "Installing missing packages"
+		if [ "$verbose" = "yes" ]; then
+			packageManager "${installPackages[@]}"
+		else
+			packageManager "${installPackages[@]}" 1>/dev/null
+		fi
+		informationMessage PASS "Installing missing packages"
+	fi
+	
+	export PATH="$ourPath"
+}
+dependencyFunctions+=(verifyHostSystemRequirementsUsingDependencyChecks)
+
+function installDependencies()
+{
+	local dependencyFunction
+	for dependencyFunction in "${dependencyFunctions[@]}"
+	do
+		$dependencyFunction
+	done
+}

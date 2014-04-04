@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
 set +o allexport -o braceexpand +o emacs -o errexit +o errtrace +o functrace +o hashall +o histexpand +o history +o ignoreeof -o interactive-comments +o keyword +o monitor +o noclobber +o noexec +o noglob +o nolog +o notify +o nounset +o onecmd +o physical +o pipefail +o posix +o verbose +o vi +o xtrace;unset BASH_ENV;unset BASH_XTRACEFD;unset CDPATH;unset ENV;unset FCEDIT;unset FIGNORE;unset FUNCNEST;unset GLOBIGNORE;unset HISTCONTROL;unset HISTFILE;unset HISTFILESIZE;unset HISTIGNORE;unset HISTSIZE;unset HISTTIMEFORMAT;unset HOSTFILE;unset IGNOREEOF;unset INPUTRC;unset MAIL;unset MAILCHECK;unset MAILPATH;unset TMOUT;umask 022
 
-function ensureWeAreRunningBash4()
-{
-	if [ ${BASH_VERSINFO[0]} != "4" ]; then
-		exitError "$ourName: You are not running bash 4."
-	fi
-}
-
 function informationMessage()
 {
 	local messageKind="$1"
@@ -26,55 +19,6 @@ function informationMessage()
 		;;
 	
 	esac
-}
-
-function initialiseTraps()
-{
-	addNextTrapHandler removeFilesOnExit
-}
-
-function runOnTrap()
-{
-	local trapHandler
-	for trapHandler in "${trapHandlers[@]}"
-	do
-		$trapHandler
-	done
-}
-
-function addNextTrapHandler()
-{
-	local trapHandler="$1"
-	trap runOnTrap 0 HUP INT QUIT ILL ABRT FPE SEGV PIPE TERM EXIT
-	trapHandlers+=("$trapHandler")
-}
-
-function removeLastTrapHandler()
-{
-	unset trapHandlers[$((${#trapHandlers[*]}-1))]
-}
-
-function removeFilesOnExit()
-{
-	rm -rf -- "${filesToRemoveOnExit[@]}"
-}
-
-function addFileToRemoveOnExit()
-{
-	local -r fileToRemove="$1"
-	filesToRemoveOnExit+=("$fileToRemove")
-}
-
-function temporaryFileToRemoveOnExit()
-{
-	TMP_FILE="$(mktemp -t "$ourName".XXXXXXXXXXXX)"
-	filesToRemoveOnExit+=("$TMP_FILE")
-}
-
-function temporaryFolderToRemoveOnExit()
-{
-	TMP_FILE="$(mktemp -t -d "$ourName".XXXXXXXXXXXX)"
-	filesToRemoveOnExit+=("$TMP_FILE")
 }
 
 # The purpose of these functions is to provide internal implementations of logic we can't be 100%
@@ -140,7 +84,7 @@ function exitError()
 function exitHelp()
 {
 	echo -n -E "Usage: ${ourName} -h
-Usage: ${ourName} [-v] [-c configPath] [-s cachePath] [-p pathsPath] [-o option] -- machines...
+Usage: ${ourName} [-v] [-c configPath] [-s cachePath] [-f functionsPath] [-p pathsPath] [-o option] -- machines...
 
 Argument-less Switches
     -h  show this help
@@ -150,12 +94,13 @@ Argumented Switches
     Argument              Default
     -c configPath         ${configPath}
     -s cachePath          ${cachePath}
+    -f functionsPath      ${functionsPath}
     -p pathsPath          ${pathsPath}
     -o option             See below
     --                    End of arguments
 
 Variable Arguments
-    machines              A list of machine names in configPath/machines/
+    machine-groups        A list of machine-group names in configPath/machine-groups/
 
 Options
 For options, prefix with either 'yes-' to turn it on
@@ -180,6 +125,7 @@ function parseCommandLine()
 {	
 	configPath="${crudeOurPath}/config"
 	cachePath="$configPath"/cache
+	functionsPath="$configPath"/functions
 	pathsPath="$configPath"/paths
 	optionChroot="no"
 	optionVerbose="no"
@@ -188,7 +134,7 @@ function parseCommandLine()
 	local OPTIND=1
 	local OPTARG
 	local option
-	while getopts :hvc:s:p:o: option
+	while getopts :hvc:s:p:f:o: option
 	do
 		case "$option" in
 			
@@ -206,6 +152,10 @@ function parseCommandLine()
 			
 			s)
 				cachePath="$OPTARG"
+			;;
+			
+			f)
+				functionsPath="$OPTARG"
 			;;
 			
 			p)
@@ -242,405 +192,60 @@ function parseCommandLine()
 	done
 	
 	shift $((OPTIND - 1))
-	if [ $# -eq 0 ]; then
-		exitError "Please specify at least one machine"
-	fi
+	machineGroups=("$@")
 	
-	machines=("$@")
-	
-	if [ "$optionVerbose" = yes ]; then
-		readonly superminVerbosity=" -v"
-	else
-		readonly superminVerbosity=""
-	fi
+	function makeCommandLinePathsAbsolute()
+	{
+		pushd "$configPath">/dev/null
+			configPath="$(pwd)"
+		popd >/dev/null
+
+		pushd "$cachePath">/dev/null
+			cachePath="$(pwd)"
+		popd >/dev/null
+
+		pushd "$functionsPath">/dev/null
+			functionsPath="$(pwd)"
+		popd >/dev/null
+
+		pushd "$pathsPath">/dev/null
+			pathsPath="$(pwd)"
+		popd >/dev/null
+	}
+	makeCommandLinePathsAbsolute
 }
 
-declare -a machines=()
-
-function setConfigPath()
+function validateCommandLineArguments()
 {
 	if [ ! -d "$configPath" ]; then
 		exitError "Config path $configPath does not exist or is not a directory"
 	fi
-	pushd "$configPath">/dev/null
-	configPath="$(pwd)"
-	popd >/dev/null
-}
-
-function setCachePath()
-{
+	
 	if [ ! -d "$cachePath" ]; then
 		exitError "Cache path $cachePath does not exist or is not a directory"
 	fi
-	pushd "$cachePath">/dev/null
-	cachePath="$(pwd)"
-	popd >/dev/null
-}
-
-function setPathsPath()
-{
+	
+	if [ ! -d "$functionsPath" ]; then
+		exitError "Paths path $functionsPath does not exist or is not a directory"
+	fi
+	
 	if [ ! -d "$pathsPath" ]; then
 		exitError "Paths path $pathsPath does not exist or is not a directory"
 	fi
-	pushd "$pathsPath">/dev/null
-	pathsPath="$(pwd)"
-	popd >/dev/null
+	
+	if [ ${#machineGroups[@]} -eq 0 ]; then
+		exitError "Please specify at least one machine-group"
+	fi
 }
 
-function setPaths()
+function sourceFunctions()
 {
-	setConfigPath
-	setCachePath
-	setPathsPath
-	
-	readonly machinesPath="$configPath"/machines
-	mkdir -m 0755 -p "$machinesPath"
-}
-
-function determineDistribution()
-{
-	if [ -f /etc/centos-release ]; then
-		readonly pathName="centos"
-		return 0
-	fi
-	if [ -f /etc/lsb_release ]; then
-		source /etc/lsb_release
-		readonly pathName="$DISTRIB_ID"
-		return 0
-	fi
-	
-	readonly pathName="debian"
-}
-
-function verifyHostSystemRequirementsUsingDependencyChecks()
-{
-	declare -a dependencies=()
-	
-	readonly pathNames="$pathsPath"/"$pathName"
-	if [ ! -d "$pathNames" ]; then
-		exitError "path name $pathNames does not exist or is not a directory"
-	fi
-	
-	readonly pathNamesFunction="$pathsPath"/"$pathName".path
-	if [ ! -f "$pathNamesFunction" ]; then
-		exitError "path name functions $pathNamesFunction does not exist or is not a directory"
-	fi
-	
-	# Installs the packageManager function
-	source "$pathNamesFunction"
-	
-	declare -a installPackages=()
-	local packagePath
-	local packageName
-	local symlink
-	local ourPath=""
-	for packagePath in "$pathNames"/*
+	local functionFile
+	for functionFile in *.functions
 	do
-		if [ ! -d "$packagePath" ]; then
-			continue
+		if [ -f "$functionFile" ]; then
+			source "$functionFile"
 		fi
-		if [ -z "$ourPath" ]; then
-			ourPath="$packagePath"
-		else
-			ourPath="$ourPath":"$packagePath"
-		fi
-		packageName="$(purebash_basename "$packagePath")"
-		
-		# Do not check dependencies that are already installed
-		if [ "$packageName" = "zzz-built-in" ]; then
-			continue
-		fi
-		
-		for symlink in "$packagePath"/*
-		do
-			if [ -L "$symlink" ]; then
-				# Not perfect; might point to non-exec but extant file
-				if [ ! -x "$symlink" ]; then
-					installPackages+=("$packageName")
-					informationMessage WARN "Uninstalled package $packageName"
-					break
-				fi
-			fi
-		done
-	done
-	
-	if [ ${#installPackages[@]} -ne 0 ]; then
-		informationMessage TASK "Installing missing packages"
-		if [ "$verbose" = "yes" ]; then
-			packageManager "${installPackages[@]}"
-		else
-			packageManager "${installPackages[@]}" 1>/dev/null
-		fi
-		informationMessage PASS "Installing missing packages"
-	fi
-	
-	export PATH="$ourPath"
-}
-
-function determineKnownMachines()
-{
-	knownMachines=()
-	pushd "$machinesPath" 1>/dev/null 2>/dev/null
-		local knownMachine
-		for knownMachine in *
-		do
-			if [ ! -e "$knownMachine" ]; then
-				continue
-			fi
-			knownMachines+=("$knownMachine")
-		done
-	popd 1>/dev/null 2>/dev/null
-}
-
-function cleanUpCache()
-{
-	pushd "$cachePath" 1>/dev/null 2>/dev/null
-		local cachedMachine
-		for cachedMachine in *
-		do
-			if [ ! -d "$cachedMachine" ]; then
-				continue
-			fi
-			local -i found=0
-			local knownMachine
-			for knownMachine in "${knownMachines[@]}"
-			do
-				if [ "$knownMachine" = "$cachedMachine" ]; then
-					found=1
-					break
-				fi
-			done
-			if [ $found -eq 0 ]; then
-				rm -rf "$cachedMachine"
-			fi
-		done
-	popd 1>/dev/null 2>/dev/null
-}
-
-function prepareMachinePaths()
-{
-	configMachinePath="$machinesPath"/"$machine"
-	if [ ! -d "$configMachinePath" ]; then
-		informationMessage FAIL "Machine $machine missing machine config path $configMachinePath"
-		exit 1
-	fi
-	
-	configMachinePackagesPath="$configMachinePath"/packages
-	if [ ! -f "$configMachinePackagesPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine packages file $configMachinePackagesPath"
-		exit 1
-	fi
-	
-	configMachineInitPath="$configMachinePath"/init
-	if [ ! -x "$configMachineInitPath" ]; then
-		informationMessage FAIL "Machine $machine missing (or not executable 0755) machine init file $configMachinePackagesPath"
-		exit 1
-	fi
-	
-	configMachineDevicesPath="$configMachinePath"/devices
-	if [ ! -f "$configMachineDevicesPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine devices file $configMachineDevicesPath"
-		exit 1
-	fi
-	
-	configMachineGeneratorScriptletsPath="$configMachinePath"/generator-scriptlets
-	if [ ! -d "$configMachineGeneratorScriptletsPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine generator-scriptlets folder $configMachineGeneratorScriptletsPath"
-		exit 1
-	fi
-	
-	configMachineRootOverlaysPath="$configMachinePath"/root-overlays
-	if [ ! -d "$configMachineRootOverlaysPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine root-overlays folder $configMachineRootOverlaysPath"
-		exit 1
-	fi
-
-	configMachineYumConfigTemplateFile="$configMachinePath"/yum/yum.conf.template
-	if [ ! -f "$configMachineYumConfigTemplateFile" ]; then
-		informationMessage FAIL "Machine $machine missing machine yum.conf.template file $configMachineYumConfigTemplateFile"
-		exit 1
-	fi
-	if [ ! -d "$configMachinePath"/yum/plugins ]; then
-		informationMessage FAIL "Machine $machine missing machine folder $configMachineYumConfigTemplateFile/plugins"
-		exit 1
-	fi
-	if [ ! -d "$configMachinePath"/yum/repositories ]; then
-		informationMessage FAIL "Machine $machine missing machine folder $configMachineYumConfigTemplateFile/repositories"
-		exit 1
-	fi
-	
-	cacheMachinePath="$cachePath"/"$machine"
-	mkdir -m 0755 -p "$cacheMachinePath"
-	mkdir -m 0755 -p "$cacheMachinePath"/yum
-	mkdir -m 0755 -p "$cacheMachinePath"/yum/cache
-	touch "$cacheMachinePath"/yum/log
-	chmod 0755 "$cacheMachinePath"/yum/log
-	mkdir -m 0755 -p "$cacheMachinePath"/yum/persist
-	
-	cacheMachineMinimalAppliancePath="$cacheMachinePath"/minimal-appliance
-	mkdir -m 0755 -p "$cacheMachineMinimalAppliancePath"
-	
-	cacheMachineBuiltAppliancePath="$cacheMachinePath"/built-appliance
-	mkdir -m 0755 -p "$cacheMachineBuiltAppliancePath"
-}
-
-function readMachineConfig()
-{
-	machinePackageNames=()
-	local packageName
-	while IFS= read -r packageName
-	do
-		machinePackageNames+=("$packageName")
-	done < <(cat "$configMachinePackagesPath")
-}
-
-function fillInMachineYumConfTemplate()
-{
-	temporaryFileToRemoveOnExit
-	configMachineYumConfigFile="$TMP_FILE"
-	configMachinePath="$configMachinePath" cacheMachinePath="$cacheMachinePath" templateFile "$configMachineYumConfigTemplateFile" >"$configMachineYumConfigFile"
-}
-
-function prepareMachineMinimalAppliance()
-{
-	supermin${superminVerbosity} --prepare "${machinePackageNames[@]}" --packager-config "$configMachineYumConfigFile" -o "$cacheMachineMinimalAppliancePath"
-	
-	# Should include the init script as /init
-	temporaryFolderToRemoveOnExit
-	local initFolder="$TMP_FILE"
-	
-	# Copied, as might be a symlink
-	cp "$configMachinePath"/init "$initFolder"
-	pushd "$initFolder" 1>/dev/null 2>/dev/null
-		tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/init.tar.gz init
-	popd 1>/dev/null 2>/dev/null
-	rm "$initFolder"/init
-}
-
-function installDeviceNodes()
-{
-	temporaryFolderToRemoveOnExit
-	local installPath="$TMP_FILE"
-	
-	local devicePath
-	local deviceType
-	local deviceMode
-	local deviceMajor
-	local deviceMinor
-	local parentPath
-	local completePath
-	while IFS=' ' read -r devicePath deviceType deviceMode deviceMajor deviceMinor
-	do
-		parentPath="$(purebash_dirname "$devicePath")"
-		fakeroot mkdir -m 0755 -p "${installPath}$parentPath"
-		
-		completePath="${installPath}$devicePath"
-		if [ -e "$completePath" ]; then
-			informationMessage WARN "Deleting duplicate device $devicePath"
-			rm "$completePath"
-		fi
-		
-		if [ "$deviceType" = 'p' ]; then
-			if [ -n "$deviceMajor" ]; then
-				informationMessage FAIL "$configMachineDevicesPath contains a FIFO definition $devicePath with a device major"
-			fi
-			if [ -n "$deviceMinor" ]; then
-				informationMessage FAIL "$configMachineDevicesPath contains a FIFO definition $devicePath with a device major"
-			fi
-			
-			fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType"
-		else
-			fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType" "$deviceMajor" "$deviceMinor"
-		fi
-	done < <(cat "$configMachineDevicesPath")
-	
-	pushd "$installPath" 1>/dev/null 2>/dev/null
-		fakeroot tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/zzz-devices.tar.gz *
-	popd 1>/dev/null 2>/dev/null
-}
-
-function executeGeneratorScripts()
-{
-	generatedRootOverlaysPath="$configMachineRootOverlaysPath"/generated
-	mkdir -m 0755 -p "$generatedRootOverlaysPath"
-	
-	pushd "$configMachineGeneratorScriptletsPath" 1>/dev/null 2>/dev/null
-		local generatorScriptlet
-		for generatorScriptlet in *.generator-scriptlet
-		do
-			if [ -e "$generatorScriptlet" ]; then
-				source "$generatorScriptlet"
-			fi
-		done
-	popd 1>/dev/null 2>/dev/null
-}
-
-function installAdditionalRootFileSystem()
-{
-	local overlay
-	for overlay in "$configMachineRootOverlaysPath"/*
-	do
-		if [ ! -e "$overlay" ]; then
-			continue
-		fi
-		
-		pushd "$overlay" 1>/dev/null 2>/dev/null
-			local tarball="$cacheMachineMinimalAppliancePath"/zzz.root-overlay."$(purebash_basename "$overlay")".tar.gz
-			# if '*' expands to no files (* excludes .gitignore, etc, ie all files starting with a dot) then tar will fail, hence the || rm -f "$tarball"
-			fakeroot tar --create --gzip --file "$tarball" * 1>/dev/null 2>/dev/null || rm -f "$tarball"
-		popd 1>/dev/null 2>/dev/null
-	done
-}
-
-function buildMachineBuiltAppliance()
-{
-	cacheMachineLockFilePath="$cacheMachinePath"/supermin."$(id -u)".lock
-	touch "$cacheMachineLockFilePath"
-	
-	if [ "$optionChroot" = "yes" ]; then
-		applianceFormat="chroot"
-	else
-		applianceFormat="ext2"
-	fi
-	
-	supermin${superminVerbosity} --build \
-		--format "$applianceFormat" \
-		--copy-kernel \
-		--host-cpu "$(uname -m)" \
-		--if-newer \
-		--lock "$cacheMachineLockFilePath" \
-		-o "$cacheMachineBuiltAppliancePath" \
-		"$cacheMachineMinimalAppliancePath"
-}
-
-function informMachineBuilt()
-{
-	informationMessage INFO "Run with  qemu-kvm -m 512 -kernel $cacheMachineBuiltAppliancePath/kernel -initrd $cacheMachineBuiltAppliancePath/initrd -append 'vga=773 selinux=0' -drive file=$cacheMachineBuiltAppliancePath/root,format=raw,if=virtio"
-}
-
-function buildMachines()
-{
-	local machine
-	local configMachinePath
-	local configMachinePackagesPath
-	local configMachineInitPath
-	local configMachineDevicesPath
-	local configMachineRootFixedPath
-	local cacheMachinePath
-	local cacheMachineMinimalAppliancePath
-	local cacheMachineBuiltAppliancePath
-	declare -a machinePackageNames=()
-	for machine in "${machines[@]}"
-	do
-		prepareMachinePaths
-		readMachineConfig
-		fillInMachineYumConfTemplate
-		prepareMachineMinimalAppliance
-		executeGeneratorScripts
-		installDeviceNodes
-		installAdditionalRootFileSystem
-		buildMachineBuiltAppliance
-		informMachineBuilt
 	done
 }
 
@@ -649,15 +254,14 @@ function main()
 	setDebugging
 	findOurNameAndPath
 	parseCommandLine "$@"
-	ensureWeAreRunningBash4
-	initialiseTraps
-	setPaths
-	determineDistribution
-	verifyHostSystemRequirementsUsingDependencyChecks
+	validateCommandLineArguments
 	
-	determineKnownMachines
-	cleanUpCache
-	buildMachines
+	sourceFunctions
+	
+	initialiseTraps
+	installDependencies
+	
+	buildMachineGroups
 }
 
 main "$@"

@@ -1,0 +1,269 @@
+declare -a machines=()
+declare -a machineFunctions=()
+
+function prepareMachinePaths()
+{
+	configMachinePath="$machinesPath"/"$machine"
+	if [ ! -d "$configMachinePath" ]; then
+		informationMessage FAIL "Machine $machine missing machine config path $configMachinePath"
+		exit 1
+	fi
+	
+	configMachinePackagesPath="$configMachinePath"/packages
+	if [ ! -f "$configMachinePackagesPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine packages file $configMachinePackagesPath"
+		exit 1
+	fi
+	
+	configMachineInitPath="$configMachinePath"/init
+	if [ ! -x "$configMachineInitPath" ]; then
+		informationMessage FAIL "Machine $machine missing (or not executable 0755) machine init file $configMachinePackagesPath"
+		exit 1
+	fi
+	
+	configMachineDevicesPath="$configMachinePath"/devices
+	if [ ! -f "$configMachineDevicesPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine devices file $configMachineDevicesPath"
+		exit 1
+	fi
+	
+	configMachineGeneratorScriptletsPath="$configMachinePath"/generator-scriptlets
+	if [ ! -d "$configMachineGeneratorScriptletsPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine generator-scriptlets folder $configMachineGeneratorScriptletsPath"
+		exit 1
+	fi
+	
+	configMachineRootOverlaysPath="$configMachinePath"/root-overlays
+	if [ ! -d "$configMachineRootOverlaysPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine root-overlays folder $configMachineRootOverlaysPath"
+		exit 1
+	fi
+
+	configMachineYumConfigTemplateFile="$configMachinePath"/yum/yum.conf.template
+	if [ ! -f "$configMachineYumConfigTemplateFile" ]; then
+		informationMessage FAIL "Machine $machine missing machine yum.conf.template file $configMachineYumConfigTemplateFile"
+		exit 1
+	fi
+	if [ ! -d "$configMachinePath"/yum/plugins ]; then
+		informationMessage FAIL "Machine $machine missing machine folder $configMachineYumConfigTemplateFile/plugins"
+		exit 1
+	fi
+	if [ ! -d "$configMachinePath"/yum/repositories ]; then
+		informationMessage FAIL "Machine $machine missing machine folder $configMachineYumConfigTemplateFile/repositories"
+		exit 1
+	fi
+	
+	cacheMachinePath="$cacheMachineGroupPath"/"$machine"
+	mkdir -m 0755 -p "$cacheMachinePath"
+	mkdir -m 0755 -p "$cacheMachinePath"/yum
+	mkdir -m 0755 -p "$cacheMachinePath"/yum/cache
+	touch "$cacheMachinePath"/yum/log
+	chmod 0755 "$cacheMachinePath"/yum/log
+	mkdir -m 0755 -p "$cacheMachinePath"/yum/persist
+	
+	cacheMachineMinimalAppliancePath="$cacheMachinePath"/minimal-appliance
+	mkdir -m 0755 -p "$cacheMachineMinimalAppliancePath"
+	
+	cacheMachineBuiltAppliancePath="$cacheMachinePath"/built-appliance
+	mkdir -m 0755 -p "$cacheMachineBuiltAppliancePath"
+	
+	cacheMachineRpmInstallRootPath="$cacheMachinePath"/root
+	rm -rf "$cacheMachineRpmInstallRootPath"
+	mkdir -m 0755 -p "$cacheMachineRpmInstallRootPath"
+}
+machineFunctions+=(prepareMachinePaths)
+
+function cleanUpMachinesCache()
+{
+	pushd "$cachePath" 1>/dev/null 2>/dev/null
+		local cachedMachine
+		for cachedMachine in *
+		do
+			if [ ! -d "$cachedMachine" ]; then
+				continue
+			fi
+			local -i found=0
+			local knownMachine
+			for knownMachine in "${knownMachines[@]}"
+			do
+				if [ "$knownMachine" = "$cachedMachine" ]; then
+					found=1
+					break
+				fi
+			done
+			if [ $found -eq 0 ]; then
+				rm -rf "$cachedMachine"
+			fi
+		done
+	popd 1>/dev/null 2>/dev/null
+}
+machineFunctions+=(cleanUpMachinesCache)
+
+declare -a machinePackageNames=()
+function readMachineConfig()
+{
+	machinePackageNames=()
+	local packageName
+	while IFS= read -r packageName
+	do
+		machinePackageNames+=("$packageName")
+	done < <(cat "$configMachinePackagesPath")
+}
+machineFunctions+=(readMachineConfig)
+
+function fillInMachineYumConfTemplate()
+{
+	temporaryFileToRemoveOnExit
+	configMachineYumConfigFile="$TMP_FILE"
+	configMachinePath="$configMachinePath" cacheMachinePath="$cacheMachinePath" templateFile "$configMachineYumConfigTemplateFile" >"$configMachineYumConfigFile"
+}
+machineFunctions+=(fillInMachineYumConfTemplate)
+
+function yumDownloaderWrapper()
+{
+	if [ "$optionVerbose" = no ]; then
+		local yumdownloaderVerbosity=" --quiet"
+	else	
+		local yumdownloaderVerbosity=""
+	fi
+	yumdownloader${yumdownloaderVerbosity} -c "$configMachineYumConfigFile" --resolve --archlist=x86_64,i686 --destdir "$cacheMachinePath"/yum/cache "${machinePackageNames[@]}"
+	
+	if [ "$optionVerbose" = yes ]; then
+		local yumVerbosity=" -v"
+	else	
+		local yumVerbosity=""
+	fi
+	
+	temporaryFileToRemoveOnExit
+	configMachineYumConfigFile="$TMP_FILE"
+	yum${yumVerbosity} --config="$configMachineYumConfigFile" --color=never --assumeyes --cacheonly --installroot="$cacheMachineRpmInstallRootPath"
+}
+machineFunctions+=(yumDownloaderWrapper)
+
+function prepareMachineMinimalAppliance()
+{
+	supermin${superminVerbosity} --prepare "${machinePackageNames[@]}" --packager-config "$configMachineYumConfigFile" -o "$cacheMachineMinimalAppliancePath"
+	
+	# Should include the init script as /init
+	temporaryFolderToRemoveOnExit
+	local initFolder="$TMP_FILE"
+	
+	# Copied, as might be a symlink
+	cp "$configMachinePath"/init "$initFolder"
+	pushd "$initFolder" 1>/dev/null 2>/dev/null
+		tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/init.tar.gz init
+	popd 1>/dev/null 2>/dev/null
+	rm "$initFolder"/init
+}
+machineFunctions+=(prepareMachineMinimalAppliance)
+
+function executeGeneratorScriptlets()
+{
+	generatedRootOverlaysPath="$configMachineRootOverlaysPath"/generated
+	mkdir -m 0755 -p "$generatedRootOverlaysPath"
+	
+	pushd "$configMachineGeneratorScriptletsPath" 1>/dev/null 2>/dev/null
+		local generatorScriptlet
+		for generatorScriptlet in *.generator-scriptlet
+		do
+			if [ -e "$generatorScriptlet" ]; then
+				informationMessage INFO "Executing generator-scriptlet $generatorScriptlet"
+				source "$generatorScriptlet"
+			fi
+		done
+	popd 1>/dev/null 2>/dev/null
+}
+machineFunctions+=(executeGeneratorScriptlets)
+
+function installDeviceNodes()
+{
+	temporaryFolderToRemoveOnExit
+	local installPath="$TMP_FILE"
+	
+	local devicePath
+	local deviceType
+	local deviceMode
+	local deviceMajor
+	local deviceMinor
+	local parentPath
+	local completePath
+	while IFS=' ' read -r devicePath deviceType deviceMode deviceMajor deviceMinor
+	do
+		parentPath="$(purebash_dirname "$devicePath")"
+		fakeroot mkdir -m 0755 -p "${installPath}$parentPath"
+		
+		completePath="${installPath}$devicePath"
+		if [ -e "$completePath" ]; then
+			informationMessage WARN "Deleting duplicate device $devicePath"
+			rm "$completePath"
+		fi
+		
+		if [ "$deviceType" = 'p' ]; then
+			if [ -n "$deviceMajor" ]; then
+				informationMessage FAIL "$configMachineDevicesPath contains a FIFO definition $devicePath with a device major"
+			fi
+			if [ -n "$deviceMinor" ]; then
+				informationMessage FAIL "$configMachineDevicesPath contains a FIFO definition $devicePath with a device major"
+			fi
+			
+			fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType"
+		else
+			fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType" "$deviceMajor" "$deviceMinor"
+		fi
+	done < <(cat "$configMachineDevicesPath")
+	
+	pushd "$installPath" 1>/dev/null 2>/dev/null
+		fakeroot tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/zzz-devices.tar.gz *
+	popd 1>/dev/null 2>/dev/null
+}
+machineFunctions+=(installDeviceNodes)
+
+function installAdditionalRootFileSystem()
+{
+	local overlay
+	for overlay in "$configMachineRootOverlaysPath"/*
+	do
+		if [ ! -e "$overlay" ]; then
+			continue
+		fi
+		
+		pushd "$overlay" 1>/dev/null 2>/dev/null
+			local tarball="$cacheMachineMinimalAppliancePath"/zzz.root-overlay."$(purebash_basename "$overlay")".tar.gz
+			# if '*' expands to no files (* excludes .gitignore, etc, ie all files starting with a dot) then tar will fail, hence the || rm -f "$tarball"
+			fakeroot tar --create --gzip --file "$tarball" * 1>/dev/null 2>/dev/null || rm -f "$tarball"
+		popd 1>/dev/null 2>/dev/null
+	done
+}
+machineFunctions+=(installAdditionalRootFileSystem)
+
+function buildMachineBuiltAppliance()
+{
+	cacheMachineLockFilePath="$cacheMachinePath"/supermin."$(id -u)".lock
+	touch "$cacheMachineLockFilePath"
+	
+	if [ "$optionChroot" = "yes" ]; then
+		applianceFormat="chroot"
+	else
+		applianceFormat="ext2"
+	fi
+	
+	supermin${superminVerbosity} --build \
+		--format "$applianceFormat" \
+		--copy-kernel \
+		--host-cpu "$(uname -m)" \
+		--if-newer \
+		--lock "$cacheMachineLockFilePath" \
+		-o "$cacheMachineBuiltAppliancePath" \
+		"$cacheMachineMinimalAppliancePath"
+}
+machineFunctions+=(buildMachineBuiltAppliance)
+
+function informMachineBuilt()
+{
+	if [ "$optionChroot" = "no" ]; then
+		informationMessage INFO "Run with  qemu-kvm -m 512 -kernel $cacheMachineBuiltAppliancePath/kernel -initrd $cacheMachineBuiltAppliancePath/initrd -append 'vga=773 selinux=0' -drive file=$cacheMachineBuiltAppliancePath/root,format=raw,if=virtio"
+		informationMessage INFO "Inspect the generated ext2 filesystem with  sudo mount -o loop -t ext2 $cacheMachineBuiltAppliancePath/root /mnt/root  (unmount it with  sudo umount /mnt/root)"
+	fi
+}
++=(informMachineBuilt)
+

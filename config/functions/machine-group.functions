@@ -1,0 +1,81 @@
+declare -a machineGroups=()
+declare -a machineGroupFunctions=()
+
+function prepareMachineGroupPaths()
+{
+	configMachineGroupPath="$machineGroupsPath"/"$machineGroup"
+	if [ ! -d "$configMachineGroupPath" ]; then
+		informationMessage FAIL "Machine-group $machineGroup missing machine-group config path $configMachineGroupPath"
+		exit 1
+	fi
+	
+	cacheMachineGroupPath="$cachePath"/"$machineGroup"
+	mkdir -m 0755 -p "$cacheMachineGroupPath"
+	
+	machinesPath="$configMachineGroupPath"/machines
+	if [ ! -d "$machinesPath" ]; then
+		informationMessage FAIL "Missing machine-group machines path $machinesPath"
+		exit 1
+	fi
+}
+machineGroupFunctions+=(prepareMachineGroupPaths)
+
+declare -a knownMachines=()
+function determineKnownMachines()
+{
+	knownMachines=()
+	pushd "$machinesPath" 1>/dev/null 2>/dev/null
+		local knownMachine
+		for knownMachine in *
+		do
+			if [ ! -e "$knownMachine" ]; then
+				continue
+			fi
+			knownMachines+=("$knownMachine")
+		done
+	popd 1>/dev/null 2>/dev/null
+}
+machineGroupFunctions+=(determineKnownMachines)
+
+function configureSuperminVerbosity()
+{
+	if [ "$optionVerbose" = yes ]; then
+		readonly superminVerbosity=" -v"
+	else
+		readonly superminVerbosity=""
+	fi
+}
+machineGroupFunctions+=(configureSuperminVerbosity)
+
+function buildMachines()
+{
+	local machine
+	local machineFunction
+	for machine in "${machines[@]}"
+	do
+		for machineFunction in "${machineFunctions[@]}"
+		do
+			$machineFunction
+		done
+	done
+}
+machineGroupFunctions+=(buildMachines)
+
+function buildMachineGroups()
+{
+	readonly machineGroupsPath="$configPath"/machine-groups
+	mkdir -m 0755 -p "$machineGroupsPath"
+	
+	local machineGroup
+	local machineGroupFunction
+	for machineGroup in "${machineGroups[@]}"
+	do
+		for machineGroupFunction in "${machineGroupFunctions[@]}"
+		do
+			echo "execute generator scriptlets for machine-group!!!!!!"
+			exit 50
+			
+			$machineGroupFunction
+		done
+	done
+}
