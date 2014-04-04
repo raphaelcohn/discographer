@@ -192,8 +192,21 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 
 # TODO
 
-* Support `SUPERMIN_KERNEL`, and `SUPERMIN_MODULES` environment variables.
+* chroot yum install
+* capture fs-type, disk size, block size, label, UUID per disk
+* multiple disks
+* overlays for more than root disks - one for each disk
+* creation of mounting config
+* chattr silent compression
+* chattr a+i
+* suid / guid applied only by exception
+* non-root users / fakeroot and perms that are not 0755
+* move the devices file into a per-disk overlay concept
+* more intelligent RPM caching?
 * Specify DNS domain
-* Do not copy host files
-* Patch lines 551-554 to be more verbose about file copying: https://github.com/libguestfs/supermin/blob/master/src/ext2fs-c.c
-* supermin ONLY does yumdownloader & rpm2cpio!!!
+* other users / groups
+* kernel creation
+* initrd creation
+* swap, grub, LVM, RAID?
+* RESIZE ext4 disk image, so we can shrink to minimum
+* /var/log, etc on a separate disk
