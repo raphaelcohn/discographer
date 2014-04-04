@@ -1,5 +1,5 @@
-declare -a machines=()
-declare -a machineFunctions=()
+machines=()
+machineFunctions=()
 
 function verifyMachineNameIsValidDnsLabel()
 {
@@ -147,7 +147,7 @@ function cleanUpMachinesCache()
 }
 machineFunctions+=(cleanUpMachinesCache)
 
-declare -a machinePackageNames=()
+machinePackageNames=()
 function readMachineConfig()
 {
 	machinePackageNames=()
@@ -352,5 +352,5 @@ function informMachineBuilt()
 		informationMessage INFO "Inspect the generated ext2 filesystem with  sudo mount -o loop -t ext2 $cacheMachineBuiltAppliancePath/root /mnt/root  (unmount it with  sudo umount /mnt/root)"
 	fi
 }
-+=(informMachineBuilt)
+machineFunctions+=(informMachineBuilt)
 

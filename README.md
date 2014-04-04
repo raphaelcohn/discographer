@@ -129,6 +129,7 @@ When executing a machine-group generator-scriptlet, the following environment va
 * `${configMachineGroupPath}` - where to find any additional configuration
 * `${cacheMachineGroupPath}`
 * `${configMachineGroupDevicesPath}` - file or symlink to devices to install
+* `${configMachineGeneratorScriptletsPath}` - generator scriptlets for machine group
 * `${configMachineGroupRootOverlaysPath}` - where to find all root overlays
 * `${generatedMachineGroupRootOverlaysPath}` - where to put any generated files and folders for all machines
 
@@ -138,7 +139,7 @@ When executing a machine, in addition to the above, the following environment va
 * `${configMachinePackagesPath}` - file containing packages to install
 * `${configMachineInitPath}` - file or symlink to init script to install
 * `${configMachineDevicesPath}` - file or symlink to devices to install
-* `${configMachineGeneratorScriptletsPath}` - parent folder
+* `${configMachineGeneratorScriptletsPath}` - generator scriptlets for machine
 * `${configMachineRootOverlaysPath}` - where to find all root overlays for machine
 * `${generatedMachineRootOverlaysPath}` - where to put any generated files and folders for machine
 * `${configMachineYumConfigTemplateFile}`

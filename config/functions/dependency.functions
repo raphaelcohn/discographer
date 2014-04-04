@@ -1,4 +1,4 @@
-declare -a dependencyFunctions=()
+dependencyFunctions=()
 
 function ensureWeAreRunningBash4()
 {
@@ -30,7 +30,7 @@ dependencyFunctions+=(determineDistribution)
 
 function verifyHostSystemRequirementsUsingDependencyChecks()
 {
-	declare -a dependencies=()
+	dependencies=()
 	
 	readonly pathNames="$pathsPath"/"$pathName"
 	if [ ! -d "$pathNames" ]; then
@@ -44,7 +44,7 @@ function verifyHostSystemRequirementsUsingDependencyChecks()
 	fi
 	source "$pathNamesFunction"
 	
-	declare -a installPackages=()
+	installPackages=()
 	local packagePath
 	local packageName
 	local symlink

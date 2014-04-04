@@ -84,7 +84,7 @@ function exitError()
 function exitHelp()
 {
 	echo -n -E "Usage: ${ourName} -h
-Usage: ${ourName} [-v] [-c configPath] [-s cachePath] [-f functionsPath] [-p pathsPath] [-o option] -- machines...
+Usage: ${ourName} [-v] [-c configPath] [-s cachePath] [-f functionsPath] [-p pathsPath] [-o option] -- machine-groups...
 
 Argument-less Switches
     -h  show this help
@@ -240,13 +240,15 @@ function validateCommandLineArguments()
 
 function sourceFunctions()
 {
-	local functionFile
-	for functionFile in *.functions
-	do
-		if [ -f "$functionFile" ]; then
-			source "$functionFile"
-		fi
-	done
+	pushd "$functionsPath" 1>/dev/null 2>/dev/null
+		local functionFile
+		for functionFile in *.functions
+		do
+			if [ -f "$functionFile" ]; then
+				source "$functionFile"
+			fi
+		done
+	popd 1>/dev/null 2>/dev/null
 }
 
 function main()
