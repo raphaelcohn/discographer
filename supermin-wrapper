@@ -121,14 +121,25 @@ to automatically install any missing dependencies. The PATH variable is reset to
 	exit $1
 }
 
-function parseCommandLine()
-{	
+function loadAnyConfiguration()
+{
 	configPath="${crudeOurPath}/config"
 	cachePath="$configPath"/cache
 	functionsPath="$configPath"/functions
 	pathsPath="$configPath"/paths
 	optionChroot="no"
 	optionVerbose="no"
+	
+	if [ -r /etc/"$ourName"/configuration ]; then
+		source /etc/"$ourName"/configuration
+	fi
+	if [ -r ~/."$ourName" ]; then
+		source ~/."$ourName"
+	fi
+}
+
+function parseCommandLine()
+{
 	
 	local OPTERR=1
 	local OPTIND=1
@@ -255,6 +266,7 @@ function main()
 {
 	setDebugging
 	findOurNameAndPath
+	loadAnyConfiguration
 	parseCommandLine "$@"
 	validateCommandLineArguments
 	

@@ -5,7 +5,6 @@ This program is intended to be friendly to a Continuous Integration / Delivery b
 A wrapper around supermin that creates virtual machine images (disk images) based on a set of repositories. Machine settings are captured in source control and are defined using a mixture of RPM repositories, packages to install, local files to install and programs to generate files to install.
 
 
-
 ## Syntax Notes
 
 The syntax `${variable}` is used in this document to refer to variables. These refer to the values set when calling supermin-wrapper:-
@@ -22,6 +21,11 @@ The `${cachePath}` should contain a .gitignore file with the value `*` in it, so
 The variable `${machine}` is used to refer to a machine. The value is the machine's hostname (DNS label) without domain. We don't currently validate that it is DNS-valid.
 
 The variable `${machineGroup}` is used to refer to a group of machines. This need not be a DNS label.
+
+
+### Configuration
+If a file `/etc/supermin-wrapper/configuration` exists, then this is loaded by sourcing - the path variables listed above are replaced and need not be specified on the command line. If the file `~/.supermin-wrapper` exists, then this is sourced after any file `/etc/supermin-wrapper/configuration`.
+
 
 ## Machine templates
 

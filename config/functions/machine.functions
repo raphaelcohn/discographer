@@ -167,6 +167,32 @@ function fillInMachineYumConfTemplate()
 }
 machineFunctions+=(fillInMachineYumConfTemplate)
 
+function createEmptyDiskImage()
+{
+	cacheMachineFilesystemImageFilePath="$cacheMachineBuiltAppliancePath"/root.disk.ext4
+	
+	truncate -s 256M "$cacheMachineFilesystemImageFilePath"
+	local -ir blockSize=4096
+	local -r volumeLabel16Bytes="root"
+	# Produced using uuidgen something we might want to store on a per machine basis for virtual machines...
+	local -r uuid="48c2b730-62a5-4b06-99be-85c0ea4d53dd"
+	mkfs.ext4 -F -q -b $blockSize -L "$volumeLabel16Bytes" -U "$uuid" -O uninit_bg,extent,has_journal,resize_inode,sparse_super "$cacheMachineFilesystemImageFilePath"
+}
+machineFunctions+=(createEmptyDiskImage)
+
+function mountEmptyDiskImage()
+{
+	cacheMachineFilesystemImageMountPath="$cacheMachineBuiltAppliancePath"/root.disk.ext4.mounted
+	
+	unmountEmptyDiskImage
+	
+	rm -rf "$cacheMachineFilesystemImageMountPath"
+	mkdir -m 0755 -p "$cacheMachineFilesystemImageMountPath"
+	
+	mount -o loop -t ext4 "$cacheMachineFilesystemImageFilePath" "$cacheMachineFilesystemImageMountPath"
+}
+machineFunctions+=(mountEmptyDiskImage)
+
 function yumDownloaderWrapper()
 {
 	if [ "$optionVerbose" = no ]; then
@@ -174,7 +200,7 @@ function yumDownloaderWrapper()
 	else	
 		local yumdownloaderVerbosity=""
 	fi
-	yumdownloader${yumdownloaderVerbosity} -c "$configMachineYumConfigFile" --resolve --archlist=x86_64,i686 --destdir "$cacheMachinePath"/yum/cache "${machinePackageNames[@]}"
+	yumdownloader${yumdownloaderVerbosity} -c "$configMachineYumConfigFile" --resolve --archlist=x86_64,i686 --destdir "$cacheMachinePath"/yum/cache2 "${machinePackageNames[@]}"
 	
 	if [ "$optionVerbose" = yes ]; then
 		local yumVerbosity=" -v"
@@ -185,19 +211,59 @@ function yumDownloaderWrapper()
 	autoMachineRootOverlaysPath="$configMachineRootOverlaysPath"/auto
 	mkdir -m 0755 -p "$autoMachineRootOverlaysPath"
 	
+	function installRpmDatrabase()
+	{
+		mkdir -m 0755 -p "$cacheMachineFilesystemImageMountPath"/var/lib/rpm
+		rpm --rebuilddb --root="$cacheMachineFilesystemImageMountPath"
+	}
+	installRpmDatrabase
+	
+	function installCentosRelease()
+	{
+		
+	}
+	
 	#yum${yumVerbosity} --config="$configMachineYumConfigFile" --color=never --assumeyes --cacheonly --installroot="$cacheMachineRpmInstallRootPath"
 	
-	pushd "$cacheMachinePath"/yum/cache 1>/dev/null 2>/dev/null
+	pushd "$cacheMachinePath"/yum/cache2 1>/dev/null 2>/dev/null
 		
 		local rpmFile
 		for rpmFile in *.rpm
 		do
-			rpm2cpio "$rpmFile" | (cd "$autoMachineRootOverlaysPath" && cpio --quiet -id)
+			rpm2cpio "$rpmFile" | (cd "$cacheMachineFilesystemImageMountPath" && cpio --quiet -id)
 		done
 		
 	popd 1>/dev/null 2>/dev/null
+	
+	echo "http://geek.co.il/2010/03/14/how-to-build-a-chroot-jail-environment-for-centos"
+	
+	cat >/dev/null <<-EOF
+	
+	centos-release rpm
+	Provides
+	    centos-release
+	    config(centos-release)
+	    redhat-release
+	    system-release
+	    centos-release(x86-32) 
+
+	Requires
+	    config(centos-release)
+	    rpmlib(CompressedFileNames) < 3.0.4-1
+	    rpmlib(FileDigests) = 4.6.0-1
+	    rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+	    rpmlib(PayloadIsXz) <= 5.2-1
+	
+	EOF
+	
+	
+	
+	echo "FIXME"
+	
+	unmountEmptyDiskImage
+	exit 50
 }
-#machineFunctions+=(yumDownloaderWrapper)
+machineFunctions+=(yumDownloaderWrapper)
 
 function prepareMachineMinimalAppliance()
 {
@@ -344,6 +410,14 @@ function buildMachineBuiltAppliance()
 		"$cacheMachineMinimalAppliancePath"
 }
 machineFunctions+=(buildMachineBuiltAppliance)
+
+function unmountEmptyDiskImage()
+{
+	if [ -e "$cacheMachineFilesystemImageMountPath" ]; then
+		umount "$cacheMachineFilesystemImageMountPath" || true
+	fi
+}
+machineFunctions+=(unmountEmptyDiskImage)
 
 function informMachineBuilt()
 {
