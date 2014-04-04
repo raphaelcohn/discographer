@@ -178,7 +178,7 @@ function createEmptyDiskImage()
 	local -r uuid="48c2b730-62a5-4b06-99be-85c0ea4d53dd"
 	mkfs.ext4 -F -q -b $blockSize -L "$volumeLabel16Bytes" -U "$uuid" -O uninit_bg,extent,has_journal,resize_inode,sparse_super "$cacheMachineFilesystemImageFilePath"
 }
-machineFunctions+=(createEmptyDiskImage)
+#machineFunctions+=(createEmptyDiskImage)
 
 function mountEmptyDiskImage()
 {
@@ -191,7 +191,7 @@ function mountEmptyDiskImage()
 	
 	mount -o loop -t ext4 "$cacheMachineFilesystemImageFilePath" "$cacheMachineFilesystemImageMountPath"
 }
-machineFunctions+=(mountEmptyDiskImage)
+#machineFunctions+=(mountEmptyDiskImage)
 
 function yumDownloaderWrapper()
 {
@@ -218,11 +218,6 @@ function yumDownloaderWrapper()
 	}
 	installRpmDatrabase
 	
-	function installCentosRelease()
-	{
-		
-	}
-	
 	#yum${yumVerbosity} --config="$configMachineYumConfigFile" --color=never --assumeyes --cacheonly --installroot="$cacheMachineRpmInstallRootPath"
 	
 	pushd "$cacheMachinePath"/yum/cache2 1>/dev/null 2>/dev/null
@@ -234,36 +229,12 @@ function yumDownloaderWrapper()
 		done
 		
 	popd 1>/dev/null 2>/dev/null
-	
 	echo "http://geek.co.il/2010/03/14/how-to-build-a-chroot-jail-environment-for-centos"
-	
-	cat >/dev/null <<-EOF
-	
-	centos-release rpm
-	Provides
-	    centos-release
-	    config(centos-release)
-	    redhat-release
-	    system-release
-	    centos-release(x86-32) 
-
-	Requires
-	    config(centos-release)
-	    rpmlib(CompressedFileNames) < 3.0.4-1
-	    rpmlib(FileDigests) = 4.6.0-1
-	    rpmlib(PayloadFilesHavePrefix) <= 4.0-1
-	    rpmlib(PayloadIsXz) <= 5.2-1
-	
-	EOF
-	
-	
-	
 	echo "FIXME"
 	
 	unmountEmptyDiskImage
-	exit 50
 }
-machineFunctions+=(yumDownloaderWrapper)
+#machineFunctions+=(yumDownloaderWrapper)
 
 function prepareMachineMinimalAppliance()
 {
@@ -417,7 +388,7 @@ function unmountEmptyDiskImage()
 		umount "$cacheMachineFilesystemImageMountPath" || true
 	fi
 }
-machineFunctions+=(unmountEmptyDiskImage)
+#machineFunctions+=(unmountEmptyDiskImage)
 
 function informMachineBuilt()
 {
