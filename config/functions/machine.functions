@@ -63,61 +63,47 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
-	configMachineInitPath="$configMachinePath"/init
-	if [ ! -x "$configMachineInitPath" ]; then
-		informationMessage FAIL "Machine $machine missing (or not executable 0755) machine init file $configMachinePackagesPath"
+	configMachineDisksPath="$configMachinePath"/disks
+	if [ ! -d "$configMachineDisksPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine disks folder $configMachineDisksPath"
 		exit 1
 	fi
 	
-	configMachineDevicesPath="$configMachinePath"/devices
-	if [ ! -f "$configMachineDevicesPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine devices file $configMachineDevicesPath"
+	configMachineGeneratorsPath="$configMachinePath"/generators
+	if [ ! -d "$configMachineGeneratorsPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine generators folder $configMachineGeneratorsPath"
 		exit 1
 	fi
 	
-	configMachineGeneratorScriptletsPath="$configMachinePath"/generator-scriptlets
-	if [ ! -d "$configMachineGeneratorScriptletsPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine generator-scriptlets folder $configMachineGeneratorScriptletsPath"
+	configMachineUnderlaysPath="$configMachinePath"/underlays
+	if [ ! -d "$configMachineUnderlaysPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine underlays folder $configMachineUnderlaysPath"
 		exit 1
 	fi
 	
-	configMachineRootOverlaysPath="$configMachinePath"/root-overlays
-	if [ ! -d "$configMachineRootOverlaysPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine root-overlays folder $configMachineRootOverlaysPath"
+	configMachineOverlaysPath="$configMachinePath"/overlays
+	if [ ! -d "$configMachineOverlaysPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine overlays folder $configMachineOverlaysPath"
 		exit 1
 	fi
-
-	configMachineYumConfigTemplateFile="$configMachinePath"/yum/yum.conf.template
-	if [ ! -f "$configMachineYumConfigTemplateFile" ]; then
-		informationMessage FAIL "Machine $machine missing machine yum.conf.template file $configMachineYumConfigTemplateFile"
-		exit 1
-	fi
-	if [ ! -d "$configMachinePath"/yum/plugins ]; then
-		informationMessage FAIL "Machine $machine missing machine folder $configMachineYumConfigTemplateFile/plugins"
-		exit 1
-	fi
-	if [ ! -d "$configMachinePath"/yum/repositories ]; then
-		informationMessage FAIL "Machine $machine missing machine folder $configMachineYumConfigTemplateFile/repositories"
+	
+	if [ ! -d "$configMachinePath"/repositories ]; then
+		informationMessage FAIL "Machine $machine missing machine folder $configMachinePath/repositories"
 		exit 1
 	fi
 	
 	cacheMachinePath="$cacheMachineGroupPath"/"$machine"
 	mkdir -m 0755 -p "$cacheMachinePath"
-	mkdir -m 0755 -p "$cacheMachinePath"/yum
-	mkdir -m 0755 -p "$cacheMachinePath"/yum/cache
-	touch "$cacheMachinePath"/yum/log
-	chmod 0755 "$cacheMachinePath"/yum/log
-	mkdir -m 0755 -p "$cacheMachinePath"/yum/persist
 	
-	cacheMachineMinimalAppliancePath="$cacheMachinePath"/minimal-appliance
-	mkdir -m 0755 -p "$cacheMachineMinimalAppliancePath"
+	cacheMachineOverlaysGeneratedPath="$cacheMachinePath"/overlays
+	rm -rf "$cacheMachineOverlaysGeneratedPath"
+	mkdir -m 0755 -p "$cacheMachineOverlaysGeneratedPath"
 	
-	cacheMachineBuiltAppliancePath="$cacheMachinePath"/built-appliance
-	mkdir -m 0755 -p "$cacheMachineBuiltAppliancePath"
+	cacheMachineDisksPath="$cacheMachinePath"/disks
+	mkdir -m 0755 -p "$cacheMachineDisksPath"
 	
-	cacheMachineRpmInstallRootPath="$cacheMachinePath"/root
-	rm -rf "$cacheMachineRpmInstallRootPath"
-	mkdir -m 0755 -p "$cacheMachineRpmInstallRootPath"
+	cacheMachineDisksMountsPath="$cacheMachinePath"/disks-mountpoint
+	mkdir -m 0755 -p "$cacheMachineDisksMountsPath"
 }
 machineFunctions+=(prepareMachinePaths)
 
@@ -148,7 +134,7 @@ function cleanUpMachinesCache()
 machineFunctions+=(cleanUpMachinesCache)
 
 machinePackageNames=()
-function readMachineConfig()
+function readMachinePackages()
 {
 	machinePackageNames=()
 	local packageName
@@ -156,246 +142,181 @@ function readMachineConfig()
 	do
 		machinePackageNames+=("$packageName")
 	done < <(cat "$configMachinePackagesPath")
+	
 }
-machineFunctions+=(readMachineConfig)
+machineFunctions+=(readMachinePackages)
+
+machineDisks=()
+function readMachineDiskNames()
+{
+	local -i rootDiskExists=0
+	pushd "$configMachineDisksPath" 1>/dev/null 2>/dev/null
+		
+		local diskFile
+		local disk
+		for diskFile in *.disk
+		do
+			if [ ! -f "$diskFile" ]; then
+				continue
+			fi
+			if [ "$diskFile" = "root.disk" ]; then
+				rootDiskExists=1
+			fi
+			disk="${diskFile%%.disk}"
+			machineDisks+=("$disk")
+		done
+
+	popd 1>/dev/null 2>/dev/null
+	if [ $rootDiskExists -eq 0 ]; then
+		informationMessage FAIL "Machine $machine does not have essential disk root"
+		exit 1
+	fi
+	
+	# Need to sort disk mounts by mount point
+}
+machineFunctions+=(readMachineDiskNames)
+
+function createDisks()
+{
+	local disk
+	for disk in "$machineDisks[@]"
+	do
+		local diskCreateFunctions
+		for diskCreateFunction in "$diskCreateFunctions[@]"
+		do
+			$diskCreateFunction
+		done
+	done
+}
+machineFunctions+=(createDisks)
+
+machineDiskMountPointsInDiskOrder=()
+function recordSortedDiskMountPoints()
+{
+	machineDiskMountPointsInDiskOrder=()
+	
+	local mountPoint
+	local disk
+	while IFS=' ' read -r mountPoint disk
+	do
+		machineDiskMountPointsInDiskOrder+=("$disk")
+	done < <(sortDiskMountPoints)
+}
+machineFunctions+=(recordSortedDiskMountPoints)
+
+function mountDisks()
+{
+	local disk
+	for disk in "$machineDiskMountPointsInDiskOrder[@]"
+	do
+		if mountPointIsSpecial; then
+			continue
+		fi
+		
+		local diskMountFuncton
+		for diskMountFuncton in "$diskMountFunctions[@]"
+		do
+			$diskMountFuncton
+		done
+	done
+}
+machineFunctions+=(mountDisks)
+
+function installUnderlays()
+{
+	installFilesystem "$configMachineGroupUnderlaysPath"
+	installFilesystem "$configMachineUnderlaysPath"
+}
+machineFunctions+=(installUnderlays)
 
 function fillInMachineYumConfTemplate()
 {
 	temporaryFileToRemoveOnExit
 	configMachineYumConfigFile="$TMP_FILE"
-	configMachinePath="$configMachinePath" cacheMachinePath="$cacheMachinePath" templateFile "$configMachineYumConfigTemplateFile" >"$configMachineYumConfigFile"
+	cacheYumPath="$cacheYumPath" configMachinePath="$configMachinePath" configYumPath="$configYumPath" templateFile "$configMachineYumConfigTemplateFile" >"$configMachineYumConfigFile"
 }
 machineFunctions+=(fillInMachineYumConfTemplate)
 
-function createEmptyDiskImage()
-{
-	cacheMachineFilesystemImageFilePath="$cacheMachineBuiltAppliancePath"/root.disk.ext4
-	
-	truncate -s 256M "$cacheMachineFilesystemImageFilePath"
-	local -ir blockSize=4096
-	local -r volumeLabel16Bytes="root"
-	# Produced using uuidgen something we might want to store on a per machine basis for virtual machines...
-	local -r uuid="48c2b730-62a5-4b06-99be-85c0ea4d53dd"
-	mkfs.ext4 -F -q -b $blockSize -L "$volumeLabel16Bytes" -U "$uuid" -O uninit_bg,extent,has_journal,resize_inode,sparse_super "$cacheMachineFilesystemImageFilePath"
-}
-#machineFunctions+=(createEmptyDiskImage)
-
-function mountEmptyDiskImage()
-{
-	cacheMachineFilesystemImageMountPath="$cacheMachineBuiltAppliancePath"/root.disk.ext4.mounted
-	
-	unmountEmptyDiskImage
-	
-	rm -rf "$cacheMachineFilesystemImageMountPath"
-	mkdir -m 0755 -p "$cacheMachineFilesystemImageMountPath"
-	
-	mount -o loop -t ext4 "$cacheMachineFilesystemImageFilePath" "$cacheMachineFilesystemImageMountPath"
-}
-#machineFunctions+=(mountEmptyDiskImage)
-
-function yumDownloaderWrapper()
+function yumWrapper()
 {
 	if [ "$optionVerbose" = no ]; then
-		local yumdownloaderVerbosity=" --quiet"
-	else	
-		local yumdownloaderVerbosity=""
-	fi
-	yumdownloader${yumdownloaderVerbosity} -c "$configMachineYumConfigFile" --resolve --archlist=x86_64,i686 --destdir "$cacheMachinePath"/yum/cache2 "${machinePackageNames[@]}"
-	
-	if [ "$optionVerbose" = yes ]; then
-		local yumVerbosity=" -v"
-	else	
-		local yumVerbosity=""
+		local -r yumVerbosity=" --quiet"
+	else
+		local -r yumVerbosity=""
 	fi
 	
-	autoMachineRootOverlaysPath="$configMachineRootOverlaysPath"/auto
-	mkdir -m 0755 -p "$autoMachineRootOverlaysPath"
-	
-	function installRpmDatrabase()
-	{
-		mkdir -m 0755 -p "$cacheMachineFilesystemImageMountPath"/var/lib/rpm
-		rpm --rebuilddb --root="$cacheMachineFilesystemImageMountPath"
-	}
-	installRpmDatrabase
-	
-	#yum${yumVerbosity} --config="$configMachineYumConfigFile" --color=never --assumeyes --cacheonly --installroot="$cacheMachineRpmInstallRootPath"
-	
-	pushd "$cacheMachinePath"/yum/cache2 1>/dev/null 2>/dev/null
-		
-		local rpmFile
-		for rpmFile in *.rpm
-		do
-			rpm2cpio "$rpmFile" | (cd "$cacheMachineFilesystemImageMountPath" && cpio --quiet -id)
-		done
-		
-	popd 1>/dev/null 2>/dev/null
-	echo "http://geek.co.il/2010/03/14/how-to-build-a-chroot-jail-environment-for-centos"
-	echo "FIXME"
-	
-	unmountEmptyDiskImage
+	yum${yumVerbosity} --quiet --assumeyes --config="$configMachineYumConfigFile" --cacheonly --color=never --installroot="$cacheMachineDisksMountsPath" "$@"
 }
-#machineFunctions+=(yumDownloaderWrapper)
 
-function prepareMachineMinimalAppliance()
+function installRpms()
 {
-	supermin${superminVerbosity} --prepare "${machinePackageNames[@]}" --packager-config "$configMachineYumConfigFile" -o "$cacheMachineMinimalAppliancePath"
+	# http://www.philchen.com/2009/02/14/how-to-create-an-amazon-elastic-compute-cloud-ec2-machine-image-ami
+	# http://geek.co.il/2010/03/14/how-to-build-a-chroot-jail-environment-for-centos
 	
-	# Should include the init script as /init
-	temporaryFolderToRemoveOnExit
-	local initFolder="$TMP_FILE"
+	# It is assumed that Core packages are controlled via machine group packages
+	#yumWrapper groupinstall Core
 	
-	# Copied, as might be a symlink
-	cp "$configMachinePath"/init "$initFolder"
-	pushd "$initFolder" 1>/dev/null 2>/dev/null
-		tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/init.tar.gz init
-	popd 1>/dev/null 2>/dev/null
-	rm "$initFolder"/init
+	# Fix-up yum.conf and repositories in the disk image
+	# cacheYumPath="$cacheYumPath" configMachinePath="$configMachinePath" configYumPath="$configYumPath" templateFile "$configMachineYumConfigTemplateFile" >"$configMachineYumConfigFile"
+
+	# rpm -q --whatprovides /usr/sbin/chroot to find a file
+	
+	
+	
+	runInMounts yumWrapper install "${machineGroupPackageNames[@]}" "${machinePackageNames[@]}"
 }
-machineFunctions+=(prepareMachineMinimalAppliance)
+machineFunctions+=(installRpms)
 
-function sourceMachineGeneratorScriptlets()
+function cleanUpYum()
 {
-	generatedMachineRootOverlaysPath="$configMachineRootOverlaysPath"/generated
-	mkdir -m 0755 -p "$generatedMachineRootOverlaysPath"
-	
-	pushd "$configMachineGeneratorScriptletsPath" 1>/dev/null 2>/dev/null
-		local generatorScriptlet
-		for generatorScriptlet in *.generator-scriptlet
-		do
-			if [ -e "$generatorScriptlet" ]; then
-				informationMessage INFO "Executing generator-scriptlet $generatorScriptlet"
-				source "$generatorScriptlet"
-			fi
-		done
-	popd 1>/dev/null 2>/dev/null
+	yumWrapper clean all
 }
-machineFunctions+=(sourceMachineGeneratorScriptlets)
+machineFunctions+=(cleanUpYum)
 
-function installDeviceNodes()
+function sourceMachineGenerators()
 {
-	local -r namePrefix="$1"
-	local -r devicesFilePath="$2"
+	# Relies on cacheMachineOverlaysGeneratedPath
+	sourceGenerators "machine" "$configMachineGeneratorsPath"
+}
+machineFunctions+=(sourceMachineGenerators)
+
+function installOverlays()
+{
+	installFilesystem "$configMachineGroupOverlaysPath"
+	installFilesystem "$cacheMachineGroupOverlaysGeneratedPath"
+	installFilesystem "$configMachineOverlaysPath"
+	installFilesystem "$cacheMachineOverlaysGeneratedPath"
+}
+machineFunctions+=(installOverlays)
+
+machineDiskMountPointsInReverseDiskOrder=()
+function recordReverseSortedDiskMountPoints()
+{
+	machineDiskMountPointsInReverseDiskOrder=()
 	
-	temporaryFolderToRemoveOnExit
-	local installPath="$TMP_FILE"
-	
-	local devicePath
-	local deviceType
-	local deviceMode
-	local deviceMajor
-	local deviceMinor
-	local parentPath
-	local completePath
-	while IFS=' ' read -r devicePath deviceType deviceMode deviceMajor deviceMinor
+	local mountPoint
+	local disk
+	while IFS=' ' read -r mountPoint disk
 	do
-		parentPath="$(purebash_dirname "$devicePath")"
-		fakeroot mkdir -m 0755 -p "${installPath}$parentPath"
-		
-		completePath="${installPath}$devicePath"
-		if [ -e "$completePath" ]; then
-			informationMessage WARN "Deleting duplicate device $devicePath"
-			rm "$completePath"
-		fi
-		
-		if [ "$deviceType" = 'p' ]; then
-			if [ -n "$deviceMajor" ]; then
-				informationMessage FAIL "$configMachineDevicesPath contains a FIFO definition $devicePath with a device major"
-			fi
-			if [ -n "$deviceMinor" ]; then
-				informationMessage FAIL "$configMachineDevicesPath contains a FIFO definition $devicePath with a device major"
-			fi
-			
-			fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType"
-		else
-			fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType" "$deviceMajor" "$deviceMinor"
-		fi
-	done < <(cat "$devicesFilePath")
-	
-	pushd "$installPath" 1>/dev/null 2>/dev/null
-		fakeroot tar --create --gzip --file "$cacheMachineMinimalAppliancePath"/"$namePrefix"-devices.tar.gz *
-	popd 1>/dev/null 2>/dev/null
+		machineDiskMountPointsInReverseDiskOrder+=("$disk")
+	done < <(reverseSortDiskMountPoints)
 }
+machineFunctions+=(recordReverseSortedDiskMountPoints)
 
-function installMachineGroupDeviceNodes()
+function unmountDisks()
 {
-	installDeviceNodes "zza" "$configMachineGroupDevicesPath"
-}
-machineFunctions+=(installMachineGroupDeviceNodes)
-
-function installMachineDeviceNodes()
-{
-	installDeviceNodes "zzz" "$configMachineDevicesPath"
-}
-machineFunctions+=(installMachineDeviceNodes)
-
-function installRootOverlay()
-{
-	local -r namePrefix="$1"
-	local -r rootOverlaysPath="$2"
-	
-	local overlay
-	for overlay in "$rootOverlaysPath"/*
+	local disk
+	for disk in "$machineDiskMountPointsInReverseDiskOrder[@]"
 	do
-		if [ ! -e "$overlay" ]; then
+		if mountPointIsSpecial; then
 			continue
 		fi
 		
-		pushd "$overlay" 1>/dev/null 2>/dev/null
-			local tarball="$cacheMachineMinimalAppliancePath"/"$namePrefix".root-overlay."$(purebash_basename "$overlay")".tar.gz
-			# if '*' expands to no files (* excludes .gitignore, etc, ie all files starting with a dot) then tar will fail, hence the || rm -f "$tarball"
-			fakeroot tar --create --gzip --file "$tarball" * 1>/dev/null 2>/dev/null || rm -f "$tarball"
-		popd 1>/dev/null 2>/dev/null
+		local diskUnmountFuncton
+		for diskUnmountFuncton in "$diskUnmountFunctons[@]"
+		do
+			$diskUnmountFuncton
+		done
 	done
 }
-
-function installMachineGroupRootOverlay()
-{
-	installRootOverlay "zza" "$configMachineGroupRootOverlaysPath"
-}
-machineFunctions+=(installMachineGroupRootOverlay)
-
-function installMachineRootOverlay()
-{
-	installRootOverlay "zzz" "$configMachineRootOverlaysPath"
-}
-machineFunctions+=(installMachineRootOverlay)
-
-function buildMachineBuiltAppliance()
-{
-	cacheMachineLockFilePath="$cacheMachinePath"/supermin."$(id -u)".lock
-	touch "$cacheMachineLockFilePath"
-	
-	if [ "$optionChroot" = "yes" ]; then
-		applianceFormat="chroot"
-	else
-		applianceFormat="ext2"
-	fi
-	
-	supermin${superminVerbosity} --build \
-		--format "$applianceFormat" \
-		--copy-kernel \
-		--host-cpu "$(uname -m)" \
-		--if-newer \
-		--lock "$cacheMachineLockFilePath" \
-		-o "$cacheMachineBuiltAppliancePath" \
-		"$cacheMachineMinimalAppliancePath"
-}
-machineFunctions+=(buildMachineBuiltAppliance)
-
-function unmountEmptyDiskImage()
-{
-	if [ -e "$cacheMachineFilesystemImageMountPath" ]; then
-		umount "$cacheMachineFilesystemImageMountPath" || true
-	fi
-}
-#machineFunctions+=(unmountEmptyDiskImage)
-
-function informMachineBuilt()
-{
-	if [ "$optionChroot" = "no" ]; then
-		informationMessage INFO "Run with  qemu-kvm -m 512 -kernel $cacheMachineBuiltAppliancePath/kernel -initrd $cacheMachineBuiltAppliancePath/initrd -append 'vga=773 selinux=0' -drive file=$cacheMachineBuiltAppliancePath/root,format=raw,if=virtio"
-		informationMessage INFO "Inspect the generated ext2 filesystem with  sudo mount -o loop -t ext2 $cacheMachineBuiltAppliancePath/root /mnt/root  (unmount it with  sudo umount /mnt/root)"
-	fi
-}
-machineFunctions+=(informMachineBuilt)
-
+machineFunctions+=(unmountDisks)

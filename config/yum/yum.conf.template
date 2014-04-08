@@ -1,17 +1,13 @@
 [main]
-#cachedir=/var/cache/yum
-#persistdir=/var/lib/yum
-#logfile=/var/log/yum.log
-#reposdir=/etc/yum.repos.d
-#pluginpath=/usr/share/yum-plugins
-#pluginconfpath=/etc/yum/pluginconf.d
+cachedir=${cacheYumPath}/cache
+persistdir=${cacheYumPath}/persist
+logfile=${cacheYumPath}/log
+reposdir=${configMachinePath}/repositories
+pluginpath=${configYumPath}/plugins
+pluginconfpath=${configYumPath}/plugins
 
-cachedir=${cacheMachinePath}/yum/cache
-persistdir=${cacheMachinePath}/yum/persist
-logfile=${cacheMachinePath}/yum/log
-reposdir=${configMachinePath}/yum/repositories
-pluginpath=${configMachinePath}/yum/plugins
-pluginconfpath=${configMachinePath}/yum/plugins
+pkgpolicy=newest
+distroverpkg=centos-release
 
 keepcache=1
 debuglevel=2

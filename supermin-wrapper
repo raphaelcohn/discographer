@@ -39,21 +39,6 @@ function purebash_basename()
 	echo "${1##*/}"
 }
 
-# Original solution used heredocuments, which were then sourced; this does not work when /tmp is readonly,
-# even if TMPDIR is set elsewhere, as debian / ubuntu bash uses a hardcoded /tmp
-# http://stackoverflow.com/questions/1609423/using-sed-to-expand-environment-variables-inside-files
-function createSedScriptOfEnvironmentVariableSubstitutions()
-{
-	env | sed 's/[\%]/\\&/g;s/\([^=]*\)=\(.*\)/s%${\1}%\2%g/'
-}
-
-function templateFile()
-{
-	set +e
-	cat "$1" | sed -f <(createSedScriptOfEnvironmentVariableSubstitutions)
-	set -e
-}
-
 function setDebugging()
 {
 	# is set -x on?
@@ -123,7 +108,7 @@ to automatically install any missing dependencies. The PATH variable is reset to
 
 function loadAnyConfiguration()
 {
-	configPath="${crudeOurPath}/config"
+	configPath="${crudeOurPath}"/config
 	cachePath="$configPath"/cache
 	functionsPath="$configPath"/functions
 	pathsPath="$configPath"/paths
@@ -140,7 +125,6 @@ function loadAnyConfiguration()
 
 function parseCommandLine()
 {
-	
 	local OPTERR=1
 	local OPTIND=1
 	local OPTARG
@@ -274,8 +258,7 @@ function main()
 	
 	initialiseTraps
 	installDependencies
-	
-	buildMachineGroups
+	executeMainFunctions
 }
 
 main "$@"

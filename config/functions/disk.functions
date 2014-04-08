@@ -1,0 +1,157 @@
+diskCreateFunctions=()
+
+declare -A machineDisksConfigurationFilesystemType=()
+declare -A machineDisksConfigurationMountPoint=()
+declare -A machineDisksConfigurationImagePath=()
+declare -A machineDisksConfigurationImageMountPath=()
+declare -A machineDisksConfigurationUuid=()
+declare -A machineDisksConfigurationMountOptions=()
+declare -A machineDisksConfigurationDumpOptions=()
+declare -A machineDisksConfigurationFsckOptions=()
+
+function defaultDiskImageConfiguration()
+{
+	machineDiskSize=256M
+	machineDiskMountPoint=/
+	machineDiskFilesystemType=ext4
+	machineDiskBlockSize=4096
+	machineDiskVolumeLabel16Bytes="$disk"
+	machineDiskUuid=48c2b730-62a5-4b06-99be-85c0ea4d53dd
+	machineDiskOptions=uninit_bg,extent,has_journal,resize_inode,sparse_super
+	machineDiskMountOptions=defaults
+	machineDiskDumpOptions=0
+	machineDiskFsckOptions=0
+}
+diskCreateFunctions+=(defaultDiskImageConfiguration)
+
+function sourceDiskImageConfiguration()
+{
+	source "$configMachineDisksPath"/disks/"$disk".disk
+	
+	machineDiskImagePath="$cacheMachineDisksPath"/"$disk".img
+	
+	machineDiskImageMountPath="$cacheMachineDisksMountsPath${machineDiskMountPoint}"
+}
+diskCreateFunctions+=(sourceDiskImageConfiguration)
+
+function verifyDiskImageConfiguration()
+{
+	if [ ${#machineDiskVolumeLabel16Bytes} -gt 16 ]; then
+		informationMessage FAIL "Machine $machine has a disk $disk with a label greater than 16 characters (defaults to disk name) in parameters or disk folder"
+		exit 1
+	fi
+	
+	case "$machineDiskFilesystemType" in
+		
+		ext[2-4])
+			:
+		;;
+		
+		swap)
+			:
+		;;
+		
+		*)
+			informationMessage FAIL "Machine $machine has a disk $disk with an unknown filesystem type $machineDiskFilesystemType"
+			exit 1
+		;;
+	
+	esac
+}
+diskCreateFunctions+=(verifyDiskImageConfiguration)
+
+function createDiskImageMountpoint()
+{
+	mkdir -m 0755 -p "$machineDiskImageMountPath"
+}
+diskCreateFunctions+=(createDiskImageMountpoint)
+
+function createDiskImageSpareFile()
+{
+	rm -rf "$machineDiskImagePath"
+	truncate -s "$machineDiskSize" "$machineDiskImagePath"
+}
+diskCreateFunctions+=(createDiskImageSpareFile)
+
+function createDiskImageFilesystem()
+{
+	if mountPointIsSpecial; then
+		mkswap -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" "$machineDiskImagePath"
+		return 0
+	fi
+	
+	mkfs."$machineDiskFilesystemType" -F -q -b $machineDiskBlockSize -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" -O "$machineDiskOptions" "$machineDiskImagePath"
+}
+diskCreateFunctions+=(createDiskImageFilesystem)
+
+function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting()
+{
+	machineDisksConfigurationFilesystemType["$disk"]="$machineDisksConfigurationFilesystemType"
+	machineDisksConfigurationMountPoint["$disk"]="$machineDiskMountPoint"
+	machineDisksConfigurationImagePath["$disk"]="$machineDiskImagePath"
+	machineDisksConfigurationImageMountPath["$disk"]="$machineDiskImageMountPath"
+	machineDisksConfigurationUuid["$disk"]="$machineDiskUuid"
+	machineDisksConfigurationMountOptions["$disk"]="$machineDiskMountOptions"
+	machineDisksConfigurationDumpOptions["$disk"]="$machineDiskDumpOptions"
+	machineDisksConfigurationFsckOptions["$disk"]="$machineDiskFsckOptions"
+}
+diskCreateFunctions+=(captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting)
+
+
+function sortDiskMountPoints()
+{
+	(
+		local disk
+		for disk in "$machineDisks[@]"
+		do
+			echo "${machineDisksConfigurationMountPoint["$disk"]} ${disk}"
+		done
+	) | sort --ignore-nonprinting
+}
+
+function reverseSortDiskMountPoints()
+{
+	(
+		local disk
+		for disk in "$machineDisks[@]"
+		do
+			echo "${machineDisksConfigurationMountPoint["$disk"]} ${disk}"
+		done
+	) | sort --reverse --ignore-nonprinting
+}
+
+function mountPointIsSpecial()
+{
+	local -r mountPoint="${machineDisksConfigurationMountPoint["$disk"]}"
+	if [ "${mountPoint:0:1}" != '/' ]; then
+		return 0
+	fi
+	return 1
+}
+
+
+
+function mountDiskImage()
+{
+	mount -o loop -t "${machineDisksConfigurationFilesystemType["$disk"]}" "${machineDisksConfigurationImagePath["$disk"]}" "${machineDisksConfigurationImageMountPath["$disk"]}"
+}
+diskMountFunctions+=(mountDiskImage)
+
+
+
+THERE ARE NOT OVERLAYS PER DISK - WE SHOULD MOUNT THEM AT THEIR RESPECTIVE MOUNT POINTS... which means doing a sort of the mount points
+
+
+diskUnmountFunctions=()
+
+function syncDiskImage()
+{
+	sync
+}
+diskUnmountFunctions+=(syncDiskImage)
+
+function unmountDiskImage()
+{
+	umount "${machineDisksConfigurationImageMountPath["$disk"]}" || true
+}
+diskUnmountFunctions+=(unmountDiskImage)

@@ -1,0 +1,2 @@
+echo "There is access to generated overlays at $cacheMachineOverlaysGeneratedPath"
+echo "See what variables are set using  env  and also which functions (such as informationMessage)"

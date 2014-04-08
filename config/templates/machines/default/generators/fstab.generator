@@ -1,0 +1,16 @@
+ourOverlayPath="$cacheMachineOverlaysGeneratedPath"/fstab
+
+mkdir -m 0755 -p "$ourOverlayPath"
+
+fstabFile="$ourOverlayPath"/fstab
+while IFS=' ' read -r mountPoint disk
+do
+	echo UUID=${machineDisksConfigurationUuid["$disk"]} ${mountPoint} ${machineDisksConfigurationFilesystemType["$disk"]} ${machineDisksConfigurationMountOptions["$disk"]} ${machineDisksConfigurationDumpOptions["$disk"]} ${machineDisksConfigurationDumpOptions["$disk"]} >>"$fstabFile"
+done < <(sortDiskMountPoints)
+
+cat >>"$fstabFile" <<-EOF
+	tmpfs /dev/shm tmpfs defaults 0 0
+	devpts /dev/pts devpts gid=5,mode=620  0 0
+	sysfs /sys sysfs defaults 0 0
+	proc /proc proc defaults 0 0
+EOF

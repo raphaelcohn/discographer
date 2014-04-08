@@ -1,0 +1,118 @@
+function checkDeviceConfigurationDirectoryOrFifo()
+{
+	local kind="$1"
+	
+	if [ -n "$deviceMajor" ]; then
+		informationMessage FAIL "$configMachineDevicesPath contains a $kind definition $devicePath with a device major"
+	fi
+	if [ -n "$deviceMinor" ]; then
+		informationMessage FAIL "$configMachineDevicesPath contains a $kind definition $devicePath with a device minor"
+	fi
+}
+
+function checkDeviceConfigurationLink()
+{
+	local kind="$1"
+	
+	if [ -n "$deviceMinor" ]; then
+		informationMessage FAIL "$configMachineDevicesPath contains a $kind definition $devicePath with a device minor"
+	fi
+}
+
+function installDeviceNodes()
+{
+	local -r devicesFilePath="$1"
+	
+	local devicePath
+	local deviceUid
+	local deviceGid
+	local deviceType
+	local deviceMode
+	local deviceMajor
+	local deviceMinor
+	
+	local deviceLink
+	
+	local parentPath
+	local completePath
+	
+	while IFS=' ' read -r devicePath deviceUid deviceGid deviceType deviceMode deviceMajor deviceMinor
+	do
+		parentPath="$(purebash_dirname "$devicePath")"
+		fakeroot mkdir -m 0755 -p "${cacheMachineDisksMountsPath}$parentPath"
+		
+		completePath="${cacheMachineDisksMountsPath}$devicePath"
+		if [ -e "$completePath" ]; then
+			informationMessage WARN "Deleting duplicate device $devicePath"
+			rm "$completePath"
+		fi
+		
+		case "$deviceType" in
+			
+			b|c)
+				fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType" "$deviceMajor" "$deviceMinor"
+			;;
+			
+			p)
+				checkDeviceConfigurationDirectoryOrFifo FIFO
+				fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType"
+			;;
+			
+			# Not a device, but reused as a directory
+			d)
+				checkDeviceConfigurationDirectoryOrFifo directory
+				mkdir -m "$deviceMode" -p "$completePath"
+			;;
+			
+			# Support for symlinks
+			s)
+				checkDeviceConfigurationLink symlink
+				deviceLink="$deviceMajor"
+				ln -s "$deviceType" "$deviceLink"
+			;;
+			
+			# Support for hard links
+			h)
+				checkDeviceConfigurationLink hardlink
+				deviceLink="$deviceMajor"
+				ln "$deviceType" "$deviceLink"
+			;;
+			
+			# Support for files - useful for hidden (.xxxx) files in '/' and for doing perms on stuff already created
+			f)
+				checkDeviceConfigurationDirectoryOrFifo empty-file
+				touch "$completePath"
+				chmod "$deviceMode" "$completePath"
+			;;
+		
+		esac
+		fakeroot chown "$deviceUid":"$deviceGid" "$devicePath"
+		
+	done < <(cat "$devicesFilePath")
+}
+
+function installFiles()
+{
+	local -r filesPath="$1"
+	fakeroot rsync --quiet --archive --hard-links --acls --xattrs --exclude=".gitignore" "$filesPath"/ "$cacheMachineDisksMountsPath"/
+}
+
+function installFilesystem()
+{
+	local -r underlayOrOverlayPath="$1"
+	pushd "$underlayOrOverlayPath" 1>/dev/null 2>/dev/null
+		
+		local underlay
+		for underlay in *
+		do
+			if [ -f "$underlay" ]; then
+				installDeviceNodes "$underlay"
+			fi
+			if [ -d "$underlay" ]; then
+				installFiles "$underlay"
+			fi
+		done
+		
+	popd 1>/dev/null 2>/dev/null
+}
+

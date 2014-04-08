@@ -1,0 +1,69 @@
+declare -a mainFunctions=()
+
+function setYumConfigPaths()
+{
+	readonly configYumPath="$configPath"/yum
+	if [ ! -d "$configYumPath" ]; then
+		informationMessage FAIL "Yum config missing at path $configYumPath"
+		exit 1
+	fi
+	if [ ! -d "$configYumPath"/plugins ]; then
+		informationMessage FAIL "Machine $machine missing machine folder $configYumPath/plugins"
+		exit 1
+	fi
+	
+	readonly cacheYumPath="$cachePath"/yum
+	mkdir -m 0755 -p "$cacheYumPath"
+	mkdir -m 0755 -p "$cacheYumPath"/cache
+	mkdir -m 0755 -p "$cacheYumPath"/persist
+	touch "$cacheYumPath"/log
+	chmod 0644 "$cacheYumPath"/log
+}
+mainFunctions+=(setYumConfigPaths)
+
+function setMachineGroupsPath()
+{
+	readonly machineGroupsPath="$configPath"/machine-groups
+	mkdir -m 0755 -p "$machineGroupsPath"
+}
+mainFunctions+=(setMachineGroupsPath)
+
+knownMachineGroups=()
+function determineKnownMachineGroups()
+{
+	knownMachineGroups=()
+	pushd "$machineGroupsPath" 1>/dev/null 2>/dev/null
+		local knownMachineGroup
+		for knownMachineGroup in *
+		do
+			if [ ! -e "$knownMachineGroup" ]; then
+				continue
+			fi
+			knownMachineGroups+=("$knownMachineGroup")
+		done
+	popd 1>/dev/null 2>/dev/null
+}
+mainFunctions+=(determineKnownMachineGroups)
+
+function buildMachineGroups()
+{
+	local machineGroup
+	local machineGroupFunction
+	for machineGroup in "${machineGroups[@]}"
+	do
+		for machineGroupFunction in "${machineGroupFunctions[@]}"
+		do
+			$machineGroupFunction
+		done
+	done
+}
+mainFunctions+=(buildMachineGroups)
+
+function executeMainFunctions()
+{
+	local mainFunction
+	for mainFunction in "${mainFunctionss[@]}"
+	do
+		$mainFunction
+	done
+}

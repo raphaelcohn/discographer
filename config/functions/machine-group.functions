@@ -8,24 +8,34 @@ function prepareMachineGroupPaths()
 		exit 1
 	fi
 	
-	configMachineGeneratorScriptletsPath="$configMachineGroupPath"/generator-scriptlets
-	if [ ! -d "$configMachineGeneratorScriptletsPath" ]; then
-		informationMessage FAIL "Machine-group $machineGroup missing machine-group generator-scriptlets path $configMachineGeneratorScriptletsPath"
+	configMachineGroupPackagesPath="$configMachineGroupPath"/packages
+	if [ ! -f "$configMachineGroupPackagesPath" ]; then
+		informationMessage FAIL "Machine group $machineGroup missing machin-groupe packages file $configMachineGroupPackagesPath"
+		exit 1
+	fi
+	
+	configMachineGeneratorsPath="$configMachineGroupPath"/generators
+	if [ ! -d "$configMachineGeneratorsPath" ]; then
+		informationMessage FAIL "Machine-group $machineGroup missing machine-group generators path $configMachineGeneratorsPath"
 		exit 1
 	fi
 	
 	cacheMachineGroupPath="$cachePath"/"$machineGroup"
 	mkdir -m 0755 -p "$cacheMachineGroupPath"
 	
-	configMachineGroupDevicesPath="$configMachineGroupPath"/devices
-	if [ ! -f "$configMachineGroupDevicesPath" ]; then
-		informationMessage FAIL "Machine-group $machineGroup missing machine-group devices file $configMachineGroupDevicesPath"
+	cacheMachineGroupOverlaysGeneratedPath="$cacheMachineGroupPath"/overlays
+	rm -rf "$cacheMachineGroupOverlaysGeneratedPath"
+	mkdir -m 0755 -p "$cacheMachineGroupOverlaysGeneratedPath"
+	
+	configMachineGroupUnderlaysPath="$configMachineGroupPath"/underlays
+	if [ ! -d "$configMachineGroupUnderlaysPath" ]; then
+		informationMessage FAIL "Machine-group $machineGroup missing machine-group underlays folder $configMachineGroupUnderlaysPath"
 		exit 1
 	fi
 	
-	configMachineGroupRootOverlaysPath="$configMachineGroupPath"/root-overlays
-	if [ ! -d "$configMachineGroupRootOverlaysPath" ]; then
-		informationMessage FAIL "Machine-group $machineGroup missing machine-group root-overlays folder $configMachineGroupRootOverlaysPath"
+	configMachineGroupOverlaysPath="$configMachineGroupPath"/overlays
+	if [ ! -d "$configMachineGroupOverlaysPath" ]; then
+		informationMessage FAIL "Machine-group $machineGroup missing machine-group overlays folder $configMachineGroupOverlaysPath"
 		exit 1
 	fi
 	
@@ -63,6 +73,18 @@ function cleanUpMachineGroupsCache()
 }
 machineGroupFunctions+=(cleanUpMachineGroupsCache)
 
+machineGroupPackageNames=()
+function readMachineGroupPackages()
+{
+	machineGroupPackageNames=()
+	local packageName
+	while IFS= read -r packageName
+	do
+		machineGroupPackageNames+=("$packageName")
+	done < <(cat "$configMachineGroupPackagesPath")
+}
+machineGroupFunctions+=(readMachineGroupPackages)
+
 knownMachines=()
 function determineKnownMachines()
 {
@@ -80,23 +102,12 @@ function determineKnownMachines()
 }
 machineGroupFunctions+=(determineKnownMachines)
 
-function sourceMachineGroupGeneratorScriptlets()
+function sourceMachineGroupGenerators()
 {
-	generatedMachineGroupRootOverlaysPath="$configMachineGroupRootOverlaysPath"/generated
-	mkdir -m 0755 -p "$generatedMachineGroupRootOverlaysPath"
-	
-	pushd "$configMachineGeneratorScriptletsPath" 1>/dev/null 2>/dev/null
-		local generatorScriptlet
-		for generatorScriptlet in *.generator-scriptlet
-		do
-			if [ -e "$generatorScriptlet" ]; then
-				informationMessage INFO "Sourcing generator-scriptlet $generatorScriptlet"
-				source "$generatorScriptlet"
-			fi
-		done
-	popd 1>/dev/null 2>/dev/null
+	# Relies on $cacheMachineGroupOverlaysGeneratedPath
+	sourceGenerators "machine-group" "$configMachineGroupGeneratorsPath"
 }
-machineGroupFunctions+=(sourceMachineGroupGeneratorScriptlets)
+machineGroupFunctions+=(sourceMachineGroupGenerators)
 
 function determineMachines()
 {
@@ -115,16 +126,6 @@ function determineMachines()
 }
 machineGroupFunctions+=(determineMachines)
 
-function configureSuperminVerbosity()
-{
-	if [ "$optionVerbose" = yes ]; then
-		readonly superminVerbosity=" -v"
-	else
-		readonly superminVerbosity=""
-	fi
-}
-machineGroupFunctions+=(configureSuperminVerbosity)
-
 function buildMachines()
 {
 	local machine
@@ -138,41 +139,3 @@ function buildMachines()
 	done
 }
 machineGroupFunctions+=(buildMachines)
-
-function setMachineGroupsPath()
-{
-	readonly machineGroupsPath="$configPath"/machine-groups
-	mkdir -m 0755 -p "$machineGroupsPath"
-}
-
-knownMachineGroups=()
-function determineKnownMachineGroups()
-{
-	knownMachineGroups=()
-	pushd "$machineGroupsPath" 1>/dev/null 2>/dev/null
-		local knownMachineGroup
-		for knownMachineGroup in *
-		do
-			if [ ! -e "$knownMachineGroup" ]; then
-				continue
-			fi
-			knownMachineGroups+=("$knownMachineGroup")
-		done
-	popd 1>/dev/null 2>/dev/null
-}
-
-function buildMachineGroups()
-{
-	setMachineGroupsPath
-	determineKnownMachineGroups
-	
-	local machineGroup
-	local machineGroupFunction
-	for machineGroup in "${machineGroups[@]}"
-	do
-		for machineGroupFunction in "${machineGroupFunctions[@]}"
-		do
-			$machineGroupFunction
-		done
-	done
-}

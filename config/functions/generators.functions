@@ -1,0 +1,43 @@
+function sourceGenerators()
+{
+	local -r generatorsKind="$1"
+	local -r generatorsPath="$2"
+	pushd "$generatorsPath" 1>/dev/null 2>/dev/null
+		
+		local generator
+		for generator in *.generator
+		do
+			if [ -e "$generator" ]; then
+				informationMessage INFO "Sourcing $kind generator $generator"
+				source "$generator"
+			fi
+		done
+		
+	popd 1>/dev/null 2>/dev/null
+}
+
+function runInMounts()
+{
+	pushd "$cacheMachineFilesystemImageMountPath" 1>/dev/null 2>/dev/null
+		
+		mount -o bind /dev "$cacheMachineFilesystemImageMountPath"/dev
+		mount -o bind /dev/pts "$cacheMachineFilesystemImageMountPath"/dev/pts
+		mount -o bind /dev/shm "$cacheMachineFilesystemImageMountPath"/dev/shm
+		mount -o bind /proc "$cacheMachineFilesystemImageMountPath"/proc
+		mount -o bind /sys "$cacheMachineFilesystemImageMountPath"/sys
+		
+			"$@"
+		
+		umount "$cacheMachineFilesystemImageMountPath"/sys
+		umount "$cacheMachineFilesystemImageMountPath"/proc
+		umount "$cacheMachineFilesystemImageMountPath"/dev/shm
+		umount "$cacheMachineFilesystemImageMountPath"/dev/pts
+		umount "$cacheMachineFilesystemImageMountPath"/dev
+		
+	popd 1>/dev/null 2>/dev/null
+}
+
+function runInChroot()
+{
+	runInMounts chroot "$cacheMachineFilesystemImageMountPath" "$@"
+}
