@@ -130,16 +130,11 @@ function mountPointIsSpecial()
 }
 
 
-
 function mountDiskImage()
 {
 	mount -o loop -t "${machineDisksConfigurationFilesystemType["$disk"]}" "${machineDisksConfigurationImagePath["$disk"]}" "${machineDisksConfigurationImageMountPath["$disk"]}"
 }
 diskMountFunctions+=(mountDiskImage)
-
-
-
-THERE ARE NOT OVERLAYS PER DISK - WE SHOULD MOUNT THEM AT THEIR RESPECTIVE MOUNT POINTS... which means doing a sort of the mount points
 
 
 diskUnmountFunctions=()
