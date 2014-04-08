@@ -1,4 +1,4 @@
-declare -a mainFunctions=()
+mainFunctions=()
 
 function setYumConfigPaths()
 {
@@ -62,7 +62,7 @@ mainFunctions+=(buildMachineGroups)
 function executeMainFunctions()
 {
 	local mainFunction
-	for mainFunction in "${mainFunctionss[@]}"
+	for mainFunction in "${mainFunctions[@]}"
 	do
 		$mainFunction
 	done

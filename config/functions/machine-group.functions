@@ -10,7 +10,7 @@ function prepareMachineGroupPaths()
 	
 	configMachineGroupPackagesPath="$configMachineGroupPath"/packages
 	if [ ! -f "$configMachineGroupPackagesPath" ]; then
-		informationMessage FAIL "Machine group $machineGroup missing machin-groupe packages file $configMachineGroupPackagesPath"
+		informationMessage FAIL "Machine group $machineGroup missing machine-group packages file $configMachineGroupPackagesPath"
 		exit 1
 	fi
 	
