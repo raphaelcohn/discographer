@@ -1,0 +1,14 @@
+# Size is as for the  truncate  command
+machineDiskSize=256M
+machineDiskMountPoint=/
+machineDiskFilesystemType=ext4
+machineDiskBlockSize=4096
+# defaults to disk name
+machineDiskVolumeLabel16Bytes=root
+# defaults to 48c2b730-62a5-4b06-99be-85c0ea4d53dd; use uuidgen to create a new one
+machineDiskUuid=48c2b730-62a5-4b06-99be-85c0ea4d53dd
+# defaults to uninit_bg,extent,has_journal,resize_inode,sparse_super
+machineDiskOptions=uninit_bg,extent,has_journal,resize_inode,sparse_super
+machineDiskMountOptions=defaults
+machineDiskDumpOptions=1
+machineDiskFsckOptions=1

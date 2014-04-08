@@ -1,0 +1,10 @@
+# Size is as for the  truncate  command
+machineDiskSize=256M
+machineDiskMountPoint=swap
+machineDiskFilesystemType=swap
+machineDiskBlockSize=4096
+machineDiskUuid=b5648dba-4758-4b59-8c13-6e12356a432e
+machineDiskOptions=
+machineDiskMountOptions=swap
+machineDiskDumpOptions=0
+machineDiskFsckOptions=0
