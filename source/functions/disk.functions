@@ -187,7 +187,7 @@ function removeLoopbackMountPointsOnExit()
 	local loopbackMountPointToRemoveOnExit
 	for loopbackMountPointToRemoveOnExit in "${loopbackMountPointsToRemoveOnExit[@]}"
 	do
-		umount "$loopbackMountPointToRemoveOnExit"
+		unmountLoopback "$loopbackMountPointToRemoveOnExit"
 	done
 }
 
@@ -209,7 +209,7 @@ function removeBindMountPointsOnExit()
 	local bindMountPointToRemoveOnExit
 	for bindMountPointToRemoveOnExit in "${bindMountPointsToRemoveOnExit[@]}"
 	do
-		umount "$bindMountPointToRemoveOnExit"
+		unmountBind "$bindMountPointToRemoveOnExit"
 	done
 }
 
