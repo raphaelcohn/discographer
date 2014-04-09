@@ -259,9 +259,8 @@ function main()
 	executeUnderSudoIfRequired "$@"
 	
 	sourceFunctions "$functionsPath" functions
-	registerTrapHandlers
 	
-	initialiseTraps
+	registerTrapHandlers
 	installDependencies
 	executeMainFunctions
 }
