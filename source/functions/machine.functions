@@ -233,10 +233,7 @@ machineFunctions+=(installUnderlays)
 
 function fillInMachineYumConfTemplate()
 {
-	temporaryFileToRemoveOnExit
-	configMachineYumConfigFile="$TMP_FILE"
-	
-	# http://yum.baseurl.org/download/3.4/yum-3.4.3.tar.gz
+	configMachineYumConfigFile="$cacheMachinePath"/yum.conf
 	
 	templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
 }
@@ -256,7 +253,7 @@ function yumWrapper()
 	fi
 	
 	echo yum${yumVerbosity} --quiet --assumeyes --config="$configMachineYumConfigFile" --cacheonly --color=never --installroot="$cacheMachineDisksMountsPath" "$@"
-	#yum${yumVerbosity} --quiet --assumeyes --config="$configMachineYumConfigFile" --cacheonly --color=never --installroot="$cacheMachineDisksMountsPath" "$@"
+	yum${yumVerbosity} --quiet --assumeyes --config="$configMachineYumConfigFile" --cacheonly --color=never --installroot="$cacheMachineDisksMountsPath" "$@"
 }
 
 function installRpms()
