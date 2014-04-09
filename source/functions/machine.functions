@@ -255,7 +255,8 @@ function yumWrapper()
 		local -r yumVerbosity=""
 	fi
 	
-	yum${yumVerbosity} --quiet --assumeyes --config="$configMachineYumConfigFile" --cacheonly --color=never --installroot="$cacheMachineDisksMountsPath" "$@"
+	echo yum${yumVerbosity} --quiet --assumeyes --config="$configMachineYumConfigFile" --cacheonly --color=never --installroot="$cacheMachineDisksMountsPath" "$@"
+	#yum${yumVerbosity} --quiet --assumeyes --config="$configMachineYumConfigFile" --cacheonly --color=never --installroot="$cacheMachineDisksMountsPath" "$@"
 }
 
 function installRpms()

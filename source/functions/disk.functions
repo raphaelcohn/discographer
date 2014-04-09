@@ -53,7 +53,7 @@ diskCreateFunctions+=(verifyDiskImageConfiguration)
 
 function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting()
 {
-	machineDisksConfigurationFilesystemType["$disk"]="$machineDisksConfigurationFilesystemType"
+	machineDisksConfigurationFilesystemType["$disk"]="$machineDiskFilesystemType"
 	machineDisksConfigurationMountPoint["$disk"]="$machineDiskMountPoint"
 	machineDisksConfigurationImagePath["$disk"]="$machineDiskImagePath"
 	machineDisksConfigurationImageMountPath["$disk"]="$machineDiskImageMountPath"
@@ -74,7 +74,7 @@ diskCreateFunctions+=(createDiskImageSpareFile)
 function createDiskImageFilesystem()
 {
 	if mountPointIsSpecial; then
-		mkswap -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" "$machineDiskImagePath"
+		mkswap -f -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" "$machineDiskImagePath" 1>/dev/null 2>/dev/null
 		return 0
 	fi
 	
@@ -127,6 +127,7 @@ function mountLoopbackDiskImage()
 	fi
 	
 	mount -o loop -t "$filesystemType" "$imagePath" "$mountPath"
+	registerLoopbackMountPointToRemoveOnExit "$mountPath"
 }
 
 # Abstracted to support Mac OS X mounting in the future: http://nicksegers.com/mounting-to-loopback-in-osx/
@@ -139,6 +140,7 @@ function mountBind()
 	fi
 
 	mount -o bind /dev "$mountPath"
+	registerBindMountPointToRemoveOnExit "$mountPath"
 }
 
 function unmountBind()
@@ -150,6 +152,7 @@ function unmountBind()
 		return 0
 	fi
 	
+	unregisterLastBindMountPointToRemoveOnExit "$mountPath"
 	umount "$mountPath"
 }
 
@@ -161,10 +164,54 @@ function unmountLoopback()
 		# yum does not exist in brew; installing via source has problems (msgfmt, broken Makefile, broken install utility; Python versioning)
 		return 0
 	fi
-
+	
+	unregisterLastLoopbackMountPointToRemoveOnExit "$mountPath"
 	umount "$mountPath"
 }
 
+loopbackMountPointsToRemoveOnExit=()
+function registerLoopbackMountPointToRemoveOnExit()
+{
+	local loopbackMountPointToRemoveOnExit="$1"
+	loopbackMountPointsToRemoveOnExit+=("$loopbackMountPointToRemoveOnExit")
+}
+
+function unregisterLastLoopbackMountPointToRemoveOnExit()
+{
+	local loopbackMountPointToRemoveOnExit="$1"
+	unset loopbackMountPointsToRemoveOnExit[$((${#loopbackMountPointsToRemoveOnExit[*]}-1))]
+}
+
+function removeLoopbackMountPointsOnExit()
+{
+	local loopbackMountPointToRemoveOnExit
+	for loopbackMountPointToRemoveOnExit in "${loopbackMountPointsToRemoveOnExit[@]}"
+	do
+		umount "$loopbackMountPointToRemoveOnExit"
+	done
+}
+
+bindMountPointsToRemoveOnExit=()
+function registerBindMountPointToRemoveOnExit()
+{
+	local bindMountPointToRemoveOnExit="$1"
+	bindMountPointsToRemoveOnExit+=("$bindMountPointToRemoveOnExit")
+}
+
+function unregisterLastBindMountPointToRemoveOnExit()
+{
+	local bindMountPointToRemoveOnExit="$1"
+	unset bindMountPointsToRemoveOnExit[$((${#bindMountPointsToRemoveOnExit[*]}-1))]
+}
+
+function removeBindMountPointsOnExit()
+{
+	local bindMountPointToRemoveOnExit
+	for bindMountPointToRemoveOnExit in "${bindMountPointsToRemoveOnExit[@]}"
+	do
+		umount "$bindMountPointToRemoveOnExit"
+	done
+}
 
 function createDiskImageMountpoint()
 {
@@ -174,7 +221,7 @@ diskMountFunctions+=(createDiskImageMountpoint)
 
 function mountDiskImage()
 {
-	mountLoopbackDiskImage"${machineDisksConfigurationFilesystemType["$disk"]}" "${machineDisksConfigurationImagePath["$disk"]}" "${machineDisksConfigurationImageMountPath["$disk"]}"
+	mountLoopbackDiskImage "${machineDisksConfigurationFilesystemType["$disk"]}" "${machineDisksConfigurationImagePath["$disk"]}" "${machineDisksConfigurationImageMountPath["$disk"]}"
 }
 diskMountFunctions+=(mountDiskImage)
 
@@ -202,4 +249,5 @@ function unmountDiskImage()
 	unmountLoopback "${machineDisksConfigurationImageMountPath["$disk"]}" || true
 }
 diskUnmountFunctions+=(unmountDiskImage)
+
 
