@@ -21,6 +21,18 @@ function determineDistribution()
 		readonly pathName="Homebrew"
 		return 0
 	fi
+	if [ -f /etc/centos-release ]; then
+		readonly pathName="CentOS"
+		return 0
+	fi
+	if [ -f /etc/fedora-release ]; then
+		readonly pathName="Fedora"
+		return 0
+	fi
+	if [ -f /etc/redhat-release ]; then
+		readonly pathName="RedHat"
+		return 0
+	fi
 	informationMessage FAIL "Could not determine distribution"
 	exit 1
 }
