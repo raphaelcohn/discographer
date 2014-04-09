@@ -53,6 +53,7 @@ function buildMachineGroups()
 	do
 		for machineGroupFunction in "${machineGroupFunctions[@]}"
 		do
+			informationMessage INFO "${tab}${machineGroup} ${machineGroupFunction}"
 			$machineGroupFunction
 		done
 	done
@@ -64,6 +65,7 @@ function executeMainFunctions()
 	local mainFunction
 	for mainFunction in "${mainFunctions[@]}"
 	do
+		informationMessage INFO "${mainFunction}"
 		$mainFunction
 	done
 }

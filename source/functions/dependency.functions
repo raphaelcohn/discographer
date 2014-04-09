@@ -10,21 +10,19 @@ dependencyFunctions+=(ensureWeAreRunningBash4)
 
 function determineDistribution()
 {
-	if [ -f /etc/centos-release ]; then
-		readonly pathName="centos"
+	if which lsb_release 1>/dev/null 2>/dev/null; then
+		readonly lsbDistributor="$(lsb_release --id --short)"
+		if [ -n "$lsbDistributor" ]; then
+			readonly pathName="debian"
+			return 0
+		fi
+	fi
+	if which brew 1>/dev/null 2>/dev/null; then
+		readonly pathName="Homebrew"
 		return 0
 	fi
-	if [ -f /etc/redhat-release ]; then
-		readonly pathName="redhat"
-		return 0
-	fi
-	if [ -f /etc/lsb_release ]; then
-		source /etc/lsb_release
-		readonly pathName="$DISTRIB_ID"
-		return 0
-	fi
-	
-	readonly pathName="debian"
+	informationMessage FAIL "Could not determine distribution"
+	exit 1
 }
 dependencyFunctions+=(determineDistribution)
 

@@ -20,11 +20,11 @@ function runInMounts()
 {
 	pushd "$cacheMachineFilesystemImageMountPath" 1>/dev/null 2>/dev/null
 		
-		mount -o bind /dev "$cacheMachineFilesystemImageMountPath"/dev
-		mount -o bind /dev/pts "$cacheMachineFilesystemImageMountPath"/dev/pts
-		mount -o bind /dev/shm "$cacheMachineFilesystemImageMountPath"/dev/shm
-		mount -o bind /proc "$cacheMachineFilesystemImageMountPath"/proc
-		mount -o bind /sys "$cacheMachineFilesystemImageMountPath"/sys
+		mountBind /dev "$cacheMachineFilesystemImageMountPath"/dev
+		mountBind /dev/pts "$cacheMachineFilesystemImageMountPath"/dev/pts
+		mountBind /dev/shm "$cacheMachineFilesystemImageMountPath"/dev/shm
+		mountBind /proc "$cacheMachineFilesystemImageMountPath"/proc
+		mountBind /sys "$cacheMachineFilesystemImageMountPath"/sys
 		
 			"$@"
 		

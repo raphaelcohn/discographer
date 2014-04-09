@@ -1,13 +1,17 @@
 diskCreateFunctions=()
 
-declare -A machineDisksConfigurationFilesystemType=()
-declare -A machineDisksConfigurationMountPoint=()
-declare -A machineDisksConfigurationImagePath=()
-declare -A machineDisksConfigurationImageMountPath=()
-declare -A machineDisksConfigurationUuid=()
-declare -A machineDisksConfigurationMountOptions=()
-declare -A machineDisksConfigurationDumpOptions=()
-declare -A machineDisksConfigurationFsckOptions=()
+function declareBashDictionaryForMountingAndUnmounting()
+{
+	declare -Ag machineDisksConfigurationFilesystemType
+	declare -Ag machineDisksConfigurationMountPoint
+	declare -Ag machineDisksConfigurationImagePath
+	declare -Ag machineDisksConfigurationImageMountPath
+	declare -Ag machineDisksConfigurationUuid
+	declare -Ag machineDisksConfigurationMountOptions
+	declare -Ag machineDisksConfigurationDumpOptions
+	declare -Ag machineDisksConfigurationFsckOptions
+}
+diskCreateFunctions+=(declareBashDictionaryForMountingAndUnmounting)
 
 function defaultDiskImageConfiguration()
 {
@@ -26,7 +30,7 @@ diskCreateFunctions+=(defaultDiskImageConfiguration)
 
 function sourceDiskImageConfiguration()
 {
-	source "$configMachineDisksPath"/disks/"$disk".disk
+	source "$configMachineDisksPath"/"$disk".disk
 	
 	machineDiskImagePath="$cacheMachineDisksPath"/"$disk".img
 	
@@ -60,11 +64,18 @@ function verifyDiskImageConfiguration()
 }
 diskCreateFunctions+=(verifyDiskImageConfiguration)
 
-function createDiskImageMountpoint()
+function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting()
 {
-	mkdir -m 0755 -p "$machineDiskImageMountPath"
+	machineDisksConfigurationFilesystemType["$disk"]="$machineDisksConfigurationFilesystemType"
+	machineDisksConfigurationMountPoint["$disk"]="$machineDiskMountPoint"
+	machineDisksConfigurationImagePath["$disk"]="$machineDiskImagePath"
+	machineDisksConfigurationImageMountPath["$disk"]="$machineDiskImageMountPath"
+	machineDisksConfigurationUuid["$disk"]="$machineDiskUuid"
+	machineDisksConfigurationMountOptions["$disk"]="$machineDiskMountOptions"
+	machineDisksConfigurationDumpOptions["$disk"]="$machineDiskDumpOptions"
+	machineDisksConfigurationFsckOptions["$disk"]="$machineDiskFsckOptions"
 }
-diskCreateFunctions+=(createDiskImageMountpoint)
+diskCreateFunctions+=(captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting)
 
 function createDiskImageSpareFile()
 {
@@ -84,25 +95,11 @@ function createDiskImageFilesystem()
 }
 diskCreateFunctions+=(createDiskImageFilesystem)
 
-function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting()
-{
-	machineDisksConfigurationFilesystemType["$disk"]="$machineDisksConfigurationFilesystemType"
-	machineDisksConfigurationMountPoint["$disk"]="$machineDiskMountPoint"
-	machineDisksConfigurationImagePath["$disk"]="$machineDiskImagePath"
-	machineDisksConfigurationImageMountPath["$disk"]="$machineDiskImageMountPath"
-	machineDisksConfigurationUuid["$disk"]="$machineDiskUuid"
-	machineDisksConfigurationMountOptions["$disk"]="$machineDiskMountOptions"
-	machineDisksConfigurationDumpOptions["$disk"]="$machineDiskDumpOptions"
-	machineDisksConfigurationFsckOptions["$disk"]="$machineDiskFsckOptions"
-}
-diskCreateFunctions+=(captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting)
-
-
 function sortDiskMountPoints()
 {
 	(
 		local disk
-		for disk in "$machineDisks[@]"
+		for disk in "${machineDisks[@]}"
 		do
 			echo "${machineDisksConfigurationMountPoint["$disk"]} ${disk}"
 		done
@@ -113,7 +110,7 @@ function reverseSortDiskMountPoints()
 {
 	(
 		local disk
-		for disk in "$machineDisks[@]"
+		for disk in "${machineDisks[@]}"
 		do
 			echo "${machineDisksConfigurationMountPoint["$disk"]} ${disk}"
 		done
@@ -129,10 +126,44 @@ function mountPointIsSpecial()
 	return 1
 }
 
+# Abstracted to support Mac OS X mounting in the future: http://nicksegers.com/mounting-to-loopback-in-osx/
+function mountLoopbackDiskImage()
+{
+	local -r filesystemType="$1"
+	local -r imagePath="$2"
+	local -r mountPath="$3"
+	
+	if [ "$(uname)" = "Darwin" ]; then
+		#local -r devicePath="$(hdiutil attach -imagekey diskimage-class=CRawDiskImage -readwrite -noverify -noautopen -noautofsck -mountpoint "$mountPath" -nomount "$imagePath")"
+		#diskutil mount "$devicePath"
+		return 0
+	fi
+	
+	mount -o loop -t "$filesystemType" "$imagePath" "$mountPath"
+}
+
+# Abstracted to support Mac OS X mounting in the future: http://nicksegers.com/mounting-to-loopback-in-osx/
+function mountBind()
+{
+	local -r mountPath="$3"
+
+	if [ "$(uname)" = "Darwin" ]; then
+		return 0
+	fi
+
+	mount -o bind /dev "$mountPath"
+}
+
+
+function createDiskImageMountpoint()
+{
+	mkdir -m 0755 -p "${machineDisksConfigurationImageMountPath["$disk"]}"
+}
+diskMountFunctions+=(createDiskImageMountpoint)
 
 function mountDiskImage()
 {
-	mount -o loop -t "${machineDisksConfigurationFilesystemType["$disk"]}" "${machineDisksConfigurationImagePath["$disk"]}" "${machineDisksConfigurationImageMountPath["$disk"]}"
+	mountLoopbackDiskImage"${machineDisksConfigurationFilesystemType["$disk"]}" "${machineDisksConfigurationImagePath["$disk"]}" "${machineDisksConfigurationImageMountPath["$disk"]}"
 }
 diskMountFunctions+=(mountDiskImage)
 
@@ -150,3 +181,4 @@ function unmountDiskImage()
 	umount "${machineDisksConfigurationImageMountPath["$disk"]}" || true
 }
 diskUnmountFunctions+=(unmountDiskImage)
+

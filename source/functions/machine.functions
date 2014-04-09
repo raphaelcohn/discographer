@@ -92,8 +92,6 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
-	echo "MORE"
-	
 	cacheMachinePath="$cacheMachineGroupPath"/"$machine"
 	mkdir -m 0755 -p "$cacheMachinePath"
 	
@@ -173,19 +171,18 @@ function readMachineDiskNames()
 		informationMessage FAIL "Machine $machine does not have essential disk root"
 		exit 1
 	fi
-	
-	# Need to sort disk mounts by mount point
 }
 machineFunctions+=(readMachineDiskNames)
 
 function createDisks()
 {
 	local disk
-	for disk in "$machineDisks[@]"
+	for disk in "${machineDisks[@]}"
 	do
-		local diskCreateFunctions
-		for diskCreateFunction in "$diskCreateFunctions[@]"
+		local diskCreateFunction
+		for diskCreateFunction in "${diskCreateFunctions[@]}"
 		do
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskCreateFunction}"
 			$diskCreateFunction
 		done
 	done
@@ -209,15 +206,17 @@ machineFunctions+=(recordSortedDiskMountPoints)
 function mountDisks()
 {
 	local disk
-	for disk in "$machineDiskMountPointsInDiskOrder[@]"
+	for disk in "${machineDiskMountPointsInDiskOrder[@]}"
 	do
 		if mountPointIsSpecial; then
+			informationMessage INFO "${tab}${tab}${tab}${disk} (ignored)"
 			continue
 		fi
 		
 		local diskMountFuncton
-		for diskMountFuncton in "$diskMountFunctions[@]"
+		for diskMountFuncton in "${diskMountFunctions[@]}"
 		do
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskMountFuncton}"
 			$diskMountFuncton
 		done
 	done
@@ -241,7 +240,7 @@ machineFunctions+=(fillInMachineYumConfTemplate)
 
 function yumWrapper()
 {
-	if [ "$optionVerbose" = no ]; then
+	if [ "$beVerbose" = no ]; then
 		local -r yumVerbosity=" --quiet"
 	else
 		local -r yumVerbosity=""
@@ -311,12 +310,14 @@ function unmountDisks()
 	for disk in "$machineDiskMountPointsInReverseDiskOrder[@]"
 	do
 		if mountPointIsSpecial; then
+			informationMessage INFO "${tab}${tab}${tab}${disk} (ignored)"
 			continue
 		fi
 		
 		local diskUnmountFuncton
 		for diskUnmountFuncton in "$diskUnmountFunctons[@]"
 		do
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskUnmountFuncton}"
 			$diskUnmountFuncton
 		done
 	done

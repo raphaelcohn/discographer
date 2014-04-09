@@ -36,26 +36,26 @@ function installDeviceNodes()
 	local parentPath
 	local completePath
 	
-	while IFS=' ' read -r devicePath deviceUid deviceGid deviceType deviceMode deviceMajor deviceMinor
+	while IFS=' ' read -r devicePath deviceUid deviceGid deviceMode deviceType deviceMajor deviceMinor
 	do
 		parentPath="$(purebash_dirname "$devicePath")"
-		fakeroot mkdir -m 0755 -p "${cacheMachineDisksMountsPath}$parentPath"
+		mkdir -m 0755 -p "${cacheMachineDisksMountsPath}$parentPath"
 		
 		completePath="${cacheMachineDisksMountsPath}$devicePath"
 		if [ -e "$completePath" ]; then
-			informationMessage WARN "Deleting duplicate device $devicePath"
-			rm "$completePath"
+			informationMessage WARN "Deleting duplicate device $devicePath (in $devicesFilePath)"
+			rm -rf "$completePath"
 		fi
 		
 		case "$deviceType" in
 			
 			b|c)
-				fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType" "$deviceMajor" "$deviceMinor"
+				mknod --mode="$deviceMode" "$completePath" "$deviceType" "$deviceMajor" "$deviceMinor"
 			;;
 			
 			p)
 				checkDeviceConfigurationDirectoryOrFifo FIFO
-				fakeroot mknod --mode="$deviceMode" "$completePath" "$deviceType"
+				mknod --mode="$deviceMode" "$completePath" "$deviceType"
 			;;
 			
 			# Not a device, but reused as a directory
@@ -84,9 +84,14 @@ function installDeviceNodes()
 				touch "$completePath"
 				chmod "$deviceMode" "$completePath"
 			;;
+			
+			*)
+				informationMessage FAIL "Unknown deviceType $deviceType in $devicesFilePath"
+				exit 1
+			;;
 		
 		esac
-		fakeroot chown "$deviceUid":"$deviceGid" "$devicePath"
+		chown "$deviceUid":"$deviceGid" "$completePath"
 		
 	done < <(cat "$devicesFilePath")
 }
@@ -94,7 +99,7 @@ function installDeviceNodes()
 function installFiles()
 {
 	local -r filesPath="$1"
-	fakeroot rsync --quiet --archive --hard-links --acls --xattrs --exclude=".gitignore" "$filesPath"/ "$cacheMachineDisksMountsPath"/
+	rsync --quiet --archive --hard-links --acls --xattrs --exclude=".gitignore" "$filesPath"/ "$cacheMachineDisksMountsPath"/
 }
 
 function installFilesystem()

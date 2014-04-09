@@ -1,4 +1,9 @@
-function packageManager()
+function centos_packageManager()
 {
-	sudo -p "Please enter your password for sudo to run yum install: " yum install -y "$@"
+	if [ "$beVerbose" = no ]; then
+		local -r yumVerbosity=" --quiet"
+	else
+		local -r yumVerbosity=""
+	fi
+	sudo -p "Please enter your password for sudo to run yum install: " yum${yumVerbosity} --assumeyes install "$@"
 }

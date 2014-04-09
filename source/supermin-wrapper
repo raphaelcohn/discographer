@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set +o allexport -o braceexpand +o emacs -o errexit +o errtrace +o functrace +o hashall +o histexpand +o history +o ignoreeof -o interactive-comments +o keyword +o monitor +o noclobber +o noexec +o noglob +o nolog +o notify +o nounset +o onecmd +o physical +o pipefail +o posix +o verbose +o vi +o xtrace;unset BASH_ENV;unset BASH_XTRACEFD;unset CDPATH;unset ENV;unset FCEDIT;unset FIGNORE;unset FUNCNEST;unset GLOBIGNORE;unset HISTCONTROL;unset HISTFILE;unset HISTFILESIZE;unset HISTIGNORE;unset HISTSIZE;unset HISTTIMEFORMAT;unset HOSTFILE;unset IGNOREEOF;unset INPUTRC;unset MAIL;unset MAILCHECK;unset MAILPATH;unset TMOUT;umask 022
 
+readonly tab=$'\t'
 function informationMessage()
 {
 	local messageKind="$1"
@@ -13,7 +14,7 @@ function informationMessage()
 		;;
 		
 		*)
-			if [ "$optionVerbose" = "yes" ]; then
+			if [ "$beVerbose" = "yes" ]; then
 				echo "$ourName: $messageKind: $message"
 			fi
 		;;
@@ -81,23 +82,10 @@ Argumented Switches
     -s cachePath          ${cachePath}
     -f functionsPath      ${functionsPath}
     -p pathsPath          ${pathsPath}
-    -o option             See below
     --                    End of arguments
 
 Variable Arguments
     machine-groups        A list of machine-group names in configPath/machine-groups/
-
-Options
-For options, prefix with either 'yes-' to turn it on
-or 'no-' to turn it off. For example, to turn on 'chroot' :-
-
-    ${ourName} -o yes-chroot
-
--o may be repeated as necessary. Options are evaluated in left-to-right order.
-Last setting wins.
-
-Options are as follows:-   Default
-    chroot                 ${optionChroot}
 
 Notes
 A path is used to define the location of essential programs used during initial bootstrapping. It also defines a packageManager
@@ -112,7 +100,7 @@ function loadAnyConfiguration()
 	cachePath="$crudeOurPath"/cache
 	functionsPath="$crudeOurPath"/functions
 	pathsPath="$configPath"/paths
-	optionVerbose="no"
+	beVerbose="no"
 	
 	if [ -r /etc/"$ourName"/configuration ]; then
 		source /etc/"$ourName"/configuration
@@ -137,7 +125,7 @@ function parseCommandLine()
 			;;
 			
 			v)
-				optionVerbose="yes"
+				beVerbose="yes"
 			;;
 			
 			c)
@@ -232,9 +220,18 @@ function validateCommandLineArguments()
 	fi
 }
 
+function executeUnderSudoIfRequired()
+{
+	if [ $EUID -ne 0 ]; then
+		exec sudo -p "Enter your password to run $ourName as root: " "$crudeOurPath"/"$ourName" "$@"
+	fi
+}
+
 function sourceFunctions()
 {
-	pushd "$functionsPath" 1>/dev/null 2>/dev/null
+	local -r pathToFunctions="$1"
+	local -r extension="$2"
+	pushd "$pathToFunctions" 1>/dev/null 2>/dev/null
 		local functionFile
 		for functionFile in *.functions
 		do
@@ -252,8 +249,9 @@ function main()
 	loadAnyConfiguration
 	parseCommandLine "$@"
 	validateCommandLineArguments
+	executeUnderSudoIfRequired "$@"
 	
-	sourceFunctions
+	sourceFunctions "$functionsPath" functions
 	
 	initialiseTraps
 	installDependencies

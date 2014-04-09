@@ -134,6 +134,7 @@ function buildMachines()
 	do
 		for machineFunction in "${machineFunctions[@]}"
 		do
+			informationMessage INFO "${tab}${tab}${machine} ${machineFunction}"
 			$machineFunction
 		done
 	done
