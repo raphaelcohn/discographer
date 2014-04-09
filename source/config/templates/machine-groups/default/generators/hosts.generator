@@ -1,1 +1,1 @@
-echo "DO SOMETHING HERE to generate /etc/hosts !"
+informationMessage INFO "${tab}${tab}${tab}DO SOMETHING HERE to generate /etc/hosts!"

@@ -2,13 +2,31 @@ function sourceGenerators()
 {
 	local -r generatorsKind="$1"
 	local -r generatorsPath="$2"
+	
+	case "$generatorsKind" in
+		
+		machine-group)
+			local -r localIndentation="${tab}${tab}"
+		;;
+		
+		machine)
+			local -r localIndentation="${tab}${tab}${tab}"
+		;;
+		
+		*)
+			informationMessage FAIL "Unknown generator"
+			exit 1
+		;;
+		
+	esac
+	
 	pushd "$generatorsPath" 1>/dev/null 2>/dev/null
 		
 		local generator
 		for generator in *.generator
 		do
 			if [ -e "$generator" ]; then
-				informationMessage INFO "Sourcing $kind generator $generator"
+				informationMessage INFO "${localIndentation}${generator%%.generator} sourcingGenerator"
 				source "$generator"
 			fi
 		done
@@ -18,23 +36,21 @@ function sourceGenerators()
 
 function runInMounts()
 {
+	mountBind /dev "$cacheMachineFilesystemImageMountPath"/dev
+	mountBind /dev/pts "$cacheMachineFilesystemImageMountPath"/dev/pts
+	mountBind /dev/shm "$cacheMachineFilesystemImageMountPath"/dev/shm
+	mountBind /proc "$cacheMachineFilesystemImageMountPath"/proc
+	mountBind /sys "$cacheMachineFilesystemImageMountPath"/sys
 	pushd "$cacheMachineFilesystemImageMountPath" 1>/dev/null 2>/dev/null
 		
-		mountBind /dev "$cacheMachineFilesystemImageMountPath"/dev
-		mountBind /dev/pts "$cacheMachineFilesystemImageMountPath"/dev/pts
-		mountBind /dev/shm "$cacheMachineFilesystemImageMountPath"/dev/shm
-		mountBind /proc "$cacheMachineFilesystemImageMountPath"/proc
-		mountBind /sys "$cacheMachineFilesystemImageMountPath"/sys
-		
-			"$@"
-		
-		umount "$cacheMachineFilesystemImageMountPath"/sys
-		umount "$cacheMachineFilesystemImageMountPath"/proc
-		umount "$cacheMachineFilesystemImageMountPath"/dev/shm
-		umount "$cacheMachineFilesystemImageMountPath"/dev/pts
-		umount "$cacheMachineFilesystemImageMountPath"/dev
+		"$@"
 		
 	popd 1>/dev/null 2>/dev/null
+	unmountBind "$cacheMachineFilesystemImageMountPath"/sys
+	unmountBind "$cacheMachineFilesystemImageMountPath"/proc
+	unmountBind "$cacheMachineFilesystemImageMountPath"/dev/shm
+	unmountBind "$cacheMachineFilesystemImageMountPath"/dev/pts
+	unmountBind "$cacheMachineFilesystemImageMountPath"/dev
 }
 
 function runInChroot()

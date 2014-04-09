@@ -13,7 +13,7 @@ function determineDistribution()
 	if which lsb_release 1>/dev/null 2>/dev/null; then
 		readonly lsbDistributor="$(lsb_release --id --short)"
 		if [ -n "$lsbDistributor" ]; then
-			readonly pathName="debian"
+			readonly pathName="$lsbDistributor"
 			return 0
 		fi
 	fi
@@ -70,6 +70,7 @@ function verifyHostSystemRequirementsUsingDependencyChecks()
 				# Not perfect; might point to non-exec but extant file
 				if [ ! -x "$symlink" ]; then
 					installPackages+=("$packageName")
+					informationMessage INFO "Uninstalled binary $symlink"
 					informationMessage WARN "Uninstalled package $packageName"
 					break
 				fi

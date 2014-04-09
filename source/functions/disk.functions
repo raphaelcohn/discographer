@@ -145,13 +145,37 @@ function mountLoopbackDiskImage()
 # Abstracted to support Mac OS X mounting in the future: http://nicksegers.com/mounting-to-loopback-in-osx/
 function mountBind()
 {
-	local -r mountPath="$3"
+	local -r mountPath="$1"
 
 	if [ "$(uname)" = "Darwin" ]; then
 		return 0
 	fi
 
 	mount -o bind /dev "$mountPath"
+}
+
+function unmountBind()
+{
+	local -r mountPath="$1"
+	
+	if [ "$(uname)" = "Darwin" ]; then
+		# yum does not exist in brew; installing via source has problems (msgfmt, broken Makefile, broken install utility; Python versioning)
+		return 0
+	fi
+	
+	umount "$mountPath"
+}
+
+function unmountLoopback()
+{
+	local -r mountPath="$1"
+
+	if [ "$(uname)" = "Darwin" ]; then
+		# yum does not exist in brew; installing via source has problems (msgfmt, broken Makefile, broken install utility; Python versioning)
+		return 0
+	fi
+
+	umount "$mountPath"
 }
 
 
@@ -176,9 +200,19 @@ function syncDiskImage()
 }
 diskUnmountFunctions+=(syncDiskImage)
 
+function shrinkDiskImage()
+{
+	echo "FIXME: Disk resize for ext2/3/4 but only if permitted"
+	#resize2fs -P /dev/disk/by-uuid/"${machineDisksConfigurationUuid["$disk"]}"
+	# -M gives minum size
+	#resize2fs -M
+	#truncate -s <<minimumSize>>
+}
+diskUnmountFunctions+=(shrinkDiskImage)
+
 function unmountDiskImage()
 {
-	umount "${machineDisksConfigurationImageMountPath["$disk"]}" || true
+	unmountLoopback "${machineDisksConfigurationImageMountPath["$disk"]}" || true
 }
 diskUnmountFunctions+=(unmountDiskImage)
 

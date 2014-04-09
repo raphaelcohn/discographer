@@ -3,10 +3,10 @@ function checkDeviceConfigurationDirectoryOrFifo()
 	local kind="$1"
 	
 	if [ -n "$deviceMajor" ]; then
-		informationMessage FAIL "$configMachineDevicesPath contains a $kind definition $devicePath with a device major"
+		informationMessage FAIL "${indentationLevel}$configMachineDevicesPath contains a $kind definition $devicePath with a device major"
 	fi
 	if [ -n "$deviceMinor" ]; then
-		informationMessage FAIL "$configMachineDevicesPath contains a $kind definition $devicePath with a device minor"
+		informationMessage FAIL "${indentationLevel}$configMachineDevicesPath contains a $kind definition $devicePath with a device minor"
 	fi
 }
 
@@ -15,13 +15,19 @@ function checkDeviceConfigurationLink()
 	local kind="$1"
 	
 	if [ -n "$deviceMinor" ]; then
-		informationMessage FAIL "$configMachineDevicesPath contains a $kind definition $devicePath with a device minor"
+		informationMessage FAIL "${indentationLevel}$configMachineDevicesPath contains a $kind definition $devicePath with a device minor"
 	fi
 }
 
 function installDeviceNodes()
 {
 	local -r devicesFilePath="$1"
+	
+	if [ "$beVerbose" = "yes" ]; then
+		local -r indentationLevel="${tab}${tab}${tab}${tab}"
+	else
+		local -r indentationLevel=""
+	fi
 	
 	local devicePath
 	local deviceUid
@@ -43,7 +49,7 @@ function installDeviceNodes()
 		
 		completePath="${cacheMachineDisksMountsPath}$devicePath"
 		if [ -e "$completePath" ]; then
-			informationMessage WARN "Deleting duplicate device $devicePath (in $devicesFilePath)"
+			informationMessage WARN "${indentationLevel}Deleting duplicate device $devicePath"
 			rm -rf "$completePath"
 		fi
 		
@@ -86,7 +92,7 @@ function installDeviceNodes()
 			;;
 			
 			*)
-				informationMessage FAIL "Unknown deviceType $deviceType in $devicesFilePath"
+				informationMessage FAIL "${indentationLevel}Unknown deviceType $deviceType in $devicesFilePath"
 				exit 1
 			;;
 		
@@ -111,9 +117,11 @@ function installFilesystem()
 		for underlay in *
 		do
 			if [ -f "$underlay" ]; then
+				informationMessage INFO "${tab}${tab}${tab}${underlay%%.devices} installDeviceNodes"
 				installDeviceNodes "$underlay"
 			fi
 			if [ -d "$underlay" ]; then
+				informationMessage INFO "${tab}${tab}${tab}${underlay} installFiles"
 				installFiles "$underlay"
 			fi
 		done

@@ -51,7 +51,7 @@ machineFunctions+=(verifyMachineNameIsValidDnsLabel)
 
 function prepareMachinePaths()
 {
-	configMachinePath="$machinesPath"/"$machine"
+	export configMachinePath="$machinesPath"/"$machine"
 	if [ ! -d "$configMachinePath" ]; then
 		informationMessage FAIL "Machine $machine missing machine config path $configMachinePath"
 		exit 1
@@ -103,6 +103,7 @@ function prepareMachinePaths()
 	mkdir -m 0755 -p "$cacheMachineDisksPath"
 	
 	cacheMachineDisksMountsPath="$cacheMachinePath"/disks-mountpoint
+	rm -rf "$cacheMachineDisksMountsPath"
 	mkdir -m 0755 -p "$cacheMachineDisksMountsPath"
 }
 machineFunctions+=(prepareMachinePaths)
@@ -234,12 +235,20 @@ function fillInMachineYumConfTemplate()
 {
 	temporaryFileToRemoveOnExit
 	configMachineYumConfigFile="$TMP_FILE"
-	cacheYumPath="$cacheYumPath" configMachinePath="$configMachinePath" configYumPath="$configYumPath" templateFile "$configMachineYumConfigTemplateFile" >"$configMachineYumConfigFile"
+	
+	# http://yum.baseurl.org/download/3.4/yum-3.4.3.tar.gz
+	
+	templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
 }
 machineFunctions+=(fillInMachineYumConfTemplate)
 
 function yumWrapper()
 {
+	if [ "$(uname)" = "Darwin" ]; then
+		# yum does not exist in brew; installing via source has problems (msgfmt, broken Makefile, broken install utility; Python versioning)
+		return 0
+	fi
+	
 	if [ "$beVerbose" = no ]; then
 		local -r yumVerbosity=" --quiet"
 	else
@@ -258,7 +267,7 @@ function installRpms()
 	#yumWrapper groupinstall Core
 	
 	# Fix-up yum.conf and repositories in the disk image
-	# cacheYumPath="$cacheYumPath" configMachinePath="$configMachinePath" configYumPath="$configYumPath" templateFile "$configMachineYumConfigTemplateFile" >"$configMachineYumConfigFile"
+	# cacheYumPath="$cacheYumPath" configMachinePath="$configMachinePath" configYumPath="$configYumPath" templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
 
 	# rpm -q --whatprovides /usr/sbin/chroot to find a file
 	

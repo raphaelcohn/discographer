@@ -2,17 +2,22 @@ mainFunctions=()
 
 function setYumConfigPaths()
 {
-	readonly configYumPath="$configPath"/yum
+	export configYumPath="$configPath"/yum
 	if [ ! -d "$configYumPath" ]; then
 		informationMessage FAIL "Yum config missing at path $configYumPath"
 		exit 1
 	fi
 	if [ ! -d "$configYumPath"/plugins ]; then
-		informationMessage FAIL "Machine $machine missing machine folder $configYumPath/plugins"
+		informationMessage FAIL "Yum config plugins missing at path $configYumPath/plugins"
+		exit 1
+	fi
+	readonly configYumConfigFileTemplatePath="$configYumPath"/yum.conf.template
+	if [ ! -f "$configYumConfigFileTemplatePath" ]; then
+		informationMessage FAIL "Yum config file template missing at path $configYumConfigFileTemplatePath"
 		exit 1
 	fi
 	
-	readonly cacheYumPath="$cachePath"/yum
+	export cacheYumPath="$cachePath"/yum
 	mkdir -m 0755 -p "$cacheYumPath"
 	mkdir -m 0755 -p "$cacheYumPath"/cache
 	mkdir -m 0755 -p "$cacheYumPath"/persist

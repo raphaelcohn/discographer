@@ -14,9 +14,9 @@ function prepareMachineGroupPaths()
 		exit 1
 	fi
 	
-	configMachineGeneratorsPath="$configMachineGroupPath"/generators
-	if [ ! -d "$configMachineGeneratorsPath" ]; then
-		informationMessage FAIL "Machine-group $machineGroup missing machine-group generators path $configMachineGeneratorsPath"
+	configMachineGroupGeneratorsPath="$configMachineGroupPath"/generators
+	if [ ! -d "$configMachineGroupGeneratorsPath" ]; then
+		informationMessage FAIL "Machine-group $machineGroup missing machine-group generators path $configMachineGroupGeneratorsPath"
 		exit 1
 	fi
 	

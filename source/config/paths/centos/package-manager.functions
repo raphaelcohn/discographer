@@ -1,4 +1,4 @@
-function centos_packageManager()
+function packageManager()
 {
 	if [ "$beVerbose" = no ]; then
 		local -r yumVerbosity=" --quiet"
