@@ -92,6 +92,8 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
+	echo "MORE"
+	
 	cacheMachinePath="$cacheMachineGroupPath"/"$machine"
 	mkdir -m 0755 -p "$cacheMachinePath"
 	
