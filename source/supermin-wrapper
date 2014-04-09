@@ -242,6 +242,13 @@ function sourceFunctions()
 	popd 1>/dev/null 2>/dev/null
 }
 
+function registerTrapHandlers()
+{
+	addNextTrapHandler removeFilesOnExit
+	addNextTrapHandler removeLoopbackMountPointsOnExit
+	addNextTrapHandler removeBindMountPointsOnExit
+}
+
 function main()
 {
 	setDebugging
@@ -252,6 +259,7 @@ function main()
 	executeUnderSudoIfRequired "$@"
 	
 	sourceFunctions "$functionsPath" functions
+	registerTrapHandlers
 	
 	initialiseTraps
 	installDependencies
