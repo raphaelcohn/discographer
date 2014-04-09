@@ -108,11 +108,10 @@ to automatically install any missing dependencies. The PATH variable is reset to
 
 function loadAnyConfiguration()
 {
-	configPath="${crudeOurPath}"/config
-	cachePath="$configPath"/cache
-	functionsPath="$configPath"/functions
+	configPath="$crudeOurPath"/config
+	cachePath="$crudeOurPath"/cache
+	functionsPath="$crudeOurPath"/functions
 	pathsPath="$configPath"/paths
-	optionChroot="no"
 	optionVerbose="no"
 	
 	if [ -r /etc/"$ourName"/configuration ]; then
