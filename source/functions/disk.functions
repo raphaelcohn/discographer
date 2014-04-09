@@ -1,18 +1,5 @@
 diskCreateFunctions=()
 
-function declareBashDictionaryForMountingAndUnmounting()
-{
-	declare -Ag machineDisksConfigurationFilesystemType
-	declare -Ag machineDisksConfigurationMountPoint
-	declare -Ag machineDisksConfigurationImagePath
-	declare -Ag machineDisksConfigurationImageMountPath
-	declare -Ag machineDisksConfigurationUuid
-	declare -Ag machineDisksConfigurationMountOptions
-	declare -Ag machineDisksConfigurationDumpOptions
-	declare -Ag machineDisksConfigurationFsckOptions
-}
-diskCreateFunctions+=(declareBashDictionaryForMountingAndUnmounting)
-
 function defaultDiskImageConfiguration()
 {
 	machineDiskSize=256M
