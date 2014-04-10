@@ -53,7 +53,7 @@ function unmountBind()
 	if [ -z "$exiting" ]; then
 		unregisterMountPointToRemoveOnExit
 	fi
-	umount "$mountPath"
+	umount "$mountPath" || true
 }
 
 mountPointsToRemoveOnExitPaths=()
