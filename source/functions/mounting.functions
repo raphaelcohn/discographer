@@ -102,10 +102,13 @@ function removeMountPointsOnExit()
 	local mountPath
 	local unmountFunction
 	local -i index
-	for (( index=0; index<${#mountPointsToRemoveOnExitPaths[*]}; index++ ))
+	local -i adjustedIndex
+	
+	for (( index=${#mountPointsToRemoveOnExitPaths[*]}; index>0; index-- ))
 	do
-		mountPath="${mountPointsToRemoveOnExitPaths[$index]}"
-		unmountFunction="${mountPointsToRemoveOnExitFunctions[$index]}"
+		adjustedIndex=$((index-1))
+		mountPath="${mountPointsToRemoveOnExitPaths[$adjustedIndex]}"
+		unmountFunction="${mountPointsToRemoveOnExitFunctions[$adjustedIndex]}"
 		
 		$unmountFunction "$mountPath"
 	done
