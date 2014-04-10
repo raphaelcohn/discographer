@@ -2,16 +2,7 @@ diskCreateFunctions=()
 
 function defaultDiskImageConfiguration()
 {
-	machineDiskSize=256M
-	machineDiskMountPoint=/
-	machineDiskFilesystemType=ext4
-	machineDiskBlockSize=4096
-	machineDiskVolumeLabel16Bytes="$disk"
-	machineDiskUuid=48c2b730-62a5-4b06-99be-85c0ea4d53dd
-	machineDiskOptions=uninit_bg,extent,has_journal,resize_inode,sparse_super
-	machineDiskMountOptions=defaults
-	machineDiskDumpOptions=0
-	machineDiskFsckOptions=0
+	source "$configDefaultsPath"/disk-image-configuration.default
 }
 diskCreateFunctions+=(defaultDiskImageConfiguration)
 

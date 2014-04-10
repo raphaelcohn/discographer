@@ -26,8 +26,12 @@ function prepareMachineGroupPaths()
 		exit 1
 	fi
 	
-	cacheMachineGroupPath="$cachePath"/"$machineGroup"
+	cacheMachineGroupPath="$cachePath"/machine-groups/"$machineGroup"
 	mkdir -m 0755 -p "$cacheMachineGroupPath"
+	
+	cacheMachineGroupMachinesPath="$cacheMachineGroupPath"/machines
+	rm -rf "$cacheMachineGroupMachinesPath"
+	mkdir -m 0755 -p "$cacheMachineGroupMachinesPath"
 	
 	cacheMachineGroupOverlaysGeneratedPath="$cacheMachineGroupPath"/overlays
 	rm -rf "$cacheMachineGroupOverlaysGeneratedPath"
@@ -55,7 +59,7 @@ machineGroupFunctions+=(prepareMachineGroupPaths)
 
 function cleanUpMachineGroupsCache()
 {
-	pushd "$cachePath" 1>/dev/null 2>/dev/null
+	pushd "$cacheMachineGroupPath"/.. 1>/dev/null 2>/dev/null
 		local cachedMachineGroup
 		for cachedMachineGroup in *
 		do

@@ -1,14 +1,20 @@
 mainFunctions=()
 
+function setSomePaths()
+{
+	configDefaultsPath="$configPath"/defaults
+	if [ ! -d "$configDefaultsPath" ]; then
+		informationMessage FAIL "Defaults config missing at path $configDefaultsPath"
+		exit 1
+	fi
+}
+mainFunctions+=(setSomePaths)
+
 function setYumConfigPaths()
 {
 	export configYumPath="$configPath"/yum
 	if [ ! -d "$configYumPath" ]; then
 		informationMessage FAIL "Yum config missing at path $configYumPath"
-		exit 1
-	fi
-	if [ ! -d "$configYumPath"/plugins ]; then
-		informationMessage FAIL "Yum config plugins missing at path $configYumPath/plugins"
 		exit 1
 	fi
 	readonly configYumConfigFileTemplatePath="$configYumPath"/yum.conf.template
@@ -19,10 +25,6 @@ function setYumConfigPaths()
 	
 	export cacheYumPath="$cachePath"/yum
 	mkdir -m 0755 -p "$cacheYumPath"
-	mkdir -m 0755 -p "$cacheYumPath"/cache
-	mkdir -m 0755 -p "$cacheYumPath"/persist
-	touch "$cacheYumPath"/log
-	chmod 0644 "$cacheYumPath"/log
 }
 mainFunctions+=(setYumConfigPaths)
 

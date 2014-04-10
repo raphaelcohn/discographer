@@ -99,7 +99,7 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
-	cacheMachinePath="$cacheMachineGroupPath"/"$machine"
+	cacheMachinePath="$cacheMachineGroupMachinesPath"/"$machine"
 	mkdir -m 0755 -p "$cacheMachinePath"
 	
 	cacheMachineOverlaysGeneratedPath="$cacheMachinePath"/overlays
@@ -117,7 +117,7 @@ machineFunctions+=(prepareMachinePaths)
 
 function cleanUpMachinesCache()
 {
-	pushd "$cacheMachineGroupPath" 1>/dev/null 2>/dev/null
+	pushd "$cacheMachineGroupMachinesPath" 1>/dev/null 2>/dev/null
 		local cachedMachine
 		for cachedMachine in *
 		do
@@ -143,7 +143,7 @@ machineFunctions+=(cleanUpMachinesCache)
 
 function defaultMachineConfiguration()
 {
-	machineDistribution=centos
+	source "$configDefaultsPath"/machine-configuration.default
 }
 machineFunctions+=(defaultMachineConfiguration)
 
@@ -168,7 +168,6 @@ function readMachinePackages()
 	do
 		machinePackageNames+=("$packageName")
 	done < <(cat "$configMachinePackagesPath")
-	
 }
 machineFunctions+=(readMachinePackages)
 
@@ -269,8 +268,8 @@ function fillInMachineYumConfTemplate()
 {
 	configMachineYumConfigFile="$cacheMachinePath"/yum.conf
 	
-	# Do we need to manually install this first, before yum?
 	export yumConfigDistributionVersionPackage=${machineDistribution}-release
+	export yumConfigDistributionMajorRevision=${machineDistributionMajorRevision}
 	
 	export yumConfigRepositoriesPath="$cacheMachineDisksMountsPath"/etc/yum.repos.d
 	
@@ -288,8 +287,28 @@ function fillInMachineYumConfTemplate()
 }
 machineFunctions+=(fillInMachineYumConfTemplate)
 
+function downloadDistributionVersionRpm()
+{
+	cacheYumDistributionVersionRpmPath="$cacheYumPath"/"$machineDistributionReleaseRpm"
+	
+	if [ ! -f "$cacheYumDistributionVersionRpmPath" ]; then
+		curl "$machineDistributionReleaseRpmUrl" >"$cacheYumDistributionVersionRpmPath"
+	fi
+}
+machineFunctions+=(downloadDistributionVersionRpm)
+
+function installDistributionVersionRpm()
+{
+	rpm --rebuilddb --root=${cacheMachineDisksMountsPath}
+	rpm --install --root=${cacheMachineDisksMountsPath} --nodeps "$cacheYumDistributionVersionRpmPath"
+}
+machineFunctions+=(installDistributionVersionRpm)
+
 function installYumRepositories()
 {
+	# Remove any shipped repos!
+	rm -rf "$yumConfigRepositoriesPath"/*.repo
+	
 	pushd "$configMachineRepositoriesPath" 1>/dev/null 2>/dev/null
 		
 		local file
@@ -318,26 +337,23 @@ function yumWrapper()
 		local -r yumVerbosity=""
 	fi
 	
-	# assumeyes, color=never, installroot are part of yum.conf
-	yum${yumVerbosity} --config="$configMachineYumConfigFile" --cacheonly "$@"
+	yum${yumVerbosity} --config="$configMachineYumConfigFile" "$@"
 }
 
 function installRpms()
 {
+	# Silly releasever nonsense:-
+	# https://www.linuxquestions.org/questions/linux-software-2/yum-variables-%24distribution-%24releasever-%24basearch-how-to-check-648050/
+	# https://unix.stackexchange.com/questions/19701/yum-how-can-i-view-variables-like-releasever-basearch-yum0
+	
 	# http://www.philchen.com/2009/02/14/how-to-create-an-amazon-elastic-compute-cloud-ec2-machine-image-ami
 	# http://geek.co.il/2010/03/14/how-to-build-a-chroot-jail-environment-for-centos
 	
-	# It is assumed that Core packages are controlled via machine group packages
-	#yumWrapper groupinstall Core
-	
-	# Fix-up yum.conf and repositories in the disk image
-	# cacheYumPath="$cacheYumPath" configMachinePath="$configMachinePath" configYumPath="$configYumPath" templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
-
 	# rpm -q --whatprovides /usr/sbin/chroot to find a file
 	
+	yumWrapper makecache
 	
-	
-	runInMounts yumWrapper install "${machineGroupPackageNames[@]}" "${machinePackageNames[@]}"
+	yumWrapper install "${machineGroupPackageNames[@]}" "${machinePackageNames[@]}"
 }
 machineFunctions+=(installRpms)
 

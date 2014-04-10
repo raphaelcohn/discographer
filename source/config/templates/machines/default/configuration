@@ -1,1 +1,3 @@
 machineDistribution=centos
+machineDistributionMajorRevision=6
+machineDistributionReleaseRpmUrlTemplate=http://mirror.centos.org/centos/6/os/x86_64/Packages/centos-release-6-5.el6.centos.11.1.x86_64.rpm

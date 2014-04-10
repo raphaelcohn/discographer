@@ -105,12 +105,7 @@ function installDeviceNodes()
 function installFiles()
 {
 	local -r filesPath="$1"
-	if [ "$beVerbose" = yes ]; then
-		local -r rsyncVerbosity="-vv"
-	else
-		local -r rsyncVerbosity="--quiet"
-	fi
-	rsync $rsyncVerbosity --archive --hard-links --acls --xattrs --devices --specials --sparse --numeric-ids --no-prune-empty-dirs --exclude=".gitignore" "$filesPath"/ "$cacheMachineDisksMountsPath"/
+	rsync --quiet --archive --hard-links --acls --xattrs --devices --specials --sparse --numeric-ids --no-prune-empty-dirs --exclude=".gitignore" "$filesPath"/ "$cacheMachineDisksMountsPath"/
 }
 
 function installFilesystem()
