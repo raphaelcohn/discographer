@@ -1,15 +1,19 @@
 [main]
-# /var/cache/yum
-cachedir=${cacheYumPath}/cache
+# cache /var/cache/yum
+# persist /var/lib/yum
 
-# /var/lib/yum
-persistdir=${cacheYumPath}/persist
-logfile=${cacheYumPath}/log
-reposdir=${configMachinePath}/repositories
-pluginpath=${configYumPath}/plugins
-pluginconfpath=${configYumPath}/plugins
-#protected_packages=yum glob:/etc/yum/protected.d/*.conf
 installroot=${cacheMachineDisksMountsPath}
+reposdir=${yumConfigRepositoriesPath}
+cachedir=/var/cache/yum
+persistdir=${cacheMachineDisksMountsPath}/var/lib/yum
+
+#cachedir=${cacheYumPath}/cache
+#persistdir=${cacheYumPath}/persist
+#logfile=${cacheYumPath}/log
+#reposdir=${configMachinePath}/repositories
+#pluginpath=${configYumPath}/plugins
+#pluginconfpath=${configYumPath}/plugins
+#protected_packages=yum glob:/etc/yum/protected.d/*.conf
 
 distroverpkg=${yumConfigDistributionVersionPackage}
 pkgpolicy=newest

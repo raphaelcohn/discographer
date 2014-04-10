@@ -93,8 +93,9 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
-	if [ ! -d "$configMachinePath"/repositories ]; then
-		informationMessage FAIL "Machine $machine missing machine folder $configMachinePath/repositories"
+	configMachineRepositoriesPath="$configMachinePath"/repositories
+	if [ ! -d "$configMachineRepositoriesPath" ]; then
+		informationMessage FAIL "Machine $machine missing repositories folder $configMachineRepositoriesPath"
 		exit 1
 	fi
 	
@@ -108,7 +109,7 @@ function prepareMachinePaths()
 	cacheMachineDisksPath="$cacheMachinePath"/disks
 	mkdir -m 0755 -p "$cacheMachineDisksPath"
 	
-	cacheMachineDisksMountsPath="$cacheMachinePath"/disks-mountpoint
+	export cacheMachineDisksMountsPath="$cacheMachinePath"/disks-mountpoint
 	rm -rf "$cacheMachineDisksMountsPath"
 	mkdir -m 0755 -p "$cacheMachineDisksMountsPath"
 }
@@ -271,6 +272,8 @@ function fillInMachineYumConfTemplate()
 	# Do we need to manually install this first, before yum?
 	export yumConfigDistributionVersionPackage=${machineDistribution}-release
 	
+	export yumConfigRepositoriesPath="$cacheMachineDisksMountsPath"/etc/yum.repos.d
+	
 	if [ "$beVerbose" = "yes" ]; then
 		export yumConfigDebugLevel=10
 		export yumConfigErrorLevel=10
@@ -284,6 +287,23 @@ function fillInMachineYumConfTemplate()
 	templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
 }
 machineFunctions+=(fillInMachineYumConfTemplate)
+
+function installYumRepositories()
+{
+	pushd "$configMachineRepositoriesPath" 1>/dev/null 2>/dev/null
+		
+		local file
+		for file in *.repo
+		do
+			if [ -s "$file" ]; then
+				# cat ensures that we do not copy a symlink
+				cat "$file" >"$yumConfigRepositoriesPath"/"$file"
+			fi
+		done
+		
+	popd 1>/dev/null 2>/dev/null
+}
+machineFunctions+=(installYumRepositories)
 
 function yumWrapper()
 {
@@ -299,13 +319,7 @@ function yumWrapper()
 	fi
 	
 	# assumeyes, color=never, installroot are part of yum.conf
-	
-	
-	
-	
-	set -x
 	yum${yumVerbosity} --config="$configMachineYumConfigFile" --cacheonly "$@"
-	set +x
 }
 
 function installRpms()

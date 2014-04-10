@@ -21,7 +21,7 @@ function sourceDiskImageConfiguration()
 	
 	machineDiskImagePath="$cacheMachineDisksPath"/"$disk".img
 	
-	export machineDiskImageMountPath="$cacheMachineDisksMountsPath${machineDiskMountPoint}"
+	machineDiskImageMountPath="$cacheMachineDisksMountsPath${machineDiskMountPoint}"
 }
 diskCreateFunctions+=(sourceDiskImageConfiguration)
 
