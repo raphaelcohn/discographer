@@ -1,5 +1,6 @@
 function runOnTrap()
 {
+	exiting=yes
 	local trapHandler
 	for trapHandler in "${trapHandlers[@]}"
 	do

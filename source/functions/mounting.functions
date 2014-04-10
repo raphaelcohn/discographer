@@ -1,0 +1,88 @@
+# Mounting is abstracted to support Mac OS X mounting in the future: http://nicksegers.com/mounting-to-loopback-in-osx/
+
+function mountLoopback()
+{
+	local -r filesystemType="$1"
+	local -r imagePath="$2"
+	local -r mountPath="$3"
+	
+	if [ "$(uname)" = "Darwin" ]; then
+		#local -r devicePath="$(hdiutil attach -imagekey diskimage-class=CRawDiskImage -readwrite -noverify -noautopen -noautofsck -mountpoint "$mountPath" -nomount "$imagePath")"
+		#diskutil mount "$devicePath"
+		return 0
+	fi
+	
+	mount -o loop -t "$filesystemType" "$imagePath" "$mountPath"
+	registerMountPointToRemoveOnExit "$mountPath" unmountLoopback
+}
+
+function mountBind()
+{
+	local -r mountPath="$1"
+	
+	if [ "$(uname)" = "Darwin" ]; then
+		return 0
+	fi
+	
+	mount -o bind /dev "$mountPath"
+	registerMountPointToRemoveOnExit "$mountPath" unmountBind
+}
+
+function unmountLoopback()
+{
+	local -r mountPath="$1"
+
+	if [ "$(uname)" = "Darwin" ]; then
+		return 0
+	fi
+	
+	if [ -z "$exiting" ]; then
+		unregisterMountPointToRemoveOnExit
+	fi
+	umount "$mountPath"
+}
+
+function unmountBind()
+{
+	local -r mountPath="$1"
+	
+	if [ "$(uname)" = "Darwin" ]; then
+		return 0
+	fi
+	
+	if [ -z "$exiting" ]; then
+		unregisterMountPointToRemoveOnExit
+	fi
+	umount "$mountPath"
+}
+
+mountPointsToRemoveOnExitPaths=()
+mountPointsToRemoveOnExitFunctions=()
+
+function registerMountPointToRemoveOnExit()
+{
+	local mountPath="$1"
+	local unmountFunction="$2"
+	mountPointsToRemoveOnExitPaths+=("$mountPath")
+	mountPointsToRemoveOnExitFunctions+=("$unmountFunction")
+}
+
+function unregisterMountPointToRemoveOnExit()
+{
+	unset bindMountPointsToRemoveOnExit[$((${#mountPointsToRemoveOnExitPaths[*]}-1))]
+	unset bindMountPointsToRemoveOnExit[$((${#mountPointsToRemoveOnExitFunctions[*]}-1))]
+}
+
+function removeMountPointsOnExit()
+{
+	local mountPath
+	local unmountFunction
+	local -i index
+	for (( index=0; index < ${#mountPointsToRemoveOnExitPaths[*]}; index++ ))
+	do
+		mountPath="${mountPointsToRemoveOnExitPaths[$index]}"
+		unmountFunction="${mountPointsToRemoveOnExitFunctions[$index]}"
+		
+		$unmountFunction "$mountPath"
+	done
+}

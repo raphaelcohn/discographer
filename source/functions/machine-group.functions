@@ -14,6 +14,12 @@ function prepareMachineGroupPaths()
 		exit 1
 	fi
 	
+	configMachineGroupConfigurationPath="$configMachineGroupPath"/configuration
+	if [ ! -f "$configMachineGroupConfigurationPath" ]; then
+		informationMessage FAIL "Machine group $machineGroup missing machine-group configuration file $configMachineGroupPackagesPath"
+		exit 1
+	fi
+
 	configMachineGroupGeneratorsPath="$configMachineGroupPath"/generators
 	if [ ! -d "$configMachineGroupGeneratorsPath" ]; then
 		informationMessage FAIL "Machine-group $machineGroup missing machine-group generators path $configMachineGroupGeneratorsPath"
@@ -72,6 +78,24 @@ function cleanUpMachineGroupsCache()
 	popd 1>/dev/null 2>/dev/null
 }
 machineGroupFunctions+=(cleanUpMachineGroupsCache)
+
+function defaultMachineGroupConfiguration()
+{
+	:
+}
+machineFunctions+=(defaultMachineGroupConfiguration)
+
+function sourceMachineGroupConfiguration()
+{
+	source "$configMachineGroupConfigurationPath"
+}
+machineFunctions+=(sourceMachineGroupConfiguration)
+
+function exportMachineGroupConfiguration()
+{
+	:
+}
+machineFunctions+=(exportMachineGroupConfiguration)
 
 machineGroupPackageNames=()
 function readMachineGroupPackages()

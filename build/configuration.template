@@ -1,0 +1,5 @@
+configPath="${crudeOurPath}/config"
+cachePath="${crudeOurPath"/cache"
+functionsPath="${crudeOurPath}/functions"
+pathsPath="${configPath}/paths"
+beVerbose="no"

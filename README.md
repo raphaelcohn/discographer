@@ -146,7 +146,7 @@ When executing a machine, in addition to the above, the following environment va
 * `${configMachineGeneratorsPath}` - generator scriptlets for machine
 * `${configMachineOverlaysPath}` - where to find all root overlays for machine
 * `${generatedMachineRootOverlaysPath}` - where to put any generated files and folders for machine
-* `${configMachineYumConfigTemplateFile}`
+* `${configYumConfigFileTemplatePath}`
 * `${cacheMachinePath}`
 * `${cacheMachineMinimalAppliancePath}`
 * `${cacheMachineBuiltAppliancePath}`
@@ -192,21 +192,19 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 
 # TODO
 
-* chroot yum install
-* capture fs-type, disk size, block size, label, UUID per disk
-* multiple disks
-* overlays for more than root disks - one for each disk
-* creation of mounting config
+* centos-release in yum.conf
+* install yum.repos.d
+* install yum.conf
+* support deb / debootstrap
+* support one-off rpm/deb installation
+* Support /etc/pki/* gpg keys used by yum
+
 * chattr silent compression
 * chattr a+i
 * suid / guid applied only by exception
-* non-root users / fakeroot and perms that are not 0755
-* move the devices file into a per-disk overlay concept
-* more intelligent RPM caching?
 * Specify DNS domain
 * other users / groups
 * kernel creation
 * initrd creation
 * swap, grub, LVM, RAID?
 * RESIZE ext4 disk image, so we can shrink to minimum
-* /var/log, etc on a separate disk

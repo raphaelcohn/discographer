@@ -57,6 +57,12 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
+	configMachineConfigurationPath="$configMachinePath"/configuration
+	if [ ! -f "$configMachineConfigurationPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine configuration file $configMachineConfigurationPath"
+		exit 1
+	fi
+	
 	configMachinePackagesPath="$configMachinePath"/packages
 	if [ ! -f "$configMachinePackagesPath" ]; then
 		informationMessage FAIL "Machine $machine missing machine packages file $configMachinePackagesPath"
@@ -133,6 +139,24 @@ function cleanUpMachinesCache()
 	popd 1>/dev/null 2>/dev/null
 }
 machineFunctions+=(cleanUpMachinesCache)
+
+function defaultMachineConfiguration()
+{
+	machineDistribution=centos
+}
+machineFunctions+=(defaultMachineConfiguration)
+
+function sourceMachineConfiguration()
+{
+	source "$configMachineConfigurationPath"
+}
+machineFunctions+=(sourceMachineConfiguration)
+
+function exportMachineConfiguration()
+{
+	export machineDistribution="$machineDistribution"
+}
+machineFunctions+=(exportMachineConfiguration)
 
 machinePackageNames=()
 function readMachinePackages()
@@ -235,6 +259,19 @@ function fillInMachineYumConfTemplate()
 {
 	configMachineYumConfigFile="$cacheMachinePath"/yum.conf
 	
+	# Do we need to manually install this first, before yum?
+	export yumConfigDistributionVersionPackage=${machineDistribution}-release
+	
+	if [ "$beVerbose" = "yes" ]; then
+		export yumConfigDebugLevel=10
+		export yumConfigErrorLevel=10
+		export yumConfigRpmVerbository=debug
+	else
+		export yumConfigDebugLevel=2
+		export yumConfigErrorLevel=2
+		export yumConfigRpmVerbository=info
+	fi
+	
 	templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
 }
 machineFunctions+=(fillInMachineYumConfTemplate)
@@ -252,8 +289,14 @@ function yumWrapper()
 		local -r yumVerbosity=""
 	fi
 	
-	echo yum${yumVerbosity} --quiet --assumeyes --config="$configMachineYumConfigFile" --cacheonly --color=never --installroot="$cacheMachineDisksMountsPath" "$@"
-	yum${yumVerbosity} --quiet --assumeyes --config="$configMachineYumConfigFile" --cacheonly --color=never --installroot="$cacheMachineDisksMountsPath" "$@"
+	# assumeyes, color=never, installroot are part of yum.conf
+	
+	
+	
+	
+	set -x
+	yum${yumVerbosity} --config="$configMachineYumConfigFile" --cacheonly "$@"
+	set +x
 }
 
 function installRpms()

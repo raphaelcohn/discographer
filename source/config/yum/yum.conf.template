@@ -1,23 +1,37 @@
 [main]
+# /var/cache/yum
 cachedir=${cacheYumPath}/cache
+
+# /var/lib/yum
 persistdir=${cacheYumPath}/persist
 logfile=${cacheYumPath}/log
 reposdir=${configMachinePath}/repositories
 pluginpath=${configYumPath}/plugins
 pluginconfpath=${configYumPath}/plugins
+#protected_packages=yum glob:/etc/yum/protected.d/*.conf
+installroot=${cacheMachineDisksMountsPath}
 
+distroverpkg=${yumConfigDistributionVersionPackage}
 pkgpolicy=newest
-distroverpkg=centos-release
+#group_package_types=default, mandatory
 
-keepcache=1
-debuglevel=2
-errorlevel=2
-rpmverbosity=info
-#protected_packages=yum glob:/etc/yum/protected.d/*.conf 
-protected_multilib=1
 gpgcheck=0
 localpkg_gpgcheck=0
 repo_gpgcheck=0
+
+#proxy=
+#proxy_username=
+#proxy_password=
+#username=
+#password=
+color=never
+
+keepcache=1
+debuglevel=${yumConfigDebugLevel}
+errorlevel=${yumConfigErrorLevel}
+rpmverbosity=${yumConfigRpmVerbository}
+protected_multilib=1
+multilib_policy=best
 skip_broken=1
 assumeyes=1
 alwaysprompt=0
@@ -32,9 +46,6 @@ obsoletes=True
 overwrite_groups=0
 groupremove_leaf_only=0
 enable_group_conditionals=1
-#group_package_types=default, mandatory
-#installroot=
-#distoverpkg=redhat-release
 diskspacecheck=0
 #tsflags=
 recent=7
@@ -54,18 +65,11 @@ bandwidth=0
 syslog_ident=
 syslog_facility=LOG_USER
 syslog_device=/dev/log
-#proxy=
-#proxy_username=
-#proxy_password=
-#username=
-#password=
 plugins=0
 #metadata_expire=6h
 mirrorlist_expire=20
 #mdpolicy=
-multilib_policy=best
 bugtracker_url=http://google.com/
-color=never
 #color_*
 clean_requirements_on_remove=False
 reset_nice=True
