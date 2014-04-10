@@ -1,5 +1,5 @@
 # Size is as for the  truncate  command
-machineDiskSize=256M
+machineDiskSize=1G
 machineDiskMountPoint=/
 machineDiskFilesystemType=ext4
 machineDiskBlockSize=4096
@@ -12,3 +12,4 @@ machineDiskOptions=uninit_bg,extent,has_journal,resize_inode,sparse_super
 machineDiskMountOptions=defaults
 machineDiskDumpOptions=1
 machineDiskFsckOptions=1
+machineDiskShrink=yes

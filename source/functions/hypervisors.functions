@@ -1,0 +1,38 @@
+function convertDiskImage_kvm()
+{
+	local -r inputFile="${machineDisksConfigurationImagePath["$disk"]}"
+	
+	local -r outputFile="${inputFile%%.img}".qcow2
+	
+	# -c is qcow compression
+	qemu-img convert -q -f raw -O qcow2 -c -o compat=1.1,preallocation=off "$inputFile" "$outputFile"
+	rm -rf "$inputFile"
+	
+	machineDisksConfigurationImagePath["$disk"]="$outputFile"
+}
+
+function convertDiskImage_vmware()
+{
+	local -r inputFile="${machineDisksConfigurationImagePath["$disk"]}"
+	
+	local -r outputFile="${inputFile%%.img}".vmdk
+	
+	# -c is qcow compression
+	qemu-img convert -q -f raw -O vmdk "$inputFile" "$outputFile"
+	rm -rf "$inputFile"
+	
+	machineDisksConfigurationImagePath["$disk"]="$outputFile"
+}
+
+function convertDiskImage_virtualbox()
+{
+	local -r inputFile="${machineDisksConfigurationImagePath["$disk"]}"
+
+	local -r outputFile="${inputFile%%.img}".vdi
+
+	# -c is qcow compression
+	qemu-img convert -q -f raw -O vdi "$inputFile" "$outputFile"
+	rm -rf "$inputFile"
+
+	machineDisksConfigurationImagePath["$disk"]="$outputFile"
+}

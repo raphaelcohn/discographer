@@ -292,7 +292,7 @@ function downloadDistributionVersionRpm()
 	cacheYumDistributionVersionRpmPath="$cacheYumPath"/"$machineDistributionReleaseRpm"
 	
 	if [ ! -f "$cacheYumDistributionVersionRpmPath" ]; then
-		curl "$machineDistributionReleaseRpmUrl" >"$cacheYumDistributionVersionRpmPath"
+		curl "$machineDistributionReleaseRpmUrl" 1>"$cacheYumDistributionVersionRpmPath" 2>/dev/null
 	fi
 }
 machineFunctions+=(downloadDistributionVersionRpm)
@@ -390,7 +390,7 @@ function unmountDisks()
 		fi
 		
 		local diskUnmountFuncton
-		for diskUnmountFuncton in "$diskUnmountFunctons[@]"
+		for diskUnmountFuncton in "${diskUnmountFunctons[@]}"
 		do
 			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskUnmountFuncton}"
 			$diskUnmountFuncton

@@ -8,3 +8,4 @@ machineDiskOptions=
 machineDiskMountOptions=swap
 machineDiskDumpOptions=0
 machineDiskFsckOptions=0
+machineDiskShrink=no

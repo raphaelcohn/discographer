@@ -163,6 +163,7 @@ function buildMachines()
 		for machineFunction in "${machineFunctions[@]}"
 		do
 			declare -A machineDisksConfigurationFilesystemType
+			declare -A machineDisksConfigurationBlockSize
 			declare -A machineDisksConfigurationMountPoint
 			declare -A machineDisksConfigurationImagePath
 			declare -A machineDisksConfigurationImageMountPath

@@ -192,12 +192,16 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 
 # TODO
 
-* centos-release in yum.conf
-* install yum.repos.d
-* install yum.conf
 * support deb / debootstrap
-* support one-off rpm/deb installation
-* Support /etc/pki/* gpg keys used by yum
+* support one-off rpm/deb installation (ie local rpms)
+* support parallel machine building (using bash background jobs)
+* support caching downloaded RPMs / repo structure (? symlink out of the mount point, then blow away ?)
+* support resizing file system
+* check initrd / kernel installation (? kernel package)
+* need to delete files
+* support generating a packing list
+* generate vmdk * vmx
+* generate vmware teams
 
 * chattr silent compression
 * chattr a+i

@@ -8,3 +8,4 @@ machineDiskOptions=uninit_bg,extent,has_journal,resize_inode,sparse_super
 machineDiskMountOptions=defaults
 machineDiskDumpOptions=1
 machineDiskFsckOptions=2
+machineDiskShrink=yes
