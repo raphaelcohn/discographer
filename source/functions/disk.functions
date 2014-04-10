@@ -82,37 +82,6 @@ function createDiskImageFilesystem()
 }
 diskCreateFunctions+=(createDiskImageFilesystem)
 
-function sortDiskMountPoints()
-{
-	(
-		local disk
-		for disk in "${machineDisks[@]}"
-		do
-			echo "${machineDisksConfigurationMountPoint["$disk"]} ${disk}"
-		done
-	) | sort --ignore-nonprinting
-}
-
-function reverseSortDiskMountPoints()
-{
-	(
-		local disk
-		for disk in "${machineDisks[@]}"
-		do
-			echo "${machineDisksConfigurationMountPoint["$disk"]} ${disk}"
-		done
-	) | sort --reverse --ignore-nonprinting
-}
-
-function mountPointIsSpecial()
-{
-	local -r mountPoint="${machineDisksConfigurationMountPoint["$disk"]}"
-	if [ "${mountPoint:0:1}" != '/' ]; then
-		return 0
-	fi
-	return 1
-}
-
 function createDiskImageMountpoint()
 {
 	mkdir -m 0755 -p "${machineDisksConfigurationImageMountPath["$disk"]}"

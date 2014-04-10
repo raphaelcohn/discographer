@@ -214,24 +214,33 @@ function createDisks()
 }
 machineFunctions+=(createDisks)
 
-machineDiskMountPointsInDiskOrder=()
+machineDiskMountPointsInForwardDiskOrder=()
+machineDiskMountPointsInReverseDiskOrder=()
 function recordSortedDiskMountPoints()
 {
-	machineDiskMountPointsInDiskOrder=()
+	machineDiskMountPointsInForwardDiskOrder=()
 	
 	local mountPoint
 	local disk
 	while IFS=' ' read -r mountPoint disk
 	do
-		machineDiskMountPointsInDiskOrder+=("$disk")
-	done < <(sortDiskMountPoints)
+		machineDiskMountPointsInForwardDiskOrder+=("$disk")
+	done < <(sortDiskMountPointsInForwardOrder)
+	
+	machineDiskMountPointsInReverseDiskOrder=()
+	local -i index
+	for (( index=$((${#machineDiskMountPointsInForwardDiskOrder[*]}-1)); index>=0; index-- ))
+	do
+		disk=${machineDiskMountPointsInForwardDiskOrder[$index]}
+		machineDiskMountPointsInReverseDiskOrder+=("$disk")
+	done
 }
 machineFunctions+=(recordSortedDiskMountPoints)
 
 function mountDisks()
 {
 	local disk
-	for disk in "${machineDiskMountPointsInDiskOrder[@]}"
+	for disk in "${machineDiskMountPointsInForwardDiskOrder[@]}"
 	do
 		if mountPointIsSpecial; then
 			informationMessage INFO "${tab}${tab}${tab}${disk} (ignored)"
@@ -340,24 +349,10 @@ function installOverlays()
 }
 machineFunctions+=(installOverlays)
 
-machineDiskMountPointsInReverseDiskOrder=()
-function recordReverseSortedDiskMountPoints()
-{
-	machineDiskMountPointsInReverseDiskOrder=()
-	
-	local mountPoint
-	local disk
-	while IFS=' ' read -r mountPoint disk
-	do
-		machineDiskMountPointsInReverseDiskOrder+=("$disk")
-	done < <(reverseSortDiskMountPoints)
-}
-machineFunctions+=(recordReverseSortedDiskMountPoints)
-
 function unmountDisks()
 {
 	local disk
-	for disk in "$machineDiskMountPointsInReverseDiskOrder[@]"
+	for disk in "${machineDiskMountPointsInReverseDiskOrder[@]}"
 	do
 		if mountPointIsSpecial; then
 			informationMessage INFO "${tab}${tab}${tab}${disk} (ignored)"

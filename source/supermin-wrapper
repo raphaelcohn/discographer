@@ -52,6 +52,35 @@ function setDebugging()
 	fi
 }
 
+function setSaneEnvironmentDefaults()
+{
+	set +o allexport -o braceexpand +o emacs -o errexit +o errtrace +o functrace +o hashall +o histexpand +o history +o ignoreeof -o interactive-comments +o keyword +o monitor +o noclobber +o noexec +o noglob +o nolog +o notify +o nounset +o onecmd +o physical +o pipefail +o posix +o verbose +o vi
+	
+	unset BASH_ENV
+	unset BASH_XTRACEFD
+	unset CDPATH
+	unset ENV
+	unset FCEDIT
+	unset FIGNORE
+	unset FUNCNEST
+	unset GLOBIGNORE
+	unset HISTCONTROL
+	unset HISTFILE
+	unset HISTFILESIZE
+	unset HISTIGNORE
+	unset HISTSIZE
+	unset HISTTIMEFORMAT
+	unset HOSTFILE
+	unset IGNOREEOF
+	unset INPUTRC
+	unset MAIL
+	unset MAILCHECK
+	unset MAILPATH
+	unset TMOUT
+	
+	umask 022
+}
+
 function findOurNameAndPath()
 {
 	readonly ourName="$(purebash_basename "$0")"
@@ -96,6 +125,7 @@ to automatically install any missing dependencies. The PATH variable is reset to
 
 function loadAnyConfiguration()
 {
+	language="en_GB.UTF-8"
 	configPath="$crudeOurPath"/config
 	cachePath="$crudeOurPath"/cache
 	functionsPath="$crudeOurPath"/functions
@@ -245,13 +275,13 @@ function sourceFunctions()
 function registerTrapHandlers()
 {
 	addNextTrapHandler removeFilesOnExit
-	addNextTrapHandler removeLoopbackMountPointsOnExit
-	addNextTrapHandler removeBindMountPointsOnExit
+	addNextTrapHandler removeMountPointsOnExit
 }
 
 function main()
 {
 	setDebugging
+	setSaneEnvironmentDefaults
 	findOurNameAndPath
 	loadAnyConfiguration
 	parseCommandLine "$@"
@@ -260,6 +290,7 @@ function main()
 	
 	sourceFunctions "$functionsPath" functions
 	
+	setLanguageDefaults
 	registerTrapHandlers
 	installDependencies
 	executeMainFunctions

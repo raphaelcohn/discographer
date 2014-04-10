@@ -1,10 +1,32 @@
 # Mounting is abstracted to support Mac OS X mounting in the future: http://nicksegers.com/mounting-to-loopback-in-osx/
 
+function sortDiskMountPointsInForwardOrder()
+{
+	(
+		local disk
+		for disk in "${machineDisks[@]}"
+		do
+			echo "${machineDisksConfigurationMountPoint["$disk"]} ${disk}"
+		done
+	) | sort --ignore-nonprinting --stable --key 1,1
+}
+
+function mountPointIsSpecial()
+{
+	local -r mountPoint="${machineDisksConfigurationMountPoint["$disk"]}"
+	if [ "${mountPoint:0:1}" != '/' ]; then
+		return 0
+	fi
+	return 1
+}
+
 function mountLoopback()
 {
 	local -r filesystemType="$1"
 	local -r imagePath="$2"
 	local -r mountPath="$3"
+	
+	mkdir -m 0755 -p "$mountPath"
 	
 	if [ "$(uname)" = "Darwin" ]; then
 		#local -r devicePath="$(hdiutil attach -imagekey diskimage-class=CRawDiskImage -readwrite -noverify -noautopen -noautofsck -mountpoint "$mountPath" -nomount "$imagePath")"
@@ -23,6 +45,8 @@ function mountBind()
 	if [ "$(uname)" = "Darwin" ]; then
 		return 0
 	fi
+	
+	mkdir -m 0755 -p "$mountPath"
 	
 	mount -o bind /dev "$mountPath"
 	registerMountPointToRemoveOnExit "$mountPath" unmountBind
@@ -78,7 +102,7 @@ function removeMountPointsOnExit()
 	local mountPath
 	local unmountFunction
 	local -i index
-	for (( index=0; index < ${#mountPointsToRemoveOnExitPaths[*]}; index++ ))
+	for (( index=0; index<${#mountPointsToRemoveOnExitPaths[*]}; index++ ))
 	do
 		mountPath="${mountPointsToRemoveOnExitPaths[$index]}"
 		unmountFunction="${mountPointsToRemoveOnExitFunctions[$index]}"
