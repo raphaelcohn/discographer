@@ -1,0 +1,8 @@
+			<EthernetPortItem>
+				<epasd:AutomaticAllocation>true</epasd:AutomaticAllocation>
+				<epasd:Caption>Ethernet adapter on 'NAT'</epasd:Caption>
+				<epasd:Connection>NAT</epasd:Connection>
+				<epasd:InstanceID>${instanceId}</epasd:InstanceID>
+				<epasd:ResourceSubType>${machineEthernetControllerType}</epasd:ResourceSubType>
+				<epasd:ResourceType>10</epasd:ResourceType>
+			</EthernetPortItem>

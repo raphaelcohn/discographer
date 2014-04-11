@@ -1,0 +1,1 @@
+		<Disk ovf:capacity="17179869184" ovf:diskId="vmdisk${index}" ovf:fileRef="file${index}" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" vbox:uuid="bd8fd5dd-12b3-4598-b319-1e4d755c5630"/>

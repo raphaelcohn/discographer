@@ -1,0 +1,1 @@
+		<File ovf:href="disk${index}.vmdk" ovf:id="file${index}"/>
