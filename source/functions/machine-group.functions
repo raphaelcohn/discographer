@@ -14,6 +14,12 @@ function prepareMachineGroupPaths()
 		exit 1
 	fi
 	
+	configMachinGroupeRpmsPath="$configMachineGroupPath"/rpms
+	if [ ! -f "$configMachinGroupeRpmsPath" ]; then
+		informationMessage FAIL "Machine-group $machineGroup missing machine-group rpms folder $configMachinGroupeRpmsPath"
+		exit 1
+	fi
+	
 	configMachineGroupConfigurationPath="$configMachineGroupPath"/configuration
 	if [ ! -f "$configMachineGroupConfigurationPath" ]; then
 		informationMessage FAIL "Machine group $machineGroup missing machine-group configuration file $configMachineGroupPackagesPath"
@@ -112,6 +118,20 @@ function readMachineGroupPackages()
 	done < <(cat "$configMachineGroupPackagesPath")
 }
 machineGroupFunctions+=(readMachineGroupPackages)
+
+machineGroupRpmFiles=()
+function readMachineGroupRpmFiles()
+{
+	machineGroupRpmFiles=()
+	local rpmFile
+	pushd "$configMachinGroupeRpmsPath" 1>/dev/null 2>/dev/null
+		for rpmFile in *.rpm
+		do
+			machineGroupRpmFiles+=("$rpmFile")
+		done
+	popd  1>/dev/null 2>/dev/null
+}
+machineGroupFunctions+=(readMachineGroupRpmFiles)
 
 knownMachines=()
 function determineKnownMachines()

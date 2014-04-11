@@ -124,7 +124,7 @@ function shrinkDiskImage()
 	local -ir minimumSize="$(resize2fs -P supermin-wrapper/source/cache/machine-groups/examples/machines/example/disks/boot.img 2>/dev/null | awk '{print $7}')"
 	resize2fs -M supermin-wrapper/source/cache/machine-groups/examples/machines/example/disks/boot.img 2>/dev/null
 	
-	local -ir shrinkSizeInBytes=$(minimumSize*machineDiskBlockSize))
+	local -ir shrinkSizeInBytes=$((minimumSize*machineDiskBlockSize))
 	truncate -s $shrinkSizeInBytes "${machineDisksConfigurationImagePath["$disk"]}"
 }
 diskUnmountFunctions+=(shrinkDiskImage)

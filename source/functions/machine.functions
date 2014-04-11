@@ -69,6 +69,12 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
+	configMachineRpmsPath="$configMachinePath"/rpms
+	if [ ! -f "$configMachineRpmsPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine rpms folder $configMachineRpmsPath"
+		exit 1
+	fi
+	
 	configMachineDisksPath="$configMachinePath"/disks
 	if [ ! -d "$configMachineDisksPath" ]; then
 		informationMessage FAIL "Machine $machine missing machine disks folder $configMachineDisksPath"
@@ -112,6 +118,9 @@ function prepareMachinePaths()
 	export cacheMachineDisksMountsPath="$cacheMachinePath"/disks-mountpoint
 	rm -rf "$cacheMachineDisksMountsPath"
 	mkdir -m 0755 -p "$cacheMachineDisksMountsPath"
+	
+	cacheMachineArtefactsPath="$cacheMachinePath"/artefacts
+	mkdir -m 0755 -p "$cacheMachineArtefactsPath"
 }
 machineFunctions+=(prepareMachinePaths)
 
@@ -170,6 +179,20 @@ function readMachinePackages()
 	done < <(cat "$configMachinePackagesPath")
 }
 machineFunctions+=(readMachinePackages)
+
+machineRpmFiles=()
+function readMachineRpmFiles()
+{
+	machineRpmFiles=()
+	local rpmFile
+	pushd "$configMachineRpmsPath" 1>/dev/null 2>/dev/null
+		for rpmFile in *.rpm
+		do
+			machineRpmFiles+=("$rpmFile")
+		done
+	popd  1>/dev/null 2>/dev/null
+}
+machineFunctions+=(readMachineRpmFiles)
 
 machineDisks=()
 function readMachineDiskNames()
@@ -264,104 +287,15 @@ function installUnderlays()
 }
 machineFunctions+=(installUnderlays)
 
-function fillInMachineYumConfTemplate()
+function installRpmsFromYum()
 {
-	configMachineYumConfigFile="$cacheMachinePath"/yum.conf
-	
-	export yumConfigDistributionVersionPackage=${machineDistribution}-release
-	export yumConfigDistributionMajorRevision=${machineDistributionMajorRevision}
-	
-	export yumConfigRepositoriesPath="$cacheMachineDisksMountsPath"/etc/yum.repos.d
-	
-	if [ "$beVerbose" = "yes" ]; then
-		export yumConfigDebugLevel=10
-		export yumConfigErrorLevel=10
-		export yumConfigRpmVerbository=debug
-	else
-		export yumConfigDebugLevel=2
-		export yumConfigErrorLevel=2
-		export yumConfigRpmVerbository=info
-	fi
-	
-	templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
+	local yumFunction
+	for yumFunction in "${yumFunctions[@]}"
+	do
+		$yumFunction
+	done
 }
-machineFunctions+=(fillInMachineYumConfTemplate)
-
-function downloadDistributionVersionRpm()
-{
-	cacheYumDistributionVersionRpmPath="$cacheYumPath"/"$machineDistributionReleaseRpm"
-	
-	if [ ! -f "$cacheYumDistributionVersionRpmPath" ]; then
-		curl "$machineDistributionReleaseRpmUrl" 1>"$cacheYumDistributionVersionRpmPath" 2>/dev/null
-	fi
-}
-machineFunctions+=(downloadDistributionVersionRpm)
-
-function installDistributionVersionRpm()
-{
-	rpm --rebuilddb --root=${cacheMachineDisksMountsPath}
-	rpm --install --root=${cacheMachineDisksMountsPath} --nodeps "$cacheYumDistributionVersionRpmPath"
-}
-machineFunctions+=(installDistributionVersionRpm)
-
-function installYumRepositories()
-{
-	# Remove any shipped repos!
-	rm -rf "$yumConfigRepositoriesPath"/*.repo
-	
-	pushd "$configMachineRepositoriesPath" 1>/dev/null 2>/dev/null
-		
-		local file
-		for file in *.repo
-		do
-			if [ -s "$file" ]; then
-				# cat ensures that we do not copy a symlink
-				cat "$file" >"$yumConfigRepositoriesPath"/"$file"
-			fi
-		done
-		
-	popd 1>/dev/null 2>/dev/null
-}
-machineFunctions+=(installYumRepositories)
-
-function yumWrapper()
-{
-	if [ "$(uname)" = "Darwin" ]; then
-		# yum does not exist in brew; installing via source has problems (msgfmt, broken Makefile, broken install utility; Python versioning)
-		return 0
-	fi
-	
-	if [ "$beVerbose" = no ]; then
-		local -r yumVerbosity=" --quiet"
-	else
-		local -r yumVerbosity=""
-	fi
-	
-	yum${yumVerbosity} --config="$configMachineYumConfigFile" "$@"
-}
-
-function installRpms()
-{
-	# Silly releasever nonsense:-
-	# https://www.linuxquestions.org/questions/linux-software-2/yum-variables-%24distribution-%24releasever-%24basearch-how-to-check-648050/
-	# https://unix.stackexchange.com/questions/19701/yum-how-can-i-view-variables-like-releasever-basearch-yum0
-	
-	# http://www.philchen.com/2009/02/14/how-to-create-an-amazon-elastic-compute-cloud-ec2-machine-image-ami
-	# http://geek.co.il/2010/03/14/how-to-build-a-chroot-jail-environment-for-centos
-	
-	# rpm -q --whatprovides /usr/sbin/chroot to find a file
-	
-	yumWrapper makecache
-	
-	yumWrapper install "${machineGroupPackageNames[@]}" "${machinePackageNames[@]}"
-}
-machineFunctions+=(installRpms)
-
-function cleanUpYum()
-{
-	yumWrapper clean all
-}
-machineFunctions+=(cleanUpYum)
+machineFunctions+=(installRpmsFromYum)
 
 function sourceMachineGenerators()
 {
@@ -379,6 +313,12 @@ function installOverlays()
 }
 machineFunctions+=(installOverlays)
 
+function recordHashesOfAllFiles()
+{
+	recordHashes "${cacheMachineDisksMountsPath}" "/" "$cacheMachineArtefactsPath"/installed-files.report.txt
+}
+machineFunctions+=(recordHashesOfAllFiles)
+
 function unmountDisks()
 {
 	local disk
@@ -389,11 +329,11 @@ function unmountDisks()
 			continue
 		fi
 		
-		local diskUnmountFuncton
-		for diskUnmountFuncton in "${diskUnmountFunctons[@]}"
+		local diskUnmountFunction
+		for diskUnmountFunction in "${diskUnmountFunctions[@]}"
 		do
-			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskUnmountFuncton}"
-			$diskUnmountFuncton
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskUnmountFunction}"
+			$diskUnmountFunction
 		done
 	done
 }

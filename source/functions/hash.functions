@@ -1,0 +1,225 @@
+function recordHashes()
+{
+	local -r prefix="$1"
+	local -r path="$2"
+	local -r hashesFile="$3"
+	
+	local -r topLevelFolder="${prefix}${path}"
+	local -ir prefixLength=${#prefix}
+	
+	recordHashLine Type Uid Gid Mode MTime CTime Meta Version Chattr Acl DefaultAcl Selinux Capabilities Size MD5 SHA1 SHA256 SHA512
+	
+	# Done this way to try to overcome an open files bug
+	temporaryFileToRemoveOnExit
+	local -r sortedAsciiNullSeparatedFiles="$TMP_FILE"
+	find "$topLevelFolder" -print0 | LC_ALL=C sort -k 1 -z >"$sortedAsciiNullSeparatedFiles"
+	
+	local fileObject
+	while IFS= read -r -d $'\0' fileObject
+	do
+		# symlinks first as all other tests cause de-referencing of symlinks
+		if [ -h "$fileObject" ]; then
+			recordHashSymlink
+		elif [ -f "$fileObject" ]; then
+			recordHashFile
+		elif [ -d "$fileObject" ]; then
+			recordHashFolder
+		elif [ -b "$fileObject" ]; then
+			recordHashDevice b
+		elif [ -c "$fileObject" ]; then
+			recordHashDevice c
+		elif [ -p "$fileObject" ]; then
+			recordHashNamedPipe
+		elif [ -S "$fileObject" ]; then
+			recordHashSocket
+		else
+			recordHashUnknown
+		fi
+	done <"$sortedAsciiNullSeparatedFiles"
+}
+
+function recordHashLine()
+{
+	if [ $# -ne 18 ]; then
+		echo "Not 18 arguments" 1>&2
+		exit 1
+	fi
+	
+	local -r fileType="$1"
+	local uid="$2"
+	local -r gid="$3"
+	local -r mode="$4"
+	local -r mtime="$5"
+	local -r ctime="$6"
+	local -r meta="$7"
+	local -r version="$8"
+	local -r chattr="$9"
+	shift 9
+	local -r acl="$1"
+	local -r defaultacl="$2"
+	local -r selinux="$3"
+	local -r capabilities="$4"
+	local -r size="$5"
+	local -r md5="$6"
+	local -r sha1="$7"
+	local -r sha256="$8"
+	local -r sha512="$9"
+	shift 9
+	
+	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\0' "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" "$defaultacl" "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512" "${fileObject:$prefixLength}" >>"$hashesFile"
+}
+
+function readHashesLine()
+{
+	IFS=$'\t' read -r -d $'\0' HashesLine_Type HashesLine_Uid HashesLine_Gid HashesLine_Mode HashesLine_MTime HashesLine_CTime HashesLine_Meta HashesLine_Version HashesLine_Chattr HashesLine_Acl HashesLine_DefaultAcl HashesLine_Selinux HashesLine_Capabilities HashesLine_Size HashesLine_MD5 HashesLine_SHA1 HashesLine_SHA256 HashesLine_SHA512 HashesLine_File
+}
+
+# birthTime %W seems to not be known for most files (outputs 0)
+# atime %X is not very useful
+
+function recordHashSymlink()
+{
+	local uid gid mode mtime ctime size
+	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z %s" "$fileObject")
+	
+	local -r meta="$(readlink -n "$fileObject")"
+		
+	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
+	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
+	
+	local -r md5="$(echo -n "$meta" | md5sum | awk 'NR==1 {print $1}')"
+	local -r sha1="$(echo -n "$meta" | sha1sum | awk 'NR==1 {print $1}')"
+	local -r sha256="$(echo -n "$meta" | sha256sum | awk 'NR==1 {print $1}')"
+	local -r sha512="$(echo -n "$meta" | sha512sum | awk 'NR==1 {print $1}')"
+	
+	recordHashLine l "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' '' '' "$selinux" '' "$size" "$md5" "$sha1" "$sha256" "$sha512"
+}
+
+function recordHashFile()
+{
+	local uid gid mode mtime ctime size
+	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z %s" "$fileObject")
+	
+	local -r meta="$(file --brief --keep-going --no-dereference --uncompress "$fileObject")"
+	
+	local version chattr file
+	IFS=' ' read -r -d $'\n' version chattr file < <(lsattr -v "$fileObject")
+	
+	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+	if [ -n "$initialAcl" ]; then
+		# strips a trailing ' '
+		local -r acl="${initialAcl:0:-1}"
+	else
+		local -r acl=""
+	fi
+	
+	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
+	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
+	
+	local -r capabilities="$(getcap "$fileObject" | awk '{print $3}')"
+	
+	local -r md5="$(md5sum "$fileObject" | awk 'NR==1 {print $1}')"
+	local -r sha1="$(sha1sum "$fileObject" | awk 'NR==1 {print $1}')"
+	local -r sha256="$(sha256sum "$fileObject" | awk 'NR==1 {print $1}')"
+	local -r sha512="$(sha512sum "$fileObject" | awk 'NR==1 {print $1}')"
+		
+	recordHashLine f "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" '' "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512"
+}
+
+function recordHashFolder()
+{
+	# Whilst directories do have a size, it's very much a function of the file system
+	local uid gid mode mtime ctime
+	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z" "$fileObject")
+	
+	# it might be useful to record entry count, less . and .. as 'meta', or perhaps an ignore-rule
+	
+	# Note -d to make lsattr behave
+	local version chattr file
+	IFS=' ' read -r -d $'\n' version chattr file < <(lsattr -d -v "$fileObject")
+	
+	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+	if [ -n "$initialAcl" ]; then
+		# strips a trailing ' '
+		local -r acl="${initialAcl:0:-1}"
+	else
+		local -r acl=""
+	fi
+	
+	# Only directories have default acl
+	local -r initialDefaultAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --default -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+	if [ -n "$initialDefaultAcl" ]; then
+		# strips a trailing ' '
+		local -r defaultAcl="${initialDefaultAcl:0:-1}"
+	else
+		local -r defaultAcl=""
+	fi
+	
+	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
+	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
+	
+	recordHashLine d "$uid" "$gid" "$mode" "$mtime" "$ctime" '' "$version" "$chattr" "$acl" "$defaultAcl" "$selinux" '' "$size" '' '' '' ''
+}
+
+function recordHashDevice()
+{
+	local -r fileType="$1"
+	
+	# Whilst directories do have a size, it's very much a function of the file system
+	local uid gid mode mtime ctime meta
+	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z %t:%T" "$fileObject")
+	
+	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+	if [ -n "$initialAcl" ]; then
+		# strips a trailing ' '
+		local -r acl="${initialAcl:0:-1}"
+	else
+		local -r acl=""
+	fi
+	
+	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
+	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
+	
+	recordHashLine "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
+}
+
+function recordHashNamedPipe()
+{
+	# Whilst directories do have a size, it's very much a function of the file system
+	local uid gid mode mtime ctime
+	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z" "$fileObject")
+	
+	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+	if [ -n "$initialAcl" ]; then
+		# strips a trailing ' '
+		local -r acl="${initialAcl:0:-1}"
+	else
+		local -r acl=""
+	fi
+	
+	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
+	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
+		
+	recordHashLine p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
+}
+
+function recordHashSocket()
+{
+	local uid gid mode mtime ctime
+	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z" "$fileObject")
+	
+	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+	if [ -n "$initialAcl" ]; then
+		# strips a trailing ' '
+		local -r acl="${initialAcl:0:-1}"
+	else
+		local -r acl=""
+	fi
+	
+	recordHashLine p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' '' '' '' '' '' '' ''
+}
+
+function recordHashUnknown()
+{
+	exitError "Unknown file type $fileObject"
+}

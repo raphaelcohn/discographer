@@ -194,6 +194,10 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 
 * support deb / debootstrap
 * support one-off rpm/deb installation (ie local rpms)
+	* for yum, we could use createrepo and specify the RPM in the list with all the others (packages = fullname.version.rpm)
+	* support for install tar balls over root?
+	* gem installs?
+	* pip / easyinstall (python)?
 * support parallel machine building (using bash background jobs)
 * support caching downloaded RPMs / repo structure (? symlink out of the mount point, then blow away ?)
 * support resizing file system
@@ -202,6 +206,7 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 * support generating a packing list
 * generate vmdk * vmx
 * generate vmware teams
+* preserve / use file timestamps - touch with devices
 
 * chattr silent compression
 * chattr a+i

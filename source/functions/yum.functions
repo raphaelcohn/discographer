@@ -1,0 +1,159 @@
+
+# Silly releasever nonsense:-
+# https://www.linuxquestions.org/questions/linux-software-2/yum-variables-%24distribution-%24releasever-%24basearch-how-to-check-648050/
+# https://unix.stackexchange.com/questions/19701/yum-how-can-i-view-variables-like-releasever-basearch-yum0
+
+# http://www.philchen.com/2009/02/14/how-to-create-an-amazon-elastic-compute-cloud-ec2-machine-image-ami
+# http://geek.co.il/2010/03/14/how-to-build-a-chroot-jail-environment-for-centos
+
+# rpm -q --whatprovides /usr/sbin/chroot to find a file
+
+
+yumFunctions=()
+
+function yumWrapper()
+{
+	if [ "$(uname)" = "Darwin" ]; then
+		# yum does not exist in brew; installing via source has problems (msgfmt, broken Makefile, broken install utility; Python versioning)
+		return 0
+	fi
+	
+	if [ "$beVerbose" = no ]; then
+		local -r yumVerbosity=" --quiet"
+	else
+		local -r yumVerbosity=""
+	fi
+	
+	yum${yumVerbosity} --config="$configMachineYumConfigFile" "$@"
+}
+
+function yumInstall()
+{
+	declare -a packageNames="$@"
+	if [ ${#packageNames[@]} -eq 0 ]; then
+		return 0
+	fi
+	
+	yumWrapper install "${packageNames[@]}"
+}
+
+function yumLocalInstall()
+{
+	local -r rpmsFolder="$1"
+	shift 1
+	declare -a rpmFiles="$@"
+	if [ ${#rpmFiles[@]} -eq 0 ]; then
+		return 0
+	fi
+	
+	pushd "$rpmsFolder" 1>/dev/null 2>/dev/null
+		yumWrapper localinstall "${rpmFiles[@]}"
+	popd 1>/dev/null 2>/dev/null
+}
+
+function fillInMachineYumConfTemplate()
+{
+	configMachineYumConfigFile="$cacheMachinePath"/yum.conf
+	
+	export yumConfigDistributionVersionPackage=${machineDistribution}-release
+	export yumConfigDistributionMajorRevision=${machineDistributionMajorRevision}
+	
+	export yumConfigRepositoriesPath="$cacheMachineDisksMountsPath"/etc/yum.repos.d
+	
+	if [ "$beVerbose" = "yes" ]; then
+		export yumConfigDebugLevel=10
+		export yumConfigErrorLevel=10
+		export yumConfigRpmVerbository=debug
+	else
+		export yumConfigDebugLevel=2
+		export yumConfigErrorLevel=2
+		export yumConfigRpmVerbository=info
+	fi
+	
+	templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
+}
+yumFunctions+=(fillInMachineYumConfTemplate)
+
+function prepareRpmDb()
+{
+	rpm --rebuilddb --root=${cacheMachineDisksMountsPath}
+}
+yumFunctions+=(prepareRpmDb)
+
+function downloadDistributionVersionRpm()
+{
+	cacheYumDistributionVersionRpmPath="$cacheYumPath"/"$machineDistributionReleaseRpm"
+	
+	if [ ! -f "$cacheYumDistributionVersionRpmPath" ]; then
+		curl "$machineDistributionReleaseRpmUrl" 1>"$cacheYumDistributionVersionRpmPath" 2>/dev/null
+	fi
+}
+yumFunctions+=(downloadDistributionVersionRpm)
+
+function installDistributionVersionRpm()
+{
+	rpm --install --root=${cacheMachineDisksMountsPath} --nodeps "$cacheYumDistributionVersionRpmPath"
+}
+yumFunctions+=(installDistributionVersionRpm)
+
+function installYumRepositories()
+{
+	# Remove any shipped repos!
+	rm -rf "$yumConfigRepositoriesPath"/*.repo
+	
+	pushd "$configMachineRepositoriesPath" 1>/dev/null 2>/dev/null
+		
+		local file
+		for file in *.repo
+		do
+			if [ -s "$file" ]; then
+				# cat ensures that we do not copy a symlink
+				cat "$file" >"$yumConfigRepositoriesPath"/"$file"
+			fi
+		done
+		
+	popd 1>/dev/null 2>/dev/null
+}
+yumFunctions+=(installYumRepositories)
+
+function prepareYumCache()
+{
+	yumWrapper makecache
+}
+yumFunctions+=(prepareYumCache)
+
+function installMachineGroupRpms()
+{
+	yumInstall "${machineGroupPackageNames[@]}"
+}
+yumFunctions+=(installMachineGroupRpms)
+
+function installMachineGroupLocalRpms()
+{
+	yumLocalInstall "$configMachinGroupeRpmsPath" "${machineGroupRpmFiles[@]}"
+}
+yumFunctions+=(installMachineGroupLocalRpms)
+
+function installMachineRpms()
+{
+	yumInstall "${machinePackageNames[@]}"
+}
+yumFunctions+=(installMachineGroupRpms)
+
+function installMachineLocalRpms()
+{
+	yumLocalInstall "$configMachineRpmsPath" "${machineRpmFiles[@]}"
+}
+yumFunctions+=(installMachineLocalRpms)
+
+function cleanUpYum()
+{
+	yumWrapper clean all
+}
+yumFunctions+=(cleanUpYum)
+
+function recordInstalledRpms()
+{
+	yumWrapper list installed 1>"$cacheMachineArtefactsPath"/install-rpms.report.txt 2>/dev/null
+}
+yumFunctions+=(recordInstalledRpms)
