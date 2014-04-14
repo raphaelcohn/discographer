@@ -81,6 +81,12 @@ function prepareMachinePaths()
 		exit 1
 	fi
 	
+	configMachineNicsPath="$configMachinePath"/nics
+	if [ ! -d "$configMachineNicsPath" ]; then
+		informationMessage FAIL "Machine $machine missing machine nics folder $configMachineNicsPath"
+		exit 1
+	fi
+	
 	configMachineGeneratorsPath="$configMachinePath"/generators
 	if [ ! -d "$configMachineGeneratorsPath" ]; then
 		informationMessage FAIL "Machine $machine missing machine generators folder $configMachineGeneratorsPath"
@@ -152,7 +158,7 @@ machineFunctions+=(cleanUpMachinesCache)
 
 function defaultMachineConfiguration()
 {
-	source "$configDefaultsPath"/machine-configuration.default
+	source "$configDefaultsPath"/machine.default.configuration
 }
 machineFunctions+=(defaultMachineConfiguration)
 
@@ -197,7 +203,8 @@ machineFunctions+=(readMachineRpmFiles)
 machineDisks=()
 function readMachineDiskNames()
 {
-	local -i rootDiskExists=0
+	machineDisks=()
+	
 	pushd "$configMachineDisksPath" 1>/dev/null 2>/dev/null
 		
 		local diskFile
@@ -207,20 +214,37 @@ function readMachineDiskNames()
 			if [ ! -f "$diskFile" ]; then
 				continue
 			fi
-			if [ "$diskFile" = "root.disk" ]; then
-				rootDiskExists=1
-			fi
+			
 			disk="${diskFile%%.disk}"
 			machineDisks+=("$disk")
 		done
 
 	popd 1>/dev/null 2>/dev/null
-	if [ $rootDiskExists -eq 0 ]; then
-		informationMessage FAIL "Machine $machine does not have essential disk root"
-		exit 1
-	fi
 }
 machineFunctions+=(readMachineDiskNames)
+
+machineNics=()
+function readMachineNicNames()
+{
+	machineNics=()
+	
+	pushd "$configMachineNicsPath" 1>/dev/null 2>/dev/null
+	
+		local nicFile
+		local nic
+		for nicFile in *.nic
+		do
+			if [ ! -f "$nicFile" ]; then
+				continue
+			fi
+		
+			disk="${nicFile%%.nic}"
+			machineNics+=("$nic")
+		done
+
+	popd 1>/dev/null 2>/dev/null
+}
+machineFunctions+=(readMachineNicNames)
 
 function createDisks()
 {

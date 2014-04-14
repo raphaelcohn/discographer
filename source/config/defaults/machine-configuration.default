@@ -8,12 +8,12 @@ machineNetworkType=NAT
 machineCpuCount=1
 machineRamSizeMegabytes=2048
 
-machineIdeControllerTypes=()
-machineIdeControllerTypes+=('PIIX4')
-machineIdeControllerTypes+=('PIIX4')
-
-machineSataControllerTypes=()
-machineSataControllerTypes+=('AHCI')
+# Parallels supports 4 IDE, 6 SATA and 15 SCSI devices (but SCSI location 0:7 is the controller and so can't be used)
+# IDE controller hardware choices are PIIX3, PIIX4 and ICH6 (Virtual Box)
+# SATA controller hardware choice is just AHCI (Virtual Box)
+# SAS controller choice (Virtual Box) is lsilogicsas
+machineDiskControllerHardwareKind=SATA
+machineDiskControllerHardwareImplementation=AHCI
 
 machineOperatingSystemId=94
 machineOperatingSystemName=Ubuntu_64

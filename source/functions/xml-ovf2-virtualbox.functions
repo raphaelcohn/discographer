@@ -85,6 +85,7 @@ function ovf2Xml_VirtualSystem_vboxMachine_Hardware_HPET()
 
 function ovf2Xml_VirtualSystem_vboxMachine_Hardware_Chipset()
 {
+	# Also PIIX3
 	xml_selfclose "Chipset type='ICH9'"
 }
 
@@ -133,15 +134,24 @@ function ovf2Xml_VirtualSystem_vboxMachine_Hardware_USBController()
 
 function ovf2Xml_VirtualSystem_vboxMachine_Hardware_Network()
 {
-	FIX ME - multiple NICs
 	xml_start "Network"
 		
-		local -i zeroBasedSlotNumber
-		local macAddress=080027D62B59
-		# type seems to be either 82540EM or Am79C973
-		for ((zeroBasedSlotNumber=0;zeroBasedSlotNumber<XXXXXX;zeroBasedSlotNumber++))
+		local nic
+		local machineNicMac
+		local ethernetControllerHardware
+		local -i index=0
+		for nic in "${machineNics[@]}"
 		do
-			xml_start "Adapter slot='${zeroBasedSlotNumber}' enabled='true' MACAddress='${macAddress}' cable='true' speed='0' type='82540EM'"
+			machineNicMac="${machineConfigurationNicsMac[@]}"
+			
+			if [ "${machineConfigurationNicsVariant["$nic"]}" = "virtual" ]; then
+				ethernetControllerHardware="virtio-net"
+			else
+				# Same as E1000, but virtualbox uses a different name here...
+				ethernetControllerHardware="82540EM"
+			fi
+			
+			xml_start "Adapter slot='${index}' enabled='true' MACAddress='${machineNicMac}' cable='true' speed='0' type='${ethernetControllerHardware}'"
 				
 				xml_start "DisabledModes"
 					
@@ -158,9 +168,11 @@ function ovf2Xml_VirtualSystem_vboxMachine_Hardware_Network()
 					
 				xml_end "NAT"
 				
-			xml_end "Adaptor"
+			xml_end "Adapter"
+			
+			index=$((index+1))
 		done
-	
+		
 	xml_end "Network"
 }
 

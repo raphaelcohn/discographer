@@ -2,7 +2,7 @@ diskCreateFunctions=()
 
 function defaultDiskImageConfiguration()
 {
-	source "$configDefaultsPath"/disk-image-configuration.default
+	source "$configDefaultsPath"/disk.default.configuration
 }
 diskCreateFunctions+=(defaultDiskImageConfiguration)
 
@@ -53,6 +53,7 @@ function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmountin
 	machineDisksConfigurationMountOptions["$disk"]="$machineDiskMountOptions"
 	machineDisksConfigurationDumpOptions["$disk"]="$machineDiskDumpOptions"
 	machineDisksConfigurationFsckOptions["$disk"]="$machineDiskFsckOptions"
+	machineDisksConfigurationShrinkDisk["$disk"]="$machineDiskShrink"
 }
 diskCreateFunctions+=(captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting)
 
@@ -103,7 +104,7 @@ diskUnmountFunctions+=(unmountDiskImage)
 
 function shrinkDiskImage()
 {
-	if [ "$machineDiskShrink" != "yes" ]; then
+	if [ "${machineDisksConfigurationShrinkDisk["$disk"]}" != "yes" ]; then
 		return 0
 	fi
 	

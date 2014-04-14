@@ -191,6 +191,10 @@ function buildMachines()
 			declare -A machineDisksConfigurationMountOptions
 			declare -A machineDisksConfigurationDumpOptions
 			declare -A machineDisksConfigurationFsckOptions
+			declare -A machineDisksConfigurationShrinkDisk
+			
+			declare -A machineConfigurationNicsMac
+			declare -A machineConfigurationNicsVariant
 			
 			informationMessage INFO "${tab}${tab}${machine} ${machineFunction}"
 			$machineFunction

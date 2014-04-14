@@ -27,6 +27,8 @@ ovf - file names
 ovf - disk names
 ovf - attachment of disks to controllers
 
+ovf - export order for OVA
+
 ovf - missing - nic MACs
 ovf - missing - boot order
 

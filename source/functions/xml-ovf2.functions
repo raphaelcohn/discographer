@@ -16,22 +16,46 @@ function ovf2Xml()
 function ovf2Xml_References()
 {
 	xml_start "References"
-	
-		local reference
-		for reference in "$@"
+		
+		local -i diskIndex=1
+		for disk in "${machineDisks[@]}"
 		do
-			xml_selfclose "File ovf:href='disk${index}.vmdk' ovf:id='file${index}'"
+			xml_selfclose "File ovf:href='${disk}.vmdk' ovf:id='file${diskIndex}'"
+			diskIndex=$((diskIndex+1))
 		done
-	
+		
 	xml_end "References"
 }
 
 function ovf2Xml_DiskSection()
 {
-	FIX ME (disk capacity)
-	
 	xml_start "DiskSection"
-
+	
+		local -i diskIndex=1
+		for disk in "${machineDisks[@]}"
+		do
+			xml_selfclose "File ovf:href='disk${diskIndex}.vmdk' ovf:id='file${diskIndex}'"
+			
+echo "************** FIX ME (DISK UUID) **************"
+echo "************** FFIX ME (DISK CAPACITY) **************"
+			qemu-img info -f vmdk --output=human "$cacheMachineArtefactsPath"/"${disk}.vmdk"
+echo "************** FIX ME (DISK UUID) **************"
+echo "************** FFIX ME (DISK CAPACITY) **************"
+			
+			# Setting a disk UUID: VBoxManage internalcommands setvdiuuid disk2.vdi
+			
+			# integrate guestfish (to create disks with partitions and LVM, RAID, etc) and libguestfs
+			# will be needed if using disk partitions, MBR or GPT for boot records...
+			# virt-builder: install latest kernel and initrd
+			# virt-resize: resize a disk
+			
+			local diskUuid=bd8fd5dd-12b3-4598-b319-1e4d755c5630
+			
+			xml_selfclose "Disk ovf:capacity='17179869184' ovf:diskId='${disk}' ovf:fileRef='file${diskIndex}' ovf:format='http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized' vbox:uuid='${diskUuid}'"
+			
+			diskIndex=$((diskIndex+1))
+		done
+		
 		local reference
 		for reference in "$@"
 		do
@@ -149,8 +173,7 @@ function ovf2Xml_VirtualSystem_VirtualHardwareSection()
 		ovf2Xml_VirtualSystem_VirtualHardwareSection_System
 		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemCpu
 		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemMemory
-		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemIde
-		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemSata
+		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemDiskControllerAndStorageItems
 		ovf2Xml_VirtualSystem_VirtualHardwareSection_StorageItem
 		ovf2Xml_VirtualSystem_VirtualHardwareSection_EthernetPortItem
 		
@@ -202,88 +225,118 @@ function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemMemory()
 	xml_end "Item"
 }
 
-function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemIde()
+function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemDiskControllerAndStorageItems()
 {
-	xml_start "Item"
-		
-		local -i index=0
-		local machineIdeControllerType
-		for machineIdeControllerType in "${machineIdeControllerTypes[@]}"
-		do
-			instanceId=$((instanceId+1))
-			
-			xml_value rasd:Address "${index}"
-			xml_value rasd:Caption "ideController${index}"
-			xml_value rasd:Description "IDE Controller"
-			xml_value rasd:InstanceID "${instanceId}"
-			xml_value rasd:ResourceSubType "${machineIdeControllerType}"
-			xml_value rasd:ResourceType "5"
-			
-			index=$((index+1))
-			
-		done
-
-	xml_end "Item"
-}
-
-function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemSata()
-{
-	xml_start "Item"
-		
-		local -i index=0
-		local machineSataControllerType
-		for machineSataControllerType in "${machineSataControllerTypes[@]}"
-		do
-			instanceId=$((instanceId+1))
-			
-			xml_value rasd:Address "${index}"
-			xml_value rasd:Caption "sataController${index}"
-			xml_value rasd:Description "SATA Controller"
-			xml_value rasd:InstanceID "${instanceId}"
-			xml_value rasd:ResourceSubType "${machineSataControllerType}"
-			xml_value rasd:ResourceType "20"
-			
-			index=$((index+1))
-			
-		done
-
-	xml_end "Item"
-}
-
-function ovf2Xml_VirtualSystem_VirtualHardwareSection_StorageItem()
-{
-	TODO - FIXME - has parent dependencies
+	if [ "$machineDiskControllerHardwareKind" != "IDE" ]; then
+		return 0
+	fi
 	
-	xml_start "StorageItem"
+	case "$machineDiskControllerHardwareKind" in
 		
-		local -i index
-		local xxx
-		for xxx in "${xxxx[@]}"
-		do
-			instanceId=$((instanceId+1))
+		IDE)
+			local -r captionBase="ideController"
+			local -r descriptionBase="IDE"
+			local -r resourceType=5
+			local -r namespace=rasd
+			case "$machineDiskControllerHardwareImplementation" in
+				
+				PIIX3|PIIX4|ICH6)
+					:
+				;;
+				
+				*)
+					informationMessage FAIL "Machine disk controller hardware implementation (machineDiskControllerHardwareImplementation) $machineDiskControllerHardwareImplementation is not supported"
+					exitError 1
+				;;
+				
+			esac
+		;;
+		
+		SATA)
+			local -r captionBase="sataController"
+			local -r descriptionBase="SATA"
+			local -r resourceType=20
+			local -r namespace=rasd
+			if [ "$machineDiskControllerHardwareImplementation" != "AHCI" ]; then
+				informationMessage FAIL "Machine disk controller hardware implementation (machineDiskControllerHardwareImplementation) $machineDiskControllerHardwareImplementation is not supported"
+				exitError 1
+			fi
+		;;
+		
+		SAS)
+			local -r captionBase="scsiController"
+			local -r descriptionBase="SCSI"
+			local -r resourceType=6
+			local -r namespace=sasd
+			if [ "$machineDiskControllerHardwareImplementation" != "lsilogicsas" ]; then
+				informationMessage FAIL "Machine disk controller hardware implementation (machineDiskControllerHardwareImplementation) $machineDiskControllerHardwareImplementation is not supported"
+				exitError 1
+			fi
+		;;
+		
+		*)
+			informationMessage FAIL "Machine disk controller hardware kind (machineDiskControllerHardwareKind) $machineDiskControllerHardwareKind is not supported"
+			exitError 1
+		;;
+		
+	esac
+	
+	local -i index=0
+	
+	xml_start "Item"
+		
+		instanceId=$((instanceId+1))
+		
+		xml_value rasd:Address "${index}"
+		xml_value rasd:Caption "${captionBase}${index}"
+		xml_value rasd:Description "${descriptionBase} Controller"
+		xml_value rasd:InstanceID "${instanceId}"
+		xml_value rasd:ResourceSubType "${machineDiskControllerHardwareImplementation}"
+		xml_value rasd:ResourceType "${resourceType}"
+
+	xml_end "Item"
+	local -i parentInstanceId=$instanceId
+	
+	# disks seem to be one based
+	local -i index=0
+	local -i diskIndex=1
+	local disk
+	for disk in "${machineDisks[@]}"
+	do
+		instanceId=$((instanceId+1))
+		
+		xml_start "StorageItem"
 			
-			xml_value sasd:AddressOnParent "${index}"
-			xml_value sasd:Caption "disk${index}"
+			xml_value sasd:AddressOnParent $index
+			xml_value sasd:Caption "disk${diskIndex}"
 			xml_value sasd:Description "Disk Image"
-			xml_value sasd:HostResource "/disk/vmdiskdisk${index}"
+			xml_value sasd:HostResource "/disk/${disk}"
 			xml_value sasd:InstanceID "${instanceId}"
 			xml_value sasd:Parent "${parentInstanceId}"
 			xml_value sasd:ResourceType "17"
 			
-		done
-
-	xml_end "StorageItem"
+		xml_end "StorageItem"
+		
+		index=$((index+1))
+		diskIndex=$((diskIndex+1))
+	done
 }
 
 function ovf2Xml_VirtualSystem_VirtualHardwareSection_EthernetPortItem()
 {
 	xml_start "EthernetPortItem"
 		
-		local -i index
-		local machineEthernetControllerType
-		for machineEthernetControllerType in "${machineEthernetControllerTypes[@]}"
+		local nic
+		local ethernetControllerHardware
+		for nic in "${machineNics[@]}"
 		do
 			instanceId=$((instanceId+1))
+			
+			if [ "${machineConfigurationNicsVariant["$nic"]}" = "virtual" ]; then
+				ethernetControllerHardware="virtio-net"
+			else
+				ethernetControllerHardware="E1000"
+			fi
 			
 			xml_value epasd:AutomaticAllocation "true"
 			xml_value epasd:Caption "Ethernet adapter on '${machineNetworkType}'"
@@ -291,7 +344,6 @@ function ovf2Xml_VirtualSystem_VirtualHardwareSection_EthernetPortItem()
 			xml_value epasd:InstanceID "${instanceId}"
 			xml_value epasd:ResourceSubType "${machineEthernetControllerType}"
 			xml_value epasd:ResourceType "10"
-			
 		done
 
 	xml_end "EthernetPortItem"
