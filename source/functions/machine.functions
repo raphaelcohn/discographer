@@ -70,7 +70,7 @@ function prepareMachinePaths()
 	fi
 	
 	configMachineRpmsPath="$configMachinePath"/rpms
-	if [ ! -f "$configMachineRpmsPath" ]; then
+	if [ ! -d "$configMachineRpmsPath" ]; then
 		informationMessage FAIL "Machine $machine missing machine rpms folder $configMachineRpmsPath"
 		exit 1
 	fi

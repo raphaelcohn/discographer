@@ -15,7 +15,7 @@ function prepareMachineGroupPaths()
 	fi
 	
 	configMachinGroupeRpmsPath="$configMachineGroupPath"/rpms
-	if [ ! -f "$configMachinGroupeRpmsPath" ]; then
+	if [ ! -d "$configMachinGroupeRpmsPath" ]; then
 		informationMessage FAIL "Machine-group $machineGroup missing machine-group rpms folder $configMachinGroupeRpmsPath"
 		exit 1
 	fi
