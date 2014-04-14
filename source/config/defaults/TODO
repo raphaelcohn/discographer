@@ -21,3 +21,16 @@ ${machineIdeControllerType} PIIX4  from an array ${machineIdeControllerType[${in
 ${machineSataControllerType} AHCI  from an array ${machineSataControllerType[${index}]}
 ${parentInstanceId}  used for disk references
 ${machineEthernetControllerType} E1000
+
+
+ovf - file names
+ovf - disk names
+ovf - attachment of disks to controllers
+
+ovf - missing - nic MACs
+ovf - missing - boot order
+
+vbox - boot order
+vbox - NICs
+vbox - GuestProperties
+vbox - storage controllers - sata port count / ports / assignment

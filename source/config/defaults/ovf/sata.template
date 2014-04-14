@@ -1,8 +1,0 @@
-			<Item>
-				<rasd:Address>${index}</rasd:Address>
-				<rasd:Caption>sataController${index}</rasd:Caption>
-				<rasd:Description>SATA Controller</rasd:Description>
-				<rasd:InstanceID>${instanceId}</rasd:InstanceID>
-				<rasd:ResourceSubType>${machineSataControllerType}</rasd:ResourceSubType>
-				<rasd:ResourceType>20</rasd:ResourceType>
-			</Item>

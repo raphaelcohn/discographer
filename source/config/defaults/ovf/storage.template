@@ -1,9 +1,0 @@
-			<StorageItem>
-				<sasd:AddressOnParent>${index}</sasd:AddressOnParent>
-				<sasd:Caption>disk${index}</sasd:Caption>
-				<sasd:Description>Disk Image</sasd:Description>
-				<sasd:HostResource>/disk/vmdiskdisk${index}</sasd:HostResource>
-				<sasd:InstanceID>${instanceId}</sasd:InstanceID>
-				<sasd:Parent>${parentInstanceId}</sasd:Parent>
-				<sasd:ResourceType>17</sasd:ResourceType>
-			</StorageItem>

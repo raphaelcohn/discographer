@@ -1,8 +1,0 @@
-			<Item>
-				<rasd:Address>${index}</rasd:Address>
-				<rasd:Caption>ideController${index}</rasd:Caption>
-				<rasd:Description>IDE Controller</rasd:Description>
-				<rasd:InstanceID>${instanceId}</rasd:InstanceID>
-				<rasd:ResourceSubType>${machineIdeControllerType}</rasd:ResourceSubType>
-				<rasd:ResourceType>5</rasd:ResourceType>
-			</Item>

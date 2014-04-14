@@ -1,0 +1,298 @@
+function ovf2Xml()
+{
+	local indentation=""
+	
+	xml_version
+	xml_start "Envelope ovf:version='2.0' xml:lang='en-US' xmlns='http://schemas.dmtf.org/ovf/envelope/2' xmlns:ovf='http://schemas.dmtf.org/ovf/envelope/2' xmlns:rasd='http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData' xmlns:vssd='http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:vbox='http://www.virtualbox.org/ovf/machine' xmlns:epasd='http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_EthernetPortAllocationSettingData.xsd' xmlns:sasd='http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_StorageAllocationSettingData.xsd'"
+	
+		ovf2Xml_References
+		ovf2Xml_DiskSection
+		ovf2Xml_NetworkSection
+		ovf2Xml_VirtualSystem
+	
+	xml_end "Envelope"
+}
+
+function ovf2Xml_References()
+{
+	xml_start "References"
+	
+		local reference
+		for reference in "$@"
+		do
+			xml_selfclose "File ovf:href='disk${index}.vmdk' ovf:id='file${index}'"
+		done
+	
+	xml_end "References"
+}
+
+function ovf2Xml_DiskSection()
+{
+	FIX ME (disk capacity)
+	
+	xml_start "DiskSection"
+
+		local reference
+		for reference in "$@"
+		do
+			xml_selfclose "Disk ovf:capacity='17179869184' ovf:diskId='vmdisk${index}' ovf:fileRef='file${index}' ovf:format='http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized' vbox:uuid='bd8fd5dd-12b3-4598-b319-1e4d755c5630'"
+		done
+
+	xml_end "DiskSection"
+}
+
+function ovf2Xml_NetworkSection()
+{
+	xml_start "NetworkSection"
+		
+		xml_value Info "Logical networks used in the package"
+		xml_start "Network ovf:name='${machineNetworkType}'"
+			
+			xml_value Description "Logical network used by this appliance."
+			
+		xml_end "Network"
+		
+	xml_end "NetworkSection"
+}
+
+function ovf2Xml_VirtualSystem()
+{
+	xml_start "VirtualSystem ovf:id='${machine}'"
+		
+		xml_value Info "A virtual machine"
+		ovf2Xml_VirtualSystem_ProductSection
+		ovf2Xml_VirtualSystem_AnnotationSection
+		ovf2Xml_VirtualSystem_EulaSection
+		ovf2Xml_VirtualSystem_OperatingSystemSection
+		ovf2Xml_VirtualSystem_VirtualHardwareSection
+		ovf2Xml_VirtualSystem_vboxMachine
+		
+	xml_end "VirtualSystem"
+}
+
+function ovf2Xml_VirtualSystem_ProductSection()
+{
+	xml_start "ProductSection"
+		
+		xml_value Info "Meta-information about the installed software"
+		xml_value Product "${machine}"
+		xml_value Vendor "raphaelcohn"
+		xml_value Version "${machineVersion}"
+		xml_value ProductUr "${machineUrl}"
+		xml_value VendorUrl "http://github.com/raphaelcohn/supermin-wrapper"
+		
+	xml_end "ProductSection"
+}
+
+function ovf2Xml_VirtualSystem_AnnotationSection()
+{
+	xml_start "AnnotationSection"
+		
+		xml_value Info "A human-readable annotation"
+		xml_value Annotation "Immutable machine image for ${machine} produced by ${ourName}"
+		
+	xml_end "AnnotationSection"
+}
+
+function ovf2Xml_VirtualSystem_EulaSection()
+{
+	xml_start "EulaSection"
+		
+		xml_value Info "License agreement for the virtual system<"
+		xml_indented "<License><![CDATA["
+		cat <<-EOF
+			The MIT License (MIT)
+
+			Copyright (c) 2014 Raphael Cohn
+
+			Permission is hereby granted, free of charge, to any person obtaining a copy
+			of this software and associated documentation files (the "Software"), to deal
+			in the Software without restriction, including without limitation the rights
+			to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+			copies of the Software, and to permit persons to whom the Software is
+			furnished to do so, subject to the following conditions:
+
+			The above copyright notice and this permission notice shall be included in all
+			copies or substantial portions of the Software.
+
+			THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+			IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+			FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+			AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+			LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+			OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+			SOFTWARE.
+		EOF
+		echo "]]></License>"
+		
+	xml_end "EulaSection"
+}
+
+function ovf2Xml_VirtualSystem_OperatingSystemSection()
+{
+	xml_start "OperatingSystemSection ovf:id='${machineOperatingSystemId}'"
+		
+		xml_value Info "The kind of installed guest operating system"
+		xml_value Description "${machineOperatingSystemName}"
+		xml_indented "<vbox:OSType ovf:required='false'>${machineOperatingSystemName}</vbox:OSType>"
+		
+	xml_end "OperatingSystemSection"
+}
+
+function ovf2Xml_VirtualSystem_VirtualHardwareSection()
+{
+	local -i instanceId=-1
+	
+	xml_start "VirtualHardwareSection"
+		
+		xml_value Info "Virtual hardware requirements for a virtual machine"
+		ovf2Xml_VirtualSystem_VirtualHardwareSection_System
+		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemCpu
+		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemMemory
+		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemIde
+		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemSata
+		ovf2Xml_VirtualSystem_VirtualHardwareSection_StorageItem
+		ovf2Xml_VirtualSystem_VirtualHardwareSection_EthernetPortItem
+		
+	xml_end "VirtualHardwareSection"
+}
+
+function ovf2Xml_VirtualSystem_VirtualHardwareSection_System()
+{
+	xml_start "System"
+		
+		instanceId=$((instanceId+1))
+		
+		xml_value vssd:ElementName "Virtual Hardware Family"
+		xml_value vssd:InstanceID "${instanceId}"
+		xml_value vssd:VirtualSystemIdentifier "${machine}"
+		xml_value vssd:VirtualSystemType "${machineSystemType}"
+		
+	xml_end "System"
+}
+
+function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemCpu()
+{
+	xml_start "Item"
+		
+		instanceId=$((instanceId+1))
+		
+		xml_value rasd:Caption "${machineCpuCount} virtual CPU"
+		xml_value rasd:Description "Number of virtual CPUs"
+		xml_value rasd:InstanceID "${instanceId}"
+		xml_value rasd:ResourceType "3"
+		xml_value rasd:VirtualQuantity "${machineCpuCount}"
+	
+	xml_end "Item"
+}
+
+function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemMemory()
+{
+	xml_start "Item"
+		
+		instanceId=$((instanceId+1))
+		
+		xml_value rasd:AllocationUnits "MegaBytes"
+		xml_value rasd:Caption "${machineRamSizeMegabytes} MB of memory"
+		xml_value rasd:Description "Memory Size"
+		xml_value rasd:InstanceID "${instanceId}"
+		xml_value rasd:ResourceType "4"
+		xml_value rasd:VirtualQuantity "${machineRamSizeMegabytes}"
+		
+	xml_end "Item"
+}
+
+function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemIde()
+{
+	xml_start "Item"
+		
+		local -i index=0
+		local machineIdeControllerType
+		for machineIdeControllerType in "${machineIdeControllerTypes[@]}"
+		do
+			instanceId=$((instanceId+1))
+			
+			xml_value rasd:Address "${index}"
+			xml_value rasd:Caption "ideController${index}"
+			xml_value rasd:Description "IDE Controller"
+			xml_value rasd:InstanceID "${instanceId}"
+			xml_value rasd:ResourceSubType "${machineIdeControllerType}"
+			xml_value rasd:ResourceType "5"
+			
+			index=$((index+1))
+			
+		done
+
+	xml_end "Item"
+}
+
+function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemSata()
+{
+	xml_start "Item"
+		
+		local -i index=0
+		local machineSataControllerType
+		for machineSataControllerType in "${machineSataControllerTypes[@]}"
+		do
+			instanceId=$((instanceId+1))
+			
+			xml_value rasd:Address "${index}"
+			xml_value rasd:Caption "sataController${index}"
+			xml_value rasd:Description "SATA Controller"
+			xml_value rasd:InstanceID "${instanceId}"
+			xml_value rasd:ResourceSubType "${machineSataControllerType}"
+			xml_value rasd:ResourceType "20"
+			
+			index=$((index+1))
+			
+		done
+
+	xml_end "Item"
+}
+
+function ovf2Xml_VirtualSystem_VirtualHardwareSection_StorageItem()
+{
+	TODO - FIXME - has parent dependencies
+	
+	xml_start "StorageItem"
+		
+		local -i index
+		local xxx
+		for xxx in "${xxxx[@]}"
+		do
+			instanceId=$((instanceId+1))
+			
+			xml_value sasd:AddressOnParent "${index}"
+			xml_value sasd:Caption "disk${index}"
+			xml_value sasd:Description "Disk Image"
+			xml_value sasd:HostResource "/disk/vmdiskdisk${index}"
+			xml_value sasd:InstanceID "${instanceId}"
+			xml_value sasd:Parent "${parentInstanceId}"
+			xml_value sasd:ResourceType "17"
+			
+		done
+
+	xml_end "StorageItem"
+}
+
+function ovf2Xml_VirtualSystem_VirtualHardwareSection_EthernetPortItem()
+{
+	xml_start "EthernetPortItem"
+		
+		local -i index
+		local machineEthernetControllerType
+		for machineEthernetControllerType in "${machineEthernetControllerTypes[@]}"
+		do
+			instanceId=$((instanceId+1))
+			
+			xml_value epasd:AutomaticAllocation "true"
+			xml_value epasd:Caption "Ethernet adapter on '${machineNetworkType}'"
+			xml_value epasd:Connection "${machineNetworkType}"
+			xml_value epasd:InstanceID "${instanceId}"
+			xml_value epasd:ResourceSubType "${machineEthernetControllerType}"
+			xml_value epasd:ResourceType "10"
+			
+		done
+
+	xml_end "EthernetPortItem"
+}
