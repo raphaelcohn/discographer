@@ -1,5 +1,12 @@
 function ovf2Xml()
 {
+	local -r hypervisorVariant="$1"
+	
+	if [ "$hyperisorVariant" != "virtualbox" ]; then
+		informationMessage FAIL "Only virtualbox OVF is supported at this time"
+		exitError 1
+	fi
+	
 	local indentation=""
 	
 	xml_version
@@ -89,7 +96,10 @@ function ovf2Xml_VirtualSystem()
 		ovf2Xml_VirtualSystem_EulaSection
 		ovf2Xml_VirtualSystem_OperatingSystemSection
 		ovf2Xml_VirtualSystem_VirtualHardwareSection
-		ovf2Xml_VirtualSystem_vboxMachine
+		
+		if [ "$hypervisorVariant" = "virtualbox" ]; then
+			xml_VirtualBox_Machine "yes"
+		fi
 		
 	xml_end "VirtualSystem"
 }
@@ -227,10 +237,6 @@ function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemMemory()
 
 function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemDiskControllerAndStorageItems()
 {
-	if [ "$machineDiskControllerHardwareKind" != "IDE" ]; then
-		return 0
-	fi
-	
 	case "$machineDiskControllerHardwareKind" in
 		
 		IDE)

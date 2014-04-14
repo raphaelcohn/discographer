@@ -362,3 +362,9 @@ function unmountDisks()
 	done
 }
 machineFunctions+=(unmountDisks)
+
+function createMetadata()
+{
+	hypervisorMetadata_${machineHypervisor}
+}
+machineFunctions+=(createMetadata)

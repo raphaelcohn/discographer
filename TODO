@@ -1,0 +1,10 @@
+OVF operating system ids and names (and those for VMware)
+94	Ubuntu_64
+
+ovf - missing - nic MACs
+ovf - missing - boot order
+
+vbox - boot order
+vbox - GuestProperties (OS / NET)
+
+OVF / OVA / Parallels

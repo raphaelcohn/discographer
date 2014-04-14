@@ -23,6 +23,11 @@ function convertDiskImageUsingQemuImg()
 	machineDisksConfigurationImagePath["$disk"]="$outputFile"
 }
 
+function convertDiskImage_ovf2()
+{
+	convertDiskImage_vmware
+}
+
 function convertDiskImage_raw()
 {
 	local -r inputFile="${machineDisksConfigurationImagePath["$disk"]}"
@@ -48,14 +53,11 @@ function convertDiskImage_vmware()
 function convertDiskImage_virtualbox()
 {
 	convertDiskImageUsingQemuImg vdi vdi
+	# We also force the UUID of the VDI disk to match the file system UUID.
+	VBoxManage internalcommands sethduuid "$cacheMachineArtefactsPath"/"$disk".vdi "${machineDisksConfigurationUuid["$disk"]}"
 }
 
 function convertDiskImage_parallels()
 {
 	convertDiskImageUsingQemuImg hdd parallels
-}
-
-function convertDiskImage_ovf2()
-{
-	convertDiskImage_vmware
 }

@@ -1,8 +1,25 @@
+function generateOva2()
+{
+	generateOvf2
+	
+	pushd "$cacheMachineArtefactsPath" 1>/dev/null 2>/dev/null
+	
+		tar --create --file "$cacheMachineArtefactsPath"/"$machine".ova "$machine".ovf *.vmdk "$machine".mf
+		
+	popd 1>/dev/null 2>/dev/null
+	
+	rm -rf "$cacheMachineArtefactsPath"/*.ovf "$cacheMachineArtefactsPath"/*.vmdk "$cacheMachineArtefactsPath"/*.mf
+}
+
+function generateOvf2()
+{
+	generateOvf2File
+	generateOvf2ManifestFile
+}
 
 function generateOvf2File()
 {
-	# some XML to do here...
-	:
+	ovf2Xml "virtualbox" >"$cacheMachineArtefactsPath"/"$machine".ovf
 }
 
 function generateOvf2ManifestEntry()
@@ -27,25 +44,6 @@ function generateOvf2ManifestFile()
 	do
 		generateOvf2ManifestEntry "$vmdkFile"
 	done
-}
-
-function generateMetadata_ovf2()
-{
-	generateOvf2File
-	generateOvf2ManifestFile
-}
-
-function generateMetadata_ova2()
-{
-	generateMetadata_ovf2
-	
-	pushd "$cacheMachineArtefactsPath" 1>/dev/null 2>/dev/null
-	
-		tar --create --file "$cacheMachineArtefactsPath"/"$machine".ova "$machine".ovf *.vmdk "$machine".mf
-		
-	popd 1>/dev/null 2>/dev/null
-	
-	rm -rf "$cacheMachineArtefactsPath"/*.ovf "$cacheMachineArtefactsPath"/*.vmdk "$cacheMachineArtefactsPath"/*.mf
 }
 
 # VMC files: https://stackoverflow.com/questions/4065682/importing-a-vhd-into-parallels-desktop-6-on-the-mac

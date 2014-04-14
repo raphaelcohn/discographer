@@ -2,4 +2,4 @@ machineDistribution=centos
 machineDistributionMajorRevision=6
 machineDistributionReleaseRpm=${machineDistribution}-release-${machineDistributionMajorRevision}-5.el6.centos.11.1.x86_64.rpm
 machineDistributionReleaseRpmUrl=http://mirror.centos.org/centos/${machineDistributionMajorRevision}/os/x86_64/Packages/${machineDistributionReleaseRpm}
-machineHypervisor=kvm
+machineHypervisor=ova2

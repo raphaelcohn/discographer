@@ -1,0 +1,475 @@
+function xml_VirtualBox()
+{
+	local indentation=""
+	
+	xml_version
+	xml_start "xmlns='http://www.innotek.de/VirtualBox-settings' version='1.12-macosx'"
+		
+		xml_VirtualBox_Machine "no"
+	
+	xml_end "Envelope"
+}
+
+function xml_VirtualBox_Machine()
+{
+	local -r isOvf="$1"
+	if [ "$isOvf" = "yes" ]; then
+		local -r vboxNamespace="vbox:"
+		local -r ovfNamespace="ovf:required='false' "
+	else
+		local -r vboxNamespace=""
+		local -r ovfNamespace=""
+	fi
+	
+	xml_start "${vboxNamespace}Machine ${ovfNamespace}version='1.12-macosx' uuid='{${machineUuid}}' name='${machine}' OSType='${machineOperatingSystemName}' snapshotFolder='Snapshots' lastStateChange='${machineLastStateChangeTimestamp}'"
+		
+		if [ "$isOvf" = "yes" ]; then
+			indented "<ovf:Info>Complete VirtualBox machine configuration in VirtualBox format</ovf:Info>"
+		else
+			xml_VirtualBox_Machine_MediaRegistry
+		fi
+		
+		xml_VirtualBox_Machine_ExtraData
+		xml_VirtualBox_Machine_Snapshot
+		xml_VirtualBox_Machine_Hardware
+		xml_VirtualBox_Machine_StorageControllers
+		
+	xml_end "vbox:Machine"
+}
+
+function xml_VirtualBox_Machine_MediaRegistry()
+{
+	xml_start "MediaRegistry"
+		
+		xml_start "HardDisks"
+			
+			local disk
+			for disk in "${machineDisks[@]}"
+			do
+				# QED is also supported, also VMDK, VHD and RAW
+				local diskFormat=VDI
+				local diskUuid="${machineDisksConfigurationUuid["$disk"]}"
+				xml_selfclose "HardDisk uuid='{${diskUuid}}' location='${disk}.vdi' format='${diskFormat}' type='Normal'"
+			done
+			
+		xml_end "HardDisks"
+		
+		xml_start "DVDImages"
+		
+			#xml_selfclose "Image uuid='{${imageUuid}}' location='/path/to/dvd.iso'"
+		
+		xml_end "DVDImages"
+		
+		xml_selfclose "FloppyImages"
+		
+	xml_end "MediaRegistry"
+    <MediaRegistry>
+      <HardDisks>
+        <HardDisk uuid="{30e45437-2484-4c05-9420-3d6978b5ddf9}" location="lfs.vdi" format="VDI" type="Normal">
+          <HardDisk uuid="{a9ea4f7d-a02d-49ce-a340-ae510eda1b48}" location="Snapshots/{a9ea4f7d-a02d-49ce-a340-ae510eda1b48}.vdi" format="VDI"/>
+        </HardDisk>
+        <HardDisk uuid="{a5a8e001-d633-4401-b47b-001b53d3079e}" location="ExperminalDisk.qed" format="QED" type="Normal"/>
+      </HardDisks>
+      <DVDImages>
+        <Image uuid="{d156ee37-2eb1-4d8a-82b0-9724699611b4}" location="/Users/raph/Downloads/ubuntu-13.10-server-amd64.iso"/>
+        <Image uuid="{a30944ce-76bc-48f0-80e9-43792798ad25}" location="/Users/Shared/VirtualBox/en_windows_vista_enterprise_sp2_x64_dvd_342332.iso"/>
+      </DVDImages>
+      <FloppyImages/>
+    </MediaRegistry>
+}
+
+function xml_VirtualBox_Machine_ExtraData()
+{
+	xml_start "ExtraData"
+		
+		xml_selfclose "ExtraDataItem name='GUI/LastCloseAction' value='PowerOff'"
+		#xml_selfclose "ExtraDataItem name='GUI/LastGuestSizeHint' value='720,400'"
+		#xml_selfclose "ExtraDataItem name='GUI/LastNormalWindowPosition' value='667,277,795,509'"
+		
+	xml_end "ExtraData"
+}
+
+function xml_VirtualBox_Machine_Snapshot()
+{
+	# Looks liks xml_VirtualBox_Machine_Hardware, but with uuid="{9390c488-6e53-4cb1-a7c7-547b8dd5fd63}" name="With DKMS and SSHFS" timeStamp="2014-03-11T07:19:43Z" stateFile="Snapshots/2014-03-11T07-19-43-499835000Z.sav" instead of version=2
+	:
+}
+
+function xml_VirtualBox_Machine_Hardware()
+{
+	xml_start "Hardware version='2'"
+		
+		xml_VirtualBox_Machine_Hardware_CPU
+		xml_VirtualBox_Machine_Hardware_Memory
+		xml_VirtualBox_Machine_Hardware_HID
+		xml_VirtualBox_Machine_Hardware_HPET
+		xml_VirtualBox_Machine_Hardware_Chipset
+		xml_VirtualBox_Machine_Hardware_Boot
+		xml_VirtualBox_Machine_Hardware_Display
+		xml_VirtualBox_Machine_Hardware_Videocapture
+		xml_VirtualBox_Machine_Hardware_RemoteDisplay
+		xml_VirtualBox_Machine_Hardware_BIOS
+		xml_VirtualBox_Machine_Hardware_USBController
+		xml_VirtualBox_Machine_Hardware_Network
+		xml_VirtualBox_Machine_Hardware_UART
+		xml_VirtualBox_Machine_Hardware_LPT
+		xml_VirtualBox_Machine_Hardware_AudioAdapter
+		xml_VirtualBox_Machine_Hardware_RTC
+		xml_VirtualBox_Machine_Hardware_SharedFolders
+		xml_VirtualBox_Machine_Hardware_Clipboard
+		xml_VirtualBox_Machine_Hardware_DragAndDrop
+		xml_VirtualBox_Machine_Hardware_IO
+		xml_VirtualBox_Machine_Hardware_HostPci
+		xml_VirtualBox_Machine_Hardware_EmulatedUSB
+		xml_VirtualBox_Machine_Hardware_Guest
+		xml_VirtualBox_Machine_Hardware_GuestProperties
+		
+	xml_end "Hardware"
+}
+
+function xml_VirtualBox_Machine_Hardware_CPU()
+{
+	xml_start "CPU count='2' hotpluug='false'"
+	
+		xml_selfclose "HardwareVirtEx enabled='true'"
+		xml_selfclose "HardwareVirtExNestedPaging enabled='true'"
+		xml_selfclose "HardwareVirtExVPID enabled='true'"
+		xml_selfclose "HardwareVirtExUX enabled='true'"
+		xml_selfclose "PAE enabled='true'"
+		xml_selfclose "HardwareVirtExLargePages enabled='true'"
+		xml_selfclose "HardwareVirtForce enabled='false'"
+	
+	xml_end "CPU"
+}
+
+function xml_VirtualBox_Machine_Hardware_Memory()
+{
+	xml_selfclose "Memory RAMSize='${machineRamSizeMegabytes} PageFusion='false'"
+}
+
+function xml_VirtualBox_Machine_Hardware_HID()
+{
+	xml_selfclose "HID Pointing='PS2Mouse Keyboard='PS2Keyboard'"
+}
+
+function xml_VirtualBox_Machine_Hardware_HPET()
+{
+	xml_selfclose "HPET enabled='false'"
+}
+
+function xml_VirtualBox_Machine_Hardware_Chipset()
+{
+	# Also PIIX3
+	xml_selfclose "Chipset type='ICH9'"
+}
+
+function xml_VirtualBox_Machine_Hardware_Boot()
+{
+	echo "************** FIX ME (VIRTUAL BOX Boot Order) **************"
+	
+	xml_start "Boot"
+		
+		xml_selfclose "Order position='1' device='HardDisk'"
+		xml_selfclose "Order position='2' device='None'"
+		xml_selfclose "Order position='3' device='None'"
+		xml_selfclose "Order position='4' device='None'"
+		
+	xml_end "Boot"
+}
+
+function xml_VirtualBox_Machine_Hardware_Display()
+{
+	xml_selfclose "Display VRAMSize='12' monitorCount='1' accelerate3D='false' accelerate2DVideo='false'"
+}
+
+function xml_VirtualBox_Machine_Hardware_Videocapture()
+{
+	xml_selfclose "VideoCapture"
+}
+
+function xml_VirtualBox_Machine_Hardware_BIOS()
+{
+	xml_start "BIOS"
+	
+		xml_selfclose "ACPI enabled='true'"
+		xml_selfclose "IOAPIC enabled='true'"
+		xml_selfclose "Logo fadeIn='true' fadeOut='true' displayTime='0'"
+		xml_selfclose "BootMenu mode='MessageAndMenu'"
+		xml_selfclose "TimeOffset value='0'"
+		xml_selfclose "PXEDebug enabled='false'"
+	
+	xml_end "BIOS"
+}
+
+function xml_VirtualBox_Machine_Hardware_USBController()
+{
+	xml_selfclose "USBController enabled='false' enabledEhci='false'"
+}
+
+function xml_VirtualBox_Machine_Hardware_Network()
+{
+	xml_start "Network"
+		
+		local nic
+		local machineNicMac
+		local ethernetControllerHardware
+		local -i index=0
+		for nic in "${machineNics[@]}"
+		do
+			machineNicMac="${machineConfigurationNicsMac["$nic"]}"
+			
+			if [ "${machineConfigurationNicsVariant["$nic"]}" = "virtual" ]; then
+				ethernetControllerHardware="virtio-net"
+			else
+				# Same as E1000, but virtualbox uses a different name here...
+				ethernetControllerHardware="82540EM"
+			fi
+			
+			xml_start "Adapter slot='${index}' enabled='true' MACAddress='${machineNicMac}' cable='true' speed='0' type='${ethernetControllerHardware}'"
+				
+				xml_start "DisabledModes"
+					
+					xml_selfclose "BridgedInterface name='en1: Wi-Fi (AirPort)'"
+					xml_selfclose "InternalNetwork name='intnet'"
+					xml_selfclose "NATNetwork name='NatNetwork'"
+					
+				xml_end "DisabledModes"
+				
+				xml_start "NAT"
+					
+					xml_selfclose "DNS pass-domain='true' use-proxy='false' use-host-resolver='false'"
+					xml_selfclose "Alias logging='false' proxy-only='false' use-same-ports='false'"
+					
+				xml_end "NAT"
+				
+			xml_end "Adapter"
+			
+			index=$((index+1))
+		done
+		
+	xml_end "Network"
+}
+
+function xml_VirtualBox_Machine_Hardware_UART()
+{
+	# Serial Ports - incredibly rare to have more than 2 more, and unlikely we need them at all
+	xml_start "UART"
+		
+		xml_selfclose "Port slot='0' enabled='false' IOBase='0x3f8' IRQ='4' hostMode='Disconnected'"
+		xml_selfclose "Port slot='1' enabled='false' IOBase='0x2f8' IRQ='4' hostMode='Disconnected'"
+		
+	xml_end "UART"
+}
+
+function xml_VirtualBox_Machine_Hardware_LPT()
+{
+	# Parallel Ports - unlikely to be needed at all
+	xml_start "LPT"
+		
+		xml_selfclose "Port slot='0' enabled='false' IOBase='0x378' IRQ='7'"
+		xml_selfclose "Port slot='1' enabled='false' IOBase='0x378' IRQ='7'"
+		
+	xml_end "LPT"
+}
+
+function xml_VirtualBox_Machine_Hardware_AudioAdapter()
+{
+	xml_selfclose "AudioAdapter controller='AC97' driver='CoreAudio' enabled='false'"
+}
+
+function xml_VirtualBox_Machine_Hardware_RTC()
+{
+	xml_selfclose "RTC localOrUTC='UTC'"
+}
+
+function xml_VirtualBox_Machine_Hardware_SharedFolders()
+{
+	xml_start "SharedFolders"
+		
+		#xml_selfclose "SharedFolder name='lfs' hostPath='/absolute/path/to/folder' writable='false' autoMount='true'"
+		
+	xml_end "SharedFolders"
+}
+
+function xml_VirtualBox_Machine_Hardware_Clipboard()
+{
+	xml_selfclose "Clipboard mode='Bidirectional'"
+}
+
+function xml_VirtualBox_Machine_Hardware_DragAndDrop()
+{
+	xml_selfclose "DragAndDrop mode='Disabled'"
+}
+
+function xml_VirtualBox_Machine_Hardware_IO()
+{
+	xml_start IO
+		
+		xml_selfclose "IoCache enabled='true' size='5'"
+		xml_selfclose "BandwidthGroups"
+		
+	xml_end IO
+}
+
+function xml_VirtualBox_Machine_Hardware_HostPci()
+{
+	xml_start HostPCI
+		
+		xml_selfclose "Devices"
+		
+	xml_end HostPCI
+}
+
+function xml_VirtualBox_Machine_Hardware_EmulatedUSB()
+{
+	xml_start EmulatedUSB
+	
+		xml_selfclose "CardReader enabled='false'"
+	
+	xml_end EmulatedUSB
+}
+
+function xml_VirtualBox_Machine_Hardware_Guest()
+{
+	xml_selfclose "Guest memoryBalloonSize='0'"
+}
+
+function xml_VirtualBox_Machine_Hardware_GuestProperties()
+{
+	xml_start GuestProperties
+		
+		#xml_selfclose "GuestProperty name='/VirtualBox/GuestAdd/Revision' value='92456' timestamp='1394700173553625000' flags=''"
+		#xml_selfclose "GuestProperty name='/VirtualBox/GuestAdd/Version' value='4.3.8' timestamp='1394700173552952000' flags=''"
+		#xml_selfclose "GuestProperty name='/VirtualBox/GuestAdd/VersionExt' value='4.3.8' timestamp='1394700173553329000' flags=''"
+		
+		local -i index=0
+		local nic
+		local machineNicMac
+		for nic in "${machineNics[@]}"
+		do
+			machineNicMac="${machineConfigurationNicsMac["$nic"]}"
+			xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/MAC' value='${machineNicMac}' timestamp='1394700173568774000' flags=''"
+			xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/Status' value='Up' timestamp='1394700173568774000' flags=''"
+			#xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/V4/Broadcast' value='10.0.2.255' timestamp='1394700173564802000' flags=''"
+			#xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/V4/IP' value='10.0.2.15' timestamp='1394700173564402000' flags=''"
+			#xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/V4/Netmask' value='255.255.255.0' timestamp='1394700173565175000' flags=''"
+			echo "************** FIX ME (VIRTUAL BOX GuestProperties - NET) **************"
+			
+			index=$((index+1))
+		done
+		
+		local -ir nicCount="${#machineNics[@]}"
+		xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/Count' value='${nicCount}' timestamp='1394731816650056000' flags=''"
+		
+		echo "************** FIX ME (VIRTUAL BOX GuestProperties - OS) **************"
+		xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/OS/Product' value='Linux' timestamp='1394700173550587000' flags=''"
+		#xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/OS/Release' value='3.11.0-18-generic' timestamp='1394700173551057000' flags=''"
+		#xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/OS/Version' value='#32-Ubuntu SMP Tue Feb 18 21:11:14 UTC 2014' timestamp='1394700173551645000' flags=''"
+		xml_selfclose "GuestProperty name='/VirtualBox/HostInfo/GUI/LanguageID' value='C' timestamp='1394700148192375000' flags=''"
+		
+	xml_end GuestProperties
+}
+
+function xml_VirtualBox_Machine_StorageControllers()
+{
+	xml_start "StorageControllers"
+		
+		local -ir diskCount=${#machineDisks[@]}
+			
+			case "$machineDiskControllerHardwareKind" in
+
+				IDE)
+					if [ $diskCount -gt 4 ]; then
+						informationMessage FAIL "IDE disk controllers don't support more than 4 disks/devices"
+						exitError 1
+					fi
+					local -r controllerType="$machineDiskControllerHardwareImplementation"
+					local -r ideEmulationAttributes=""
+				;;
+
+				SATA)
+					local -r controllerType="$machineDiskControllerHardwareImplementation"
+					local -r ideEmulationAttributes=" IDE0MasterEmulationPort='0' IDE0SlaveEmulationPort='1' IDE1MasterEmulationPort='2' IDE1SlaveEmulationPort='3'"
+				;;
+
+				SAS)
+					if [ "$machineDiskControllerHardwareImplementation" != "lsilogicsas" ]; then
+						informationMessage FAIL "Machine disk controller hardware implementation (machineDiskControllerHardwareImplementation) $machineDiskControllerHardwareImplementation is not supported"
+						exitError 1
+					fi
+					local -r controllerType=LsiLogicSas
+					local -r ideEmulationAttributes=""
+				
+				;;
+				
+				*)
+					informationMessage FAIL "Machine disk controller hardware kind (machineDiskControllerHardwareKind) $machineDiskControllerHardwareKind is not supported"
+					exitError 1
+				;;
+			
+			esac
+			
+			xml_start "StorageController name='${machineDiskControllerHardwareKind}' type='${controllerType}' PortCount='${portCount}' useHostIOCache='true' Bootable='true'${ideEmulationAttributes}"
+			
+			local -i count=0
+			local -i port
+			local -i device=
+			local disk
+			for disk in "${machineDisks[@]}"
+			do
+					
+					# Disk id - where from?
+					
+				xml_end "AttachedDevice"
+				
+				if [ "$machineDiskControllerHardwareKind" != "IDE" ]; then
+					port=$count
+				else
+					case $count in
+						0)
+							port=0
+							device=0
+						;;
+						
+						1)
+							port=1
+							device=0
+						;;
+						
+						2)
+							port=0
+							device=1
+						;;
+						
+						3)
+							port=1
+							device=1
+						;;
+						
+						*)
+							informationMessage FAIL "IDE disk controllers don't support more than 4 disks/devices"
+							exitError 1
+						;;
+					esac
+				fi
+				
+				# DVD / CD - note that device might be 1 for an IDE slave
+				#<AttachedDevice passthrough="false" type="DVD" port="0" device="0">
+				#<Image uuid="{a30944ce-76bc-48f0-80e9-43792798ad25}"/>
+				#</AttachedDevice>
+				
+				xml_start "AttachedDevice type='HardDisk' port='${port}' device='${device}'"
+					
+					local diskUuid="${machineDisksConfigurationUuid["$disk"]}"
+					xml_selfclose "Image uuid='{$diskUuid}'"
+					
+				xml_end "AttachedDevice"
+				
+				count=$((count+1))
+				
+			done
+
+		xml_end "StorageController"
+		
+	xml_end "StorageControllers"
+}

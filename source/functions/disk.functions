@@ -134,4 +134,4 @@ function convertDiskImage()
 {
 	convertDiskImage_${machineHypervisor}
 }
-diskUnmountFunctions+=(convertDiskImage)
+#diskUnmountFunctions+=(convertDiskImage)

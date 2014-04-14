@@ -1,0 +1,38 @@
+function hypervisorMetadata_raw()
+{
+	informationMessage WARN "raw metadata not supported"
+}
+
+function hypervisorMetadata_ova2()
+{
+	generateOva2
+}
+
+function hypervisorMetadata_qemu()
+{
+	# TODO: Generate a QEMU start script line
+	informationMessage WARN "QEMU metadata not supported"
+}
+
+function hypervisorMetadata_kvm()
+{
+	# TODO: Generate OVF
+	informationMessage WARN "KVM metadata not supported"
+}
+
+function hypervisorMetadata_vmware()
+{
+	informationMessage WARN "QEMU metadata not supported"
+}
+
+function hypervisorMetadata_virtualbox()
+{
+	xml_VirtualBox >"$cacheMachineArtefactsPath"/"$machine".vbox
+	mkdir -m 0755 -p "$cacheMachineArtefactsPath"/Logs
+	mkdir -m 0755 -p "$cacheMachineArtefactsPath"/Snapshots
+}
+
+function hypervisorMetadata_parallels()
+{
+	informationMessage WARN "Parallels metadata not supported"
+}
