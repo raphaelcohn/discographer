@@ -101,7 +101,7 @@ function installExtlinux_install()
 	extlinux --install "$extlinuxInstallPath"
 }
 extlinuxFunctions+=(installExtlinux_install)
-e2fsck -y -v -f /dev/sdb1 
+
 function installExtlinux_installMasterBootRecord()
 {
 	# Or boot from partition one
