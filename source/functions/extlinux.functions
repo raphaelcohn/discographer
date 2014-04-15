@@ -1,0 +1,115 @@
+extlinuxFunctions=()
+
+function installExtLinux_verify()
+{
+	case "${machineDisksConfigurationFilesystemType["$disk"]}" in
+
+		ext[2-4])
+			:
+		;;
+
+		btrfs)
+			:
+		;;
+
+		*)
+			informationMessage FAIL "DOS MBR using EXTLINUX is only supported for ext2, ext3, ext4 and btrfs disks"
+			exitError 1
+		;;
+
+	esac
+}
+extlinuxFunctions+=(installExtLinux_verify)
+
+function installExtlinux_determineSyslinuxSharePath()
+{
+	case "$pathName" in
+		
+		RedHat|CentOS|Fedora)
+			syslinuxSharePath=/usr/share/syslinux
+		;;
+		
+		Debian|Ubuntu)
+			syslinuxSharePath=/usr/lib/syslinux
+		;;
+		
+		*)
+			informationMessage WARN "Assuming syslinux share path is /usr/share/syslinux"
+			syslinuxSharePath=/usr/share/syslinux
+		;;
+	
+	esac
+}
+extlinuxFunctions+=(installExtlinux_determineSyslinuxSharePath)
+
+function installExtlinux_determineInstallPath()
+{
+	extlinuxInstallPath="$cacheMachineDisksMountsPath"/boot/extlinux
+	
+	extlinuxDiskImageDevicePath="${machineDisksConfigurationDiskImagePath["$disk"]}"
+}
+extlinuxFunctions+=(installExtlinux_determineInstallPath)
+
+function installExtlinux_makePath()
+{
+	mkdir -m 0755 -p "$extlinuxInstallPath"
+}
+extlinuxFunctions+=(installExtlinux_makePath)
+
+function installExtlinux_installMenuModules()
+{
+	cp "$syslinuxSharePath"/{menu,vesamenu}.c32 "$extlinuxInstallPath"
+}
+extlinuxFunctions+=(installExtlinux_installMenuModules)
+
+function installExtlinux_createConfiguration()
+{
+	local -r machineForceDefaultBoot=no
+	# We'll need these for QEMU...
+	local -r kernelAbsolutePath=/vmlinuz-2.6.32-5-686
+	local -r initrdAbsolutePath=/initrd.img-2.6.32-5-686
+	local -r rootDiskFilesystemUuid="98f012537-7a7c-2213-819e-a69ddf9abc2b"
+	if [ "$machineForceDefaultBoot" = "yes" ]; then
+		local -r prompt=0
+		local -r noescape=1
+		local -r allowOptions=0
+	else
+		local -r prompt=1
+		local -r noescape=0
+		local -r allowOptions=1
+	fi
+
+	cat >"$extlinuxInstallPath"/extlinux.conf <<-EOF
+		# Wait 50 1/10s of second (5s) before booting
+		UI menu
+		PROMPT ${prompt}
+		NOESCAPE ${noescape}
+		NOCOMPLETE 0
+		IMPLICIT 1
+		ALLOWOPTIONS ${allowOptions}
+		TIMEOUT 50
+		TOTALTIMEOUT 3000
+		DEFAULT linux
+		LABEL linux
+		      SAY Booting the kernel using EXTLINUX
+		      KERNEL ${kernelAbsolutePath}
+		      INITRD ${initrdAbsolutePath}
+		      APPEND root=UUID=${rootDiskFilesystemUuid} ro quiet
+	EOF
+}
+extlinuxFunctions+=(installExtlinux_createConfiguration)
+
+function installExtlinux_install()
+{
+	extlinux --install "$extlinuxInstallPath"
+}
+extlinuxFunctions+=(installExtlinux_install)
+e2fsck -y -v -f /dev/sdb1 
+function installExtlinux_installMasterBootRecord()
+{
+	# Or boot from partition one
+	#printf '\1' | cat "$syslinuxSharePath"/altmbr.bin - | dd bs=440 count=1 iflag=fullblock conv=notrunc of="${machineDisksConfigurationDiskImagePath["$disk"]}"
+	dd bs=440 count=1 conv=notrunc if="$syslinuxSharePath"/mbr.bin of="${machineDisksConfigurationDiskImagePath["$disk"]}"
+	#cat "$syslinuxSharePath"/mbr.bin >"${machineDisksConfigurationDiskImagePath["$disk"]}"
+}
+extlinuxFunctions+=(installExtlinux_installMasterBootRecord)

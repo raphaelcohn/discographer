@@ -20,6 +20,19 @@ function mountPointIsSpecial()
 	return 1
 }
 
+function mountDisk()
+{
+	local -r diskFilePath="$1"
+	kpartx -a -s "$diskFilePath"
+	
+	registerMountPointToRemoveOnExit "$diskFilePath" unmountDisk
+	
+	local -r deviceMapper="$(kpartx -l -s "${machineDisksConfigurationDiskImagePath["$disk"]}" 2>/dev/null | awk '{print $1}')"
+	
+	echo -n "/dev/mapper/${deviceMapper}"
+	return 0
+}
+
 function mountLoopback()
 {
 	local -r filesystemType="$1"
@@ -78,6 +91,20 @@ function unmountBind()
 		unregisterMountPointToRemoveOnExit
 	fi
 	umount "$mountPath" || true
+}
+
+function unmountDisk()
+{
+	local -r diskFilePath="$1"
+	
+	if [ "$(uname)" = "Darwin" ]; then
+		return 0
+	fi
+	
+	if [ -z "$exiting" ]; then
+		unregisterMountPointToRemoveOnExit
+	fi
+	kpartx -d -s "$diskFilePath" || true
 }
 
 mountPointsToRemoveOnExitPaths=()

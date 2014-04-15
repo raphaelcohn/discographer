@@ -343,6 +343,48 @@ function installOverlays()
 }
 machineFunctions+=(installOverlays)
 
+function installExtLinux()
+{
+	# TODO: need to have determined kernel, initrd
+	
+	# Values match man partx (except for unpartitioned)
+	case "$machineHypervisorDiskPartioning" in
+		
+		unpartitioned)
+			return 0
+		;;
+		
+		bsd|solaris|unixware)
+			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported for extlinux"
+			exitError 1
+		;;
+		
+		gpt)
+			informationMessage FAIL "GPT partitioning is unsupported at this time for extlinux"
+			exitError 1
+		;;
+		
+		dos)
+			:
+		;;
+	
+	esac
+	
+	local disk
+	for disk in "$machineDisks"
+	do
+		if [ "${machineDisksConfigurationBootable["$disk"]}" = "yes" ]; then
+			local extlinuxFunction
+			for extlinuxFunction in "${extlinuxFunctions[@]}"
+			do
+				# installExtlinux_determineInstallPath uses $disk
+				$extlinuxFunction
+			done
+		fi
+	done
+}
+machineFunctions+=(installExtLinux)
+
 function recordHashesOfAllFiles()
 {
 	recordHashes "${cacheMachineDisksMountsPath}" "/" "$cacheMachineArtefactsPath"/installed-files.report.txt
@@ -371,6 +413,10 @@ machineFunctions+=(unmountDisks)
 
 function createMetadata()
 {
-	hypervisorMetadata_${machineHypervisor}
+	if [ "$machineHypervisorMetadataOutputFormat" = "none" ]; then
+		return 0
+	fi
+	
+	hypervisorMetadata_${machineHypervisorName}
 }
 machineFunctions+=(createMetadata)

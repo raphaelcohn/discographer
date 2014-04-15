@@ -1,38 +1,87 @@
-function hypervisorMetadata_raw()
+function hypervisorMetadata_kvm()
 {
-	informationMessage WARN "raw metadata not supported"
+	informationMessage WARN "kvm metadata not supported"
 }
 
-function hypervisorMetadata_ova2()
+function hypervisorMetadata_xen()
 {
-	generateOva2
+	informationMessage WARN "kvm metadata not supported"
 }
 
 function hypervisorMetadata_qemu()
 {
-	# TODO: Generate a QEMU start script line
-	informationMessage WARN "QEMU metadata not supported"
-}
+	case "$machineHypervisorMetadataOutputFormat" in
 
-function hypervisorMetadata_kvm()
-{
-	# TODO: Generate OVF
-	informationMessage WARN "KVM metadata not supported"
+		native)
+			informationMessage WARN "*********** TODO: qemu native format [shell script to qemu] ****************"
+		;;
+
+		*)
+			informationMessage FAIL "qemu metadata machineHypervisorMetadataOutputFormat $machineHypervisorMetadataOutputFormat not supported"
+		;;
+
+	esac
 }
 
 function hypervisorMetadata_vmware()
 {
-	informationMessage WARN "QEMU metadata not supported"
+	case "$machineHypervisorMetadataOutputFormat" in
+
+		native)
+			informationMessage WARN "*********** TODO: vmware native format [vmx or vmc] ****************"
+		;;
+		
+		ovf2)
+			generateOvf2
+		;;
+		
+		ova2)
+			generateOva2
+		;;
+		
+		*)
+			informationMessage FAIL "vmware metadata machineHypervisorMetadataOutputFormat $machineHypervisorMetadataOutputFormat not supported"
+		;;
+
+	esac
 }
 
 function hypervisorMetadata_virtualbox()
 {
-	xml_VirtualBox >"$cacheMachineArtefactsPath"/"$machine".vbox
-	mkdir -m 0755 -p "$cacheMachineArtefactsPath"/Logs
-	mkdir -m 0755 -p "$cacheMachineArtefactsPath"/Snapshots
+	case "$machineHypervisorMetadataOutputFormat" in
+	
+		native)
+			xml_VirtualBox >"$cacheMachineArtefactsPath"/"$machine".vbox
+			mkdir -m 0755 -p "$cacheMachineArtefactsPath"/Logs
+			mkdir -m 0755 -p "$cacheMachineArtefactsPath"/Snapshots
+		;;
+		
+		ovf2)
+			generateOvf2
+		;;
+		
+		ova2)
+			generateOva2
+		;;
+	
+		*)
+			informationMessage FAIL "virtualbox metadata machineHypervisorMetadataOutputFormat $machineHypervisorMetadataOutputFormat not supported"
+		;;
+	
+	esac
 }
 
 function hypervisorMetadata_parallels()
 {
-	informationMessage WARN "Parallels metadata not supported"
+	case "$machineHypervisorMetadataOutputFormat" in
+		
+		native)
+			:
+		;;
+		
+		*)
+			informationMessage FAIL "parallels metadata machineHypervisorMetadataOutputFormat $machineHypervisorMetadataOutputFormat not supported"
+		;;
+		
+	esac
 }

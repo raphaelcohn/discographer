@@ -19,7 +19,7 @@ function generateOvf2()
 
 function generateOvf2File()
 {
-	ovf2Xml "virtualbox" >"$cacheMachineArtefactsPath"/"$machine".ovf
+	ovf2Xml >"$cacheMachineArtefactsPath"/"$machine".ovf
 }
 
 function generateOvf2ManifestEntry()

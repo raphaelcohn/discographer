@@ -27,14 +27,9 @@ function validateHypervisorNameAndOutputFormat()
 		qemu)
 			case "$machineHypervisorDiskFormat" in
 				
-				auto)
+				auto|unpartitioned)
 					machineHypervisorDiskFormat=raw
-					machineHypervisorDiskExtension=raw
-					machineHypervisorDiskPartioning=dos
-				;;
-				
-				unpartitioned)
-					machineHypervisorDiskExtension=unpartitioned.img
+					machineHypervisorDiskExtension=unpartitioned
 					machineHypervisorDiskPartioning=unpartitioned
 				;;
 				

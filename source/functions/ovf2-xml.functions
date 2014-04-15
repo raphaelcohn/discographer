@@ -1,12 +1,5 @@
 function ovf2Xml()
 {
-	local -r hypervisorVariant="$1"
-	
-	if [ "$hyperisorVariant" != "virtualbox" ]; then
-		informationMessage FAIL "Only virtualbox OVF is supported at this time"
-		exitError 1
-	fi
-	
 	local indentation=""
 	
 	xml_version
@@ -97,7 +90,7 @@ function ovf2Xml_VirtualSystem()
 		ovf2Xml_VirtualSystem_OperatingSystemSection
 		ovf2Xml_VirtualSystem_VirtualHardwareSection
 		
-		if [ "$hypervisorVariant" = "virtualbox" ]; then
+		if [ "$machineHypervisorName" = "virtualbox" ]; then
 			xml_VirtualBox_Machine "yes"
 		fi
 		

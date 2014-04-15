@@ -12,7 +12,7 @@ function sourceDiskImageConfiguration()
 	
 	machineDiskImagePath="$cacheMachineDisksPath"/"$disk".img
 	
-	machineDiskImageMountPath="$cacheMachineDisksMountsPath${machineDiskMountPoint}"
+	machineDiskImageMountPath="${cacheMachineDisksMountsPath}${machineDiskMountPoint}"
 }
 diskCreateFunctions+=(sourceDiskImageConfiguration)
 
@@ -26,6 +26,14 @@ function verifyDiskImageConfiguration()
 	case "$machineDiskFilesystemType" in
 		
 		ext[2-4])
+			:
+		;;
+		
+		btrfs)
+			:
+		;;
+		
+		xfs)
 			:
 		;;
 		
@@ -47,7 +55,7 @@ function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmountin
 	machineDisksConfigurationFilesystemType["$disk"]="$machineDiskFilesystemType"
 	machineDisksConfigurationBlockSize["$disk"]="$machineDiskBlockSize"
 	machineDisksConfigurationMountPoint["$disk"]="$machineDiskMountPoint"
-	machineDisksConfigurationImagePath["$disk"]="$machineDiskImagePath"
+	machineDisksConfigurationDiskImagePath["$disk"]="$machineDiskImagePath"
 	machineDisksConfigurationImageMountPath["$disk"]="$machineDiskImageMountPath"
 	machineDisksConfigurationUuid["$disk"]="$machineDiskUuid"
 	machineDisksConfigurationMountOptions["$disk"]="$machineDiskMountOptions"
@@ -55,6 +63,7 @@ function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmountin
 	machineDisksConfigurationFsckOptions["$disk"]="$machineDiskFsckOptions"
 	machineDisksConfigurationShrinkDisk["$disk"]="$machineDiskShrink"
 	machineDisksConfigurationBootable["$disk"]="$machineDiskBootable"
+	machineDisksConfigurationPartitionImagePath["$disk"]=""
 }
 diskCreateFunctions+=(captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting)
 
@@ -106,11 +115,6 @@ function createDiskImagePartitionTable()
 	
 	esac
 	
-	# We may need to specify C, H, S (disk geometry)
-	
-	#Disk disk.name: 783 cylinders, 255 heads, 63 sectors/track
-	#Units = cylinders of 8225280 bytes, blocks of 1024 bytes, counting from 0
-	
 	# default for start is first unassigned
 	local -r start=""
 	
@@ -131,68 +135,137 @@ function createDiskImagePartitionTable()
 		local -r bootable=''
 	fi
 	
-	local -r partitionsMap="$cacheMachineArtefactsPath"/"$disk".sfdisk.partitions.map
+	local -r partitionsMap="$cacheMachineArtefactsPath"/"$disk".partition-table.sfdisk.input.txt
 	
 	# <start>,<size>,<id>,<bootable>,<c,h,s>,<c,h,s>
 	cat >"$partitionsMap" <<-EOF
-		{$start}${size}${id}${bootable}
+		${start}${size}${id}${bootable}
 	EOF
 	
-	sfdisk -uS -H 255 -S ${sectors} <"$partitionsMap"
-	
-	# -uS reports in sectors of 512 bytes
-	# suppress errors about disk geometry
-	sfdisk -d "$machineDiskImagePath" 2>/dev/null | sed -e "s;${machineDiskImagePath};${disk};g" >"$cacheMachineArtefactsPath"/"$disk".partition-table-sfdisk.dump.txt
-	sfdisk -uS --list "$machineDiskImagePath" 2>/dev/null | sed -e "s;${machineDiskImagePath};${disk};g" >"$cacheMachineArtefactsPath"/"$disk".partition-table-sfdisk.report.txt
-	
-	echo "FIX ME"
-	exit 50
+	pushd "$cacheMachineDisksPath" 1>/dev/null 2>/dev/null
+		
+		sfdisk -q "$disk".img 1>/dev/null 2>/dev/null <"$partitionsMap"
+		
+		# -uS reports in sectors of 512 bytes
+		# suppress errors about disk geometry
+		sfdisk -d "$disk".img 2>/dev/null | sed -e "s;${disk}.img;${disk};g" >"$cacheMachineArtefactsPath"/"$disk".partition-table.sfdisk.dump.txt
+		sfdisk --list "$disk".img 2>/dev/null | sed -e "s;${disk}.img;${disk};g" >"$cacheMachineArtefactsPath"/"$disk".partition-table.sfdisk.report.txt
+	popd 1>/dev/null 2>/dev/null
 }
 diskCreateFunctions+=(createDiskImagePartitionTable)
 
-function createDiskImageFilesystem()
+function mountDiskImage()
 {
-	if mountPointIsSpecial; then
-		mkswap -f -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" "$machineDiskImagePath" 1>/dev/null 2>/dev/null
-		return 0
-	fi
+	# Values match man partx (except for unpartitioned)
+	case "$machineHypervisorDiskPartioning" in
+		
+		unpartitioned)
+			# Does nothing
+			machineDisksConfigurationPartitionImagePath["$disk"]="${machineDisksConfigurationDiskImagePath["$disk"]}"
+		;;
+		
+		dos)
+			machineDisksConfigurationPartitionImagePath["$disk"]="$(mountDisk "${machineDisksConfigurationDiskImagePath["$disk"]}")"
+		;;
+		
+		bsd|solaris|unixware)
+			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported"
+			exitError 1
+		;;
+		
+		gpt)
+			informationMessage FAIL "GPT partitioning is unsupported at this time"
+			exitError 1
+		;;
 	
-	mkfs."$machineDiskFilesystemType" -F -q -b $machineDiskBlockSize -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" -O "$machineDiskOptions" "$machineDiskImagePath"
+	esac
 }
-diskCreateFunctions+=(createDiskImageFilesystem)
+diskMountFunctions+=(mountDiskImage)
 
-function createDiskImageMountpoint()
+function createDiskPartitionMountpoint()
 {
 	mkdir -m 0755 -p "${machineDisksConfigurationImageMountPath["$disk"]}"
 }
-diskMountFunctions+=(createDiskImageMountpoint)
+diskMountFunctions+=(createDiskPartitionMountpoint)
 
-function mountDiskImage()
+function createDiskPartitionFilesystem()
 {
-	mountLoopback "${machineDisksConfigurationFilesystemType["$disk"]}" "${machineDisksConfigurationImagePath["$disk"]}" "${machineDisksConfigurationImageMountPath["$disk"]}"
+	if mountPointIsSpecial; then
+		mkswap -f -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" "$machineDisksConfigurationPartitionImagePath" 1>/dev/null 2>/dev/null
+		return 0
+	fi
+	
+	mkfs."$machineDiskFilesystemType" -F -q -b $machineDiskBlockSize -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" -O "$machineDiskOptions" "$machineDisksConfigurationPartitionImagePath"
 }
-diskMountFunctions+=(mountDiskImage)
+diskCreateFunctions+=(createDiskPartitionFilesystem)
+
+function mountDiskPartition()
+{
+	mountLoopback "${machineDisksConfigurationFilesystemType["$disk"]}" "${machineDisksConfigurationPartitionImagePath["$disk"]}" "${machineDisksConfigurationImageMountPath["$disk"]}"
+}
+diskMountFunctions+=(mountDiskPartition)
 
 
 diskUnmountFunctions=()
 
-function syncDiskImage()
+function unmountSyncDisk()
 {
+	# Does not flush ext3 journal
 	sync
 }
-diskUnmountFunctions+=(syncDiskImage)
+diskUnmountFunctions+=(unmountSyncDisk)
 
-function unmountDiskImage()
+function unmountDiskPartition()
 {
 	unmountLoopback "${machineDisksConfigurationImageMountPath["$disk"]}" || true
 }
-diskUnmountFunctions+=(unmountDiskImage)
+diskUnmountFunctions+=(unmountDiskPartition)
+
+function unmountOptimiseDisk()
+{
+	case "${machineDisksConfigurationFilesystemType["$disk"]}" in
+	
+		ext2|ext3|ext4)
+			e2fsck -D -f "${machineDisksConfigurationPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
+			tune2fs -f -c 0 -C 0 -i 36m -M "${machineDisksConfigurationPartitionImagePath["$disk"]}" -u 0 -g 0 "${machineDisksConfigurationPartitionImagePath["$disk"]}"
+		;;
+	
+		*)
+			return 0
+		;;
+	esac
+}
+diskUnmountFunctions+=(unmountOptimiseDisk)
 
 function shrinkDiskImage()
 {
 	if [ "${machineDisksConfigurationShrinkDisk["$disk"]}" != "yes" ]; then
 		return 0
 	fi
+	
+	# Values match man partx (except for unpartitioned)
+	case "$machineHypervisorDiskPartioning" in
+		
+		unpartitioned)
+			:
+		;;
+		
+		bsd|solaris|unixware)
+			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported for extlinux"
+			exitError 1
+		;;
+		
+		gpt)
+			informationMessage FAIL "GPT partitioning is unsupported at this time for extlinux"
+			exitError 1
+		;;
+		
+		dos)
+			informationMessage WARN "Dish shrinking is not currently possible when using DOS partition tables"
+			return 0
+		;;
+	
+	esac
 	
 	case "${machineDisksConfigurationFilesystemType["$disk"]}" in
 		
@@ -207,17 +280,45 @@ function shrinkDiskImage()
 	
 	machineDiskBlockSize=${machineDisksConfigurationBlockSize["$disk"]}
 	
-	e2fsck -f "${machineDisksConfigurationImagePath["$disk"]}" 1>/dev/null 2>/dev/null
-	local -ir minimumSize="$(resize2fs -P supermin-wrapper/source/cache/machine-groups/examples/machines/example/disks/boot.img 2>/dev/null | awk '{print $7}')"
-	resize2fs -M supermin-wrapper/source/cache/machine-groups/examples/machines/example/disks/boot.img 2>/dev/null
+	local -ir minimumSize="$(resize2fs -P "${machineDisksConfigurationPartitionImagePath["$disk"]}" 2>/dev/null | awk '{print $7}')"
+	resize2fs -M "${machineDisksConfigurationPartitionImagePath["$disk"]}" 2>/dev/null
 	
 	local -ir shrinkSizeInBytes=$((minimumSize*machineDiskBlockSize))
-	truncate -s $shrinkSizeInBytes "${machineDisksConfigurationImagePath["$disk"]}"
+	truncate -s $shrinkSizeInBytes "${machineDisksConfigurationDiskImagePath["$disk"]}"
 }
 diskUnmountFunctions+=(shrinkDiskImage)
 
+function unmountDiskImage()
+{
+	# Values match man partx (except for unpartitioned)
+	case "$machineHypervisorDiskPartioning" in
+		
+		unpartitioned)
+			# Does nothing
+			:
+		;;
+		
+		dos)
+			# unmountDisk takes the original disk image path, not the loopback device created, unlike unmountLoopback
+			unmountDisk "${machineDisksConfigurationDiskImagePath["$disk"]}"
+		;;
+		
+		bsd|solaris|unixware)
+			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported"
+			exitError 1
+		;;
+		
+		gpt)
+			informationMessage FAIL "GPT partitioning is unsupported at this time"
+			exitError 1
+		;;
+	
+	esac
+}
+diskUnmountFunctions+=(unmountDiskImage)
+
 function convertDiskImage()
 {
-	convertDiskImage_${machineHypervisor}
+	convertDiskImage_${machineHypervisorDiskExtension}
 }
-#diskUnmountFunctions+=(convertDiskImage)
+diskUnmountFunctions+=(convertDiskImage)

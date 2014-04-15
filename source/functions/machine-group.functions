@@ -185,7 +185,7 @@ function buildMachines()
 			declare -A machineDisksConfigurationFilesystemType
 			declare -A machineDisksConfigurationBlockSize
 			declare -A machineDisksConfigurationMountPoint
-			declare -A machineDisksConfigurationImagePath
+			declare -A machineDisksConfigurationDiskImagePath
 			declare -A machineDisksConfigurationImageMountPath
 			declare -A machineDisksConfigurationUuid
 			declare -A machineDisksConfigurationMountOptions
@@ -193,6 +193,8 @@ function buildMachines()
 			declare -A machineDisksConfigurationFsckOptions
 			declare -A machineDisksConfigurationShrinkDisk
 			declare -A machineDisksConfigurationBootable
+			# not for configuration
+			declare -A machineDisksConfigurationPartitionImagePath
 			
 			declare -A machineConfigurationNicsMac
 			declare -A machineConfigurationNicsVariant
