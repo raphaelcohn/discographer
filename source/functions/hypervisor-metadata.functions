@@ -13,18 +13,64 @@ function hypervisorMetadata_qemu()
 	case "$machineHypervisorMetadataOutputFormat" in
 
 		native)
-		
-		local -r kernelAbsolutePath=/vmlinuz-2.6.32-5-686
-		local -r initrdAbsolutePath=/initrd.img-2.6.32-5-686
-		local -r rootDiskFilesystemUuid="98f012537-7a7c-2213-819e-a69ddf9abc2b"
-		
-		
-		adasdasdasd
-		as
-		dasd
-		asda
-		
-			informationMessage WARN "*********** TODO: qemu native format [shell script to qemu] ****************"
+			local -r qemuScript=""
+			cat >"$qemuScript" <<-'EOF'
+				#!/usr/bin/env bash
+				set -e
+				
+				function purebash_dirname()
+				{
+				    local -r converted="${1%/*}"
+				    if [ "$converted" = "$1" ]; then
+				        echo "."
+				    else
+				        echo "$converted"
+				    fi
+				}
+
+				function purebash_basename()
+				{
+				    echo "${1##*/}"
+				}
+				
+				function findOurNameAndPath()
+				{
+				    readonly ourName="$(purebash_basename "$0")"
+				    pushd "$(purebash_dirname "$0")" >/dev/null
+				        readonly crudeOurPath="$(pwd)"
+				    popd >/dev/null
+				}
+				
+				function runQemuKvm()
+				{
+				    cd "$crudeOurPath" 1>/dev/null 2>/dev/null
+			EOF
+			cat >"$qemuScript" <<-EOF
+				    exec -a "qemu-kvm-${machine}" qemu-kvm \
+				        -m 512 \
+				        -kernel "${machineKernelFileName}" \
+				        -initrd "${machineInitramfsFileName}" \
+				        -append 'root=UUID=${machineRootDiskFilesystemUuid} selinux=0 vga=773'
+			EOF
+			cat >"$qemuScript" <<-'EOF'
+				}
+				
+				function main()
+				{
+				    findOurNameAndPath
+				    runQemuKvm
+				}
+				
+				main "$@"
+			EOF
+			local disk
+			for disk in "${machineDisks[@]}"
+			do
+				echo '\ ' >>"$qemuScript"
+				echo -n "    -drive file=${disk}.${machineHypervisorDiskExtension},format=raw,if=virtio" >>"$qemuScript"
+			done
+			
+			chmod +x "$qemuScript"
 		;;
 
 		*)

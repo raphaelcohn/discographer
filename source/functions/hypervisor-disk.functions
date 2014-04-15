@@ -31,7 +31,6 @@ function convertDiskImageUsingQemuImg()
 	local -r inputFile="${machineDisksConfigurationDiskImagePath["$disk"]}"
 	local -r outputFile="$(pathToOutputFile "$extension")"
 
-	# -c is qcow compression
 	qemu-img convert -q -f raw -O "$extension" "$@" "$inputFile" "$outputFile"
 	rm -rf "$inputFile"
 
@@ -57,6 +56,8 @@ function convertDiskImage_vmdk()
 {
 	informationMessage WARN "********* FIXME: Need to create VMDK disk UUID *******************"
 	convertDiskImageUsingQemuImg vmdk vmdk
+	#vmkfstools -J setuuid "$cacheMachineArtefactsPath"/"$disk".vmdk
+	# Apparently, virtual box can also do this for a vmdk...
 }
 
 function convertDiskImage_vdi()
