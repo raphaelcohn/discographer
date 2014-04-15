@@ -1,0 +1,208 @@
+function validateHypervisorNameAndOutputFormat()
+{
+	local -r hypervisorName="$1"
+	local -r 
+	case "$machineHypervisorName" in
+		
+		kvm)
+			# essentially the same as qemu, but produces a slightly different native format
+			informationMessage FAIL "kvm is not yet supported as a hypervisor - use qemu for now"
+		;;
+		
+		# Not really supported, but XEN uses raw disk images
+		xen)
+			informationMessage FAIL "xen is not yet supported as a hypervisor - use qemu for now"
+		;;
+		
+		# qemu and kvm are effectively the same tool
+		# qemu can use raw or qcow2 disks, and can use disks with or without a partition
+		
+		# This document describes mounting with qemu: https://wiki.archlinux.org/index.php/QEMU#Mounting_a_partition_inside_a_raw_disk_image
+		# Using qemu: https://wiki.debian.org/QEMU
+		
+		# Qemu can use raw disk partitions (with extracted kernel) and disks with partitions
+		# Disk formats can be either raw, qcow2, qed or vmdk (but we'll just support raw or qcow2)
+		
+		# Confine drive: http://www.elstel.org/qemu/
+		qemu)
+			case "$machineHypervisorDiskFormat" in
+				
+				auto)
+					machineHypervisorDiskFormat=raw
+					machineHypervisorDiskExtension=raw
+					machineHypervisorDiskPartioning=dos=bios
+				;;
+				
+				unpartitioned)
+					machineHypervisorDiskExtension=unpartitioned.img
+					machineHypervisorDiskPartioning=dos=unpartitioned
+				;;
+				
+				raw)
+					machineHypervisorDiskExtension=img
+					machineHypervisorDiskPartioning=dos=bios
+				;;
+				
+				qcow2)
+					machineHypervisorDiskExtension=qcow2
+					machineHypervisorDiskPartioning=dos=bios
+				;;
+				
+				*)
+					informationMessage FAIL "A machineHypervisorDiskFormat of $machineHypervisorDiskFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					exitError1
+				;;
+				
+			esac
+			
+			case "$machineHypervisorMetadataOutputFormat" in
+				
+				# native format will vary depending on whether we use unpartioned disks or not
+				none|native)
+					:
+				;;
+				
+				*)
+					informationMessage FAIL "A machineHypervisorFormat of $machineHypervisorMetadataOutputFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					exitError 1
+				;;
+				
+			esac
+		;;
+		
+		vmware)
+			
+			case "$machineHypervisorDiskFormat" in
+				
+				auto|vmdk)
+					machineHypervisorDiskFormat=vmdk
+					machineHypervisorDiskExtension=vmdk
+					machineHypervisorDiskPartioning=dos=bios
+				;;
+				
+				*)
+					informationMessage FAIL "A machineHypervisorDiskFormat of $machineHypervisorDiskFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					exitError1
+				;;
+				
+			esac
+			
+			case "$machineHypervisorMetadataOutputFormat" in
+				
+				# native is probably vmx, might be vmc
+				none|native|ovf2|ova2)
+					:
+				;;
+				
+				*)
+					informationMessage FAIL "A machineHypervisorFormat of $machineHypervisorMetadataOutputFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					exitError 1
+				;;
+				
+			esac
+		;;
+		
+		virtualbox)
+			
+			case "$machineHypervisorDiskFormat" in
+				
+				auto)
+					case "$machineHypervisorMetadataOutputFormat" in
+						
+						ovf2|ova2)
+							machineHypervisorMetadataOutputFormat=vmdk
+							machineHypervisorDiskExtension=vmdk
+							machineHypervisorDiskPartioning=dos=bios
+						;;
+						
+						*)
+							machineHypervisorDiskFormat=vdi
+							machineHypervisorDiskExtension=vdi
+							machineHypervisorDiskPartioning=dos=bios
+						;;
+						
+					esac
+				;;
+				
+				vdi)
+					machineHypervisorDiskFormat=vdi
+					machineHypervisorDiskExtension=vdi
+					machineHypervisorDiskPartioning=dos=bios
+				;;
+				
+				vmdk)
+					case "$machineHypervisorMetadataOutputFormat" in
+						
+						ovf2|ova2)
+							machineHypervisorMetadataOutputFormat=vmdk
+							machineHypervisorDiskExtension=vmdk
+							machineHypervisorDiskPartioning=dos=bios
+						;;
+						
+						*)
+							informationMessage FAIL "A machineHypervisorDiskFormat of $machineHypervisorDiskFormat is not supported for a machineHypervisorName of $machineHypervisorName when machineHypervisorMetadataOutputFormat is $machineHypervisorMetadataOutputFormat"
+							exitError1
+						;;
+						
+					esac
+				;;
+				
+				*)
+					informationMessage FAIL "A machineHypervisorDiskFormat of $machineHypervisorDiskFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					exitError1
+				;;
+				
+			esac
+			
+			case "$machineHypervisorMetadataOutputFormat" in
+				
+				none|native|ovf2|ova2)
+					:
+				;;
+				
+				*)
+					informationMessage FAIL "A machineHypervisorFormat of $machineHypervisorMetadataOutputFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					exitError 1
+				;;
+				
+			esac
+		;;
+		
+		parallels)
+			
+			case "$machineHypervisorDiskFormat" in
+				
+				auto|hdd)
+					machineHypervisorDiskFormat=hdd
+					machineHypervisorDiskExtension=hdd
+					machineHypervisorDiskPartioning=dos=bios
+				;;
+				
+				*)
+					informationMessage FAIL "A machineHypervisorDiskFormat of $machineHypervisorDiskFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					exitError1
+				;;
+				
+			esac
+			
+			case "$machineHypervisorMetadataOutputFormat" in
+				
+				none|native)
+					:
+				;;
+				
+				# ovf2 / ova2 is not supported (yet) for parallels
+				*)
+					informationMessage FAIL "A machineHypervisorFormat of $machineHypervisorMetadataOutputFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					exitError 1
+				;;
+				
+			esac
+		;;
+		
+		*)
+			informationMessage FAIL "A machineHypervisorName of $machineHypervisorName is not supported"
+			exitError 1
+		;;
+	esac
+}

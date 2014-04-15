@@ -9,3 +9,4 @@ machineDiskMountOptions=defaults
 machineDiskDumpOptions=0
 machineDiskFsckOptions=0
 machineDiskShrink=no
+machineDiskBootable=no

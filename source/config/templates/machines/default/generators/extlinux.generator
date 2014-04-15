@@ -1,0 +1,15 @@
+# Refer to:-
+# http://www.syslinux.org/wiki/index.php/EXTLINUX
+
+#mkdir -m 0755 -p /boot/extlinux
+#extlinux --install /boot/extlinux
+
+# To install MBR, look at http://www.syslinux.org/wiki/index.php/Mbr
+
+# explore sfdisk (and fdisk) - simple file format for modyfing partition table
+# So sfdisk (partition table, 4 partitions max) + dd of mbr + concatenate on disk images == done
+
+# need parted for GPT tables OR gdisk (also reports disk and partition uuids)
+
+# can mount at an offset, it seems: This type of mount knows about four options, namely loop, offset, sizelimit and encryption, that are really options to losetup(8). (These options can be used in addition to those specific to the filesystem type.) 
+# http://linux.die.net/man/8/losetup

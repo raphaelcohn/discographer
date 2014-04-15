@@ -63,19 +63,6 @@ function xml_VirtualBox_Machine_MediaRegistry()
 		xml_selfclose "FloppyImages"
 		
 	xml_end "MediaRegistry"
-    <MediaRegistry>
-      <HardDisks>
-        <HardDisk uuid="{30e45437-2484-4c05-9420-3d6978b5ddf9}" location="lfs.vdi" format="VDI" type="Normal">
-          <HardDisk uuid="{a9ea4f7d-a02d-49ce-a340-ae510eda1b48}" location="Snapshots/{a9ea4f7d-a02d-49ce-a340-ae510eda1b48}.vdi" format="VDI"/>
-        </HardDisk>
-        <HardDisk uuid="{a5a8e001-d633-4401-b47b-001b53d3079e}" location="ExperminalDisk.qed" format="QED" type="Normal"/>
-      </HardDisks>
-      <DVDImages>
-        <Image uuid="{d156ee37-2eb1-4d8a-82b0-9724699611b4}" location="/Users/raph/Downloads/ubuntu-13.10-server-amd64.iso"/>
-        <Image uuid="{a30944ce-76bc-48f0-80e9-43792798ad25}" location="/Users/Shared/VirtualBox/en_windows_vista_enterprise_sp2_x64_dvd_342332.iso"/>
-      </DVDImages>
-      <FloppyImages/>
-    </MediaRegistry>
 }
 
 function xml_VirtualBox_Machine_ExtraData()
@@ -372,6 +359,11 @@ function xml_VirtualBox_Machine_Hardware_GuestProperties()
 
 function xml_VirtualBox_Machine_StorageControllers()
 {
+	# Parallels supports 4 IDE, 6 SATA and 15 SCSI devices (but SCSI location 0:7 is the controller and so can't be used)
+	# IDE controller hardware choices are PIIX3, PIIX4 and ICH6 (Virtual Box)
+	# SATA controller hardware choice is just AHCI (Virtual Box)
+	# SAS controller choice (Virtual Box) is lsilogicsas
+	
 	xml_start "StorageControllers"
 		
 		local -ir diskCount=${#machineDisks[@]}

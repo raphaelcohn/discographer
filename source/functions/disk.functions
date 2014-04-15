@@ -54,6 +54,7 @@ function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmountin
 	machineDisksConfigurationDumpOptions["$disk"]="$machineDiskDumpOptions"
 	machineDisksConfigurationFsckOptions["$disk"]="$machineDiskFsckOptions"
 	machineDisksConfigurationShrinkDisk["$disk"]="$machineDiskShrink"
+	machineDisksConfigurationBootable["$disk"]="$machineDiskBootable"
 }
 diskCreateFunctions+=(captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting)
 
@@ -61,8 +62,87 @@ function createDiskImageSpareFile()
 {
 	rm -rf "$machineDiskImagePath"
 	truncate -s "$machineDiskSize" "$machineDiskImagePath"
+	
+	machineDiskSize="$(stat --format='%s' "$machineDiskImagePath")"
+	local -ir dividedMachineDiskSize=$((machineDiskSize/512))
+	local -ir rehydratedMachineDiskSize=$((dividedMachineDiskSize*512))
+	if [ $machineDiskSize -ne $rehydratedMachineDiskSize ]; then
+		informationMessage FAIL "Machine $machine disk $disk has a size that is not divisible by 512"
+		exitError 1
+	fi
+	
+	local -ir dividedBlockSize=$((machineDiskBlockSize/512))
+	local -ir rehydratedBlockSize=$((dividedBlockSize*512))
+	
+	if [ $machineDiskBlockSize -ne $rehydratedBlockSize ]; then
+		informationMessage FAIL "Machine $machine disk $disk has a block size that is not divisible by 512"
+		exitError 1
+	fi
 }
 diskCreateFunctions+=(createDiskImageSpareFile)
+
+function createDiskImagePartitionTable()
+{
+	case "$machineHypervisorDiskPartioning=dos" in
+		
+		unpartitioned)
+			return 0
+		;;
+		
+		gpt)
+			informationMessage FAIL "GPT partitioning is unsupported at this time"
+			exitError 1
+		;;
+		
+		dos)
+			:
+		;;
+	
+	esac
+	
+	# We need to specify C, H, S (disk geometry)
+	
+	#Disk disk.name: 783 cylinders, 255 heads, 63 sectors/track
+	#Units = cylinders of 8225280 bytes, blocks of 1024 bytes, counting from 0
+	
+	# default for start is first unassigned
+	local -r start=""
+	
+	# default for size is to end of disk
+	local -r size=","
+	
+	# id is either 0xXX or E, S, L or X (L is native, S is swap)
+	if [ "$machineDiskFilesystemType" = "swap" ]; then
+		local -r id=,S
+	else
+		local -r id=,L
+	fi
+	
+	# bootable is either * or -
+	if [ "$machineDiskBootable" = "yes" ]; then
+		local -r bootable=',*'
+	else
+		local -r bootable=''
+	fi
+	
+	local -r partitionsMap="$cacheMachineArtefactsPath"/"$disk".sfdisk.partitions.map
+	
+	# <start>,<size>,<id>,<bootable>,<c,h,s>,<c,h,s>
+	cat >"$partitionsMap" <<-EOF
+		{$start}${size}${id}${bootable}
+	EOF
+	
+	sfdisk -uS -H 255 -S ${sectors} <"$partitionsMap"
+	
+	# -uS reports in sectors of 512 bytes
+	# suppress errors about disk geometry
+	sfdisk -d "$machineDiskImagePath" 2>/dev/null | sed -e "s;${machineDiskImagePath};${disk};g" >"$cacheMachineArtefactsPath"/"$disk".partition-table-sfdisk.dump.txt
+	sfdisk -uS --list "$machineDiskImagePath" 2>/dev/null | sed -e "s;${machineDiskImagePath};${disk};g" >"$cacheMachineArtefactsPath"/"$disk".partition-table-sfdisk.report.txt
+	
+	echo "FIX ME"
+	exit 50
+}
+diskCreateFunctions+=(createDiskImagePartitionTable)
 
 function createDiskImageFilesystem()
 {

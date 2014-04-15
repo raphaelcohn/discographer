@@ -192,6 +192,7 @@ function buildMachines()
 			declare -A machineDisksConfigurationDumpOptions
 			declare -A machineDisksConfigurationFsckOptions
 			declare -A machineDisksConfigurationShrinkDisk
+			declare -A machineDisksConfigurationBootable
 			
 			declare -A machineConfigurationNicsMac
 			declare -A machineConfigurationNicsVariant

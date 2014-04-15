@@ -168,6 +168,12 @@ function sourceMachineConfiguration()
 }
 machineFunctions+=(sourceMachineConfiguration)
 
+function validateMachineConfiguration()
+{
+	validateHypervisorNameAndOutputFormat
+}
+machineFunctions+=(validateMachineConfiguration)
+
 function exportMachineConfiguration()
 {
 	export machineDistribution="$machineDistribution"

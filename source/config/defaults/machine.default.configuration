@@ -3,21 +3,24 @@ machineDistributionMajorRevision=6
 machineDistributionReleaseRpm=${machineDistribution}-release-${machineDistributionMajorRevision}-5.el6.centos.11.1.x86_64.rpm
 machineDistributionReleaseRpmUrl=http://mirror.centos.org/centos/${machineDistributionMajorRevision}/os/x86_64/Packages/${machineDistributionReleaseRpm}
 
-machineHypervisor=virtualbox
 machineNetworkType=NAT
 machineCpuCount=1
 machineRamSizeMegabytes=2048
 
-# Parallels supports 4 IDE, 6 SATA and 15 SCSI devices (but SCSI location 0:7 is the controller and so can't be used)
-# IDE controller hardware choices are PIIX3, PIIX4 and ICH6 (Virtual Box)
-# SATA controller hardware choice is just AHCI (Virtual Box)
-# SAS controller choice (Virtual Box) is lsilogicsas
 machineDiskControllerHardwareKind=SATA
 machineDiskControllerHardwareImplementation=AHCI
 
+# Can we get this from machineDistribution?
 machineOperatingSystemId=94
 machineOperatingSystemName=Ubuntu_64
+
+
+machineHypervisorName=qemu
+machineHypervisorDiskFormat=qcow2
+machineHypervisorMetadataOutputFormat=native
 
 machineSystemType=virtualbox-2.2
 machineUuid=fc257547-2062-44cd-9735-13b1994ced19
 machineLastStateChangeTimestamp=2014-03-13T17:30:21Z
+
+# Kernel root parameter: root=/dev/disk/by-label/root
