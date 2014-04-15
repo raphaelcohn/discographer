@@ -83,10 +83,16 @@ diskCreateFunctions+=(createDiskImageSpareFile)
 
 function createDiskImagePartitionTable()
 {
-	case "$machineHypervisorDiskPartioning=dos" in
+	# Values match man partx (except for unpartitioned)
+	case "$machineHypervisorDiskPartioning" in
 		
 		unpartitioned)
 			return 0
+		;;
+		
+		bsd|solaris|unixware)
+			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported"
+			exitError 1
 		;;
 		
 		gpt)
@@ -100,7 +106,7 @@ function createDiskImagePartitionTable()
 	
 	esac
 	
-	# We need to specify C, H, S (disk geometry)
+	# We may need to specify C, H, S (disk geometry)
 	
 	#Disk disk.name: 783 cylinders, 255 heads, 63 sectors/track
 	#Units = cylinders of 8225280 bytes, blocks of 1024 bytes, counting from 0

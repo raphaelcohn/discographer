@@ -30,22 +30,22 @@ function validateHypervisorNameAndOutputFormat()
 				auto)
 					machineHypervisorDiskFormat=raw
 					machineHypervisorDiskExtension=raw
-					machineHypervisorDiskPartioning=dos=bios
+					machineHypervisorDiskPartioning=dos
 				;;
 				
 				unpartitioned)
 					machineHypervisorDiskExtension=unpartitioned.img
-					machineHypervisorDiskPartioning=dos=unpartitioned
+					machineHypervisorDiskPartioning=unpartitioned
 				;;
 				
 				raw)
 					machineHypervisorDiskExtension=img
-					machineHypervisorDiskPartioning=dos=bios
+					machineHypervisorDiskPartioning=dos
 				;;
 				
 				qcow2)
 					machineHypervisorDiskExtension=qcow2
-					machineHypervisorDiskPartioning=dos=bios
+					machineHypervisorDiskPartioning=dos
 				;;
 				
 				*)
@@ -77,7 +77,7 @@ function validateHypervisorNameAndOutputFormat()
 				auto|vmdk)
 					machineHypervisorDiskFormat=vmdk
 					machineHypervisorDiskExtension=vmdk
-					machineHypervisorDiskPartioning=dos=bios
+					machineHypervisorDiskPartioning=dos
 				;;
 				
 				*)
@@ -112,13 +112,13 @@ function validateHypervisorNameAndOutputFormat()
 						ovf2|ova2)
 							machineHypervisorMetadataOutputFormat=vmdk
 							machineHypervisorDiskExtension=vmdk
-							machineHypervisorDiskPartioning=dos=bios
+							machineHypervisorDiskPartioning=dos
 						;;
 						
 						*)
 							machineHypervisorDiskFormat=vdi
 							machineHypervisorDiskExtension=vdi
-							machineHypervisorDiskPartioning=dos=bios
+							machineHypervisorDiskPartioning=dos
 						;;
 						
 					esac
@@ -127,7 +127,7 @@ function validateHypervisorNameAndOutputFormat()
 				vdi)
 					machineHypervisorDiskFormat=vdi
 					machineHypervisorDiskExtension=vdi
-					machineHypervisorDiskPartioning=dos=bios
+					machineHypervisorDiskPartioning=dos
 				;;
 				
 				vmdk)
@@ -136,7 +136,7 @@ function validateHypervisorNameAndOutputFormat()
 						ovf2|ova2)
 							machineHypervisorMetadataOutputFormat=vmdk
 							machineHypervisorDiskExtension=vmdk
-							machineHypervisorDiskPartioning=dos=bios
+							machineHypervisorDiskPartioning=dos
 						;;
 						
 						*)
@@ -175,7 +175,7 @@ function validateHypervisorNameAndOutputFormat()
 				auto|hdd)
 					machineHypervisorDiskFormat=hdd
 					machineHypervisorDiskExtension=hdd
-					machineHypervisorDiskPartioning=dos=bios
+					machineHypervisorDiskPartioning=dos
 				;;
 				
 				*)
