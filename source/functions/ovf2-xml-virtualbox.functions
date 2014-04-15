@@ -46,10 +46,9 @@ function xml_VirtualBox_Machine_MediaRegistry()
 			local disk
 			for disk in "${machineDisks[@]}"
 			do
-				# QED is also supported, also VMDK, VHD and RAW
-				local diskFormat=VDI
 				local diskUuid="${machineDisksConfigurationUuid["$disk"]}"
-				xml_selfclose "HardDisk uuid='{${diskUuid}}' location='${disk}.vdi' format='${diskFormat}' type='Normal'"
+				local diskFormat="${machineHypervisorDiskFormat^^}"
+				xml_selfclose "HardDisk uuid='{${diskUuid}}' location='${disk}.${machineHypervisorDiskExtension}' format='${diskFormat}' type='Normal'"
 			done
 			
 		xml_end "HardDisks"

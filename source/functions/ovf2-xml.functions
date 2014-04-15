@@ -34,11 +34,12 @@ function ovf2Xml_DiskSection()
 		local -i diskIndex=1
 		for disk in "${machineDisks[@]}"
 		do
-			xml_selfclose "File ovf:href='disk${diskIndex}.vmdk' ovf:id='file${diskIndex}'"
+			xml_selfclose "File ovf:href='disk${diskIndex}.${machineHypervisorDiskExtension}' ovf:id='file${diskIndex}'"
 			
-echo "************** FIX ME (DISK UUID) **************"
+echo "************** FIX ME (SET VMDK DISK UUID in convertDisk_vmdk) **************"
 echo "************** FFIX ME (DISK CAPACITY) **************"
-			qemu-img info -f vmdk --output=human "$cacheMachineArtefactsPath"/"${disk}.vmdk"
+echo "************** FFIX ME (DISK FORMAT URI) **************"
+			qemu-img info -f vmdk --output=human "$cacheMachineArtefactsPath"/"${disk}.${machineHypervisorDiskExtension}"
 echo "************** FIX ME (DISK UUID) **************"
 echo "************** FFIX ME (DISK CAPACITY) **************"
 			
@@ -49,17 +50,11 @@ echo "************** FFIX ME (DISK CAPACITY) **************"
 			# virt-builder: install latest kernel and initrd
 			# virt-resize: resize a disk
 			
-			local diskUuid=bd8fd5dd-12b3-4598-b319-1e4d755c5630
+			local diskUuid="${machineDisksConfigurationUuid["$disk"]}"
 			
 			xml_selfclose "Disk ovf:capacity='17179869184' ovf:diskId='${disk}' ovf:fileRef='file${diskIndex}' ovf:format='http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized' vbox:uuid='${diskUuid}'"
 			
 			diskIndex=$((diskIndex+1))
-		done
-		
-		local reference
-		for reference in "$@"
-		do
-			xml_selfclose "Disk ovf:capacity='17179869184' ovf:diskId='vmdisk${index}' ovf:fileRef='file${index}' ovf:format='http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized' vbox:uuid='bd8fd5dd-12b3-4598-b319-1e4d755c5630'"
 		done
 
 	xml_end "DiskSection"

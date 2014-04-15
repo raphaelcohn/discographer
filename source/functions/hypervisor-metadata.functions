@@ -13,6 +13,17 @@ function hypervisorMetadata_qemu()
 	case "$machineHypervisorMetadataOutputFormat" in
 
 		native)
+		
+		local -r kernelAbsolutePath=/vmlinuz-2.6.32-5-686
+		local -r initrdAbsolutePath=/initrd.img-2.6.32-5-686
+		local -r rootDiskFilesystemUuid="98f012537-7a7c-2213-819e-a69ddf9abc2b"
+		
+		
+		adasdasdasd
+		as
+		dasd
+		asda
+		
 			informationMessage WARN "*********** TODO: qemu native format [shell script to qemu] ****************"
 		;;
 
