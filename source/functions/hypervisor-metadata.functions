@@ -52,6 +52,12 @@ function hypervisorMetadata_qemu()
 				        -initrd "${machineInitramfsFileName}" \
 				        -append 'root=UUID=${machineRootDiskFilesystemUuid} selinux=0 vga=773'
 			EOF
+			local disk
+			for disk in "${machineDisks[@]}"
+			do
+				echo '\ ' >>"$qemuScript"
+				echo -n "        -drive file=${disk}.${machineHypervisorDiskExtension},format=raw,if=virtio" >>"$qemuScript"
+			done
 			cat >"$qemuScript" <<-'EOF'
 				}
 				
@@ -63,12 +69,6 @@ function hypervisorMetadata_qemu()
 				
 				main "$@"
 			EOF
-			local disk
-			for disk in "${machineDisks[@]}"
-			do
-				echo '\ ' >>"$qemuScript"
-				echo -n "    -drive file=${disk}.${machineHypervisorDiskExtension},format=raw,if=virtio" >>"$qemuScript"
-			done
 			
 			chmod +x "$qemuScript"
 		;;
