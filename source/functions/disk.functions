@@ -191,13 +191,13 @@ diskMountFunctions+=(createDiskPartitionMountpoint)
 function createDiskPartitionFilesystem()
 {
 	if mountPointIsSpecial; then
-		mkswap -f -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" "$machineDisksConfigurationPartitionImagePath" 1>/dev/null 2>/dev/null
+		mkswap -f -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" "${machineDisksConfigurationPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
 		return 0
 	fi
 	
-	mkfs."$machineDiskFilesystemType" -F -q -b $machineDiskBlockSize -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" -O "$machineDiskOptions" "$machineDisksConfigurationPartitionImagePath"
+	mkfs."$machineDiskFilesystemType" -F -q -b $machineDiskBlockSize -L "$machineDiskVolumeLabel16Bytes" -U "$machineDiskUuid" -O "$machineDiskOptions" "${machineDisksConfigurationPartitionImagePath["$disk"]}"
 }
-diskCreateFunctions+=(createDiskPartitionFilesystem)
+diskMountFunctions+=(createDiskPartitionFilesystem)
 
 function mountDiskPartition()
 {
