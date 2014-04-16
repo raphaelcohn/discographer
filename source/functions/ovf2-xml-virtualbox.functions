@@ -202,9 +202,9 @@ function xml_VirtualBox_Machine_Hardware_Network()
 		local -i index=0
 		for nic in "${machineNics[@]}"
 		do
-			machineNicMac="${machineConfigurationNicsMac["$nic"]}"
+			machineNicMac="${machineNicsConfigurationMac["$nic"]}"
 			
-			if [ "${machineConfigurationNicsVariant["$nic"]}" = "virtual" ]; then
+			if [ "${machineNicsConfigurationVariant["$nic"]}" = "virtual" ]; then
 				ethernetControllerHardware="virtio-net"
 			else
 				# Same as E1000, but virtualbox uses a different name here...
@@ -333,7 +333,7 @@ function xml_VirtualBox_Machine_Hardware_GuestProperties()
 		local machineNicMac
 		for nic in "${machineNics[@]}"
 		do
-			machineNicMac="${machineConfigurationNicsMac["$nic"]}"
+			machineNicMac="${machineNicsConfigurationMac["$nic"]}"
 			xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/MAC' value='${machineNicMac}' timestamp='1394700173568774000' flags=''"
 			xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/Status' value='Up' timestamp='1394700173568774000' flags=''"
 			#xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/V4/Broadcast' value='10.0.2.255' timestamp='1394700173564802000' flags=''"

@@ -200,6 +200,8 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 
 # TODO
 
+* Debug-level verbosity
+	* yum
 * Documentation
 	* Fix the read me, it's really out-of-date
 	* Clean up generators (eg grub)
@@ -219,6 +221,8 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 		* pip / easyinstall (python)?
 * Packages
 	* comments, whitespace, empty lines in packages files like https://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-bash-variable
+	* strip the install list (eg remove glibc, vim)
+	* add any other kernel / kernel options (eg kernel-firmware)
 * Metadata
 	* qemu-kvm needs boot order
 	* virtualbox and OVF need boot-order

@@ -66,7 +66,7 @@ function recordHashLine()
 	local -r sha512="$9"
 	shift 9
 	
-	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\0' "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" "$defaultacl" "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512" "${fileObject:$prefixLength}" >>"$hashesFile"
+	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" "$defaultacl" "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512" "${fileObject:$prefixLength}" >>"$hashesFile"
 }
 
 function readHashesLine()

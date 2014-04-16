@@ -160,6 +160,8 @@ yumFunctions+=(cleanUpYum)
 
 function recordInstalledRpms()
 {
-	yumWrapper list installed 1>"$cacheMachineArtefactsPath"/install-rpms.report.txt 2>/dev/null
+	local -r reportFile="$cacheMachineArtefactsPath"/rpms-installed.report.txt
+	printf "Package.Architecture\tVersion\tOrigin\n" >"$reportFile"
+	yumWrapper list installed 2>/dev/null | tail -n +11 | awk -v OFS='\t' '{print $1,$2,$3}' >>"$reportFile"
 }
 yumFunctions+=(recordInstalledRpms)

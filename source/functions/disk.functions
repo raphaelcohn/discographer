@@ -2,7 +2,7 @@ diskCreateFunctions=()
 
 function defaultDiskImageConfiguration()
 {
-	source "$configDefaultsPath"/disk.default.configuration
+	sourceDefaultConfiguration "disk"
 }
 diskCreateFunctions+=(defaultDiskImageConfiguration)
 
@@ -205,7 +205,7 @@ function createDiskPartitionFilesystem()
 		extraOptions+=("${machineDisksConfigurationOptions["$disk"]}")
 	fi
 		
-	mkfs."${machineDisksConfigurationFilesystemType["$disk"]}" -F -q -b ${machineDisksConfigurationBlockSize["$disk"]} -L "${machineDisksConfigurationVolumeLabel16Bytes["$disk"]}" -U "${machineDisksConfigurationUuid["$disk"]}" "${extraOptions[@]}" "${machineDisksConfigurationPartitionImagePath["$disk"]}" 2>/dev/null
+	mkfs."${machineDisksConfigurationFilesystemType["$disk"]}" -F -q -b ${machineDisksConfigurationBlockSize["$disk"]} -L "${machineDisksConfigurationVolumeLabel16Bytes["$disk"]}" -U "${machineDisksConfigurationUuid["$disk"]}" "${extraOptions[@]}" "${machineDisksConfigurationPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
 }
 diskMountFunctions+=(createDiskPartitionFilesystem)
 

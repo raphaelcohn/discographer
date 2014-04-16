@@ -326,7 +326,7 @@ function ovf2Xml_VirtualSystem_VirtualHardwareSection_EthernetPortItem()
 		do
 			instanceId=$((instanceId+1))
 			
-			if [ "${machineConfigurationNicsVariant["$nic"]}" = "virtual" ]; then
+			if [ "${machineNicsConfigurationVariant["$nic"]}" = "virtual" ]; then
 				ethernetControllerHardware="virtio-net"
 			else
 				ethernetControllerHardware="E1000"

@@ -1,0 +1,63 @@
+function sourceDefaultConfiguration()
+{
+	source "$configDefaultsPath"/"$1".default.configuration
+}
+
+function configuration_readPackageNames()
+{
+	local -r packagesFilePath="$1"
+	
+	local line
+	local rawPackageName
+	while IFS= read -r line
+	do
+		# Strip leading space, then trailing space (possible with bash expansions, too): https://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-bash-variable
+		rawPackageName="$(echo -n "${line}" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')"
+		
+		# empty
+		if [ -z "$rawPackageName" ]; then
+			continue
+		fi
+		
+		# comment
+		if [ "${rawPackageName:0:1}" = "#" ]; then
+			continue
+		fi
+		
+		echo "$rawPackageName"
+	done <"$packagesFilePath"
+}
+
+function configuration_readRpmFiles()
+{
+	local -r folder="$1"
+	
+	pushd "$folder" 1>/dev/null 2>/dev/null
+		local rpmFile
+		for rpmFile in *.rpm
+		do
+			echo "$rpmFile"
+		done
+	popd  1>/dev/null 2>/dev/null
+}
+
+function configuration_readNames()
+{
+	local -r folderPath="$1"
+	local -r fileExtension="$2"
+	
+	pushd "$folderPath" 1>/dev/null 2>/dev/null
+		
+		local nameFile
+		local name
+		for nameFile in *.${fileExtension}
+		do
+			if [ ! -f "$nameFile" ]; then
+				continue
+			fi
+			
+			echo "${nameFile%%.${fileExtension}}"
+		done
+
+	popd 1>/dev/null 2>/dev/null
+}

@@ -158,7 +158,7 @@ machineFunctions+=(cleanUpMachinesCache)
 
 function defaultMachineConfiguration()
 {
-	source "$configDefaultsPath"/machine.default.configuration
+	sourceDefaultConfiguration "machine"
 }
 machineFunctions+=(defaultMachineConfiguration)
 
@@ -174,83 +174,45 @@ function validateMachineConfiguration()
 }
 machineFunctions+=(validateMachineConfiguration)
 
-function exportMachineConfiguration()
-{
-	export machineDistribution="$machineDistribution"
-}
-machineFunctions+=(exportMachineConfiguration)
-
 machinePackageNames=()
 function readMachinePackages()
 {
-	machinePackageNames=()
-	local packageName
-	while IFS= read -r packageName
-	do
-		machinePackageNames+=("$packageName")
-	done < <(cat "$configMachinePackagesPath")
+	mapfile -t machinePackageNames < <(configuration_readPackageNames)
 }
 machineFunctions+=(readMachinePackages)
 
 machineRpmFiles=()
 function readMachineRpmFiles()
 {
-	machineRpmFiles=()
-	local rpmFile
-	pushd "$configMachineRpmsPath" 1>/dev/null 2>/dev/null
-		for rpmFile in *.rpm
-		do
-			machineRpmFiles+=("$rpmFile")
-		done
-	popd  1>/dev/null 2>/dev/null
+	mapfile -t machineRpmFiles < <(configuration_readRpmFiles "$configMachineRpmsPath")
 }
 machineFunctions+=(readMachineRpmFiles)
+
+run nicCreateFunctions
 
 machineDisks=()
 function readMachineDiskNames()
 {
-	machineDisks=()
-	
-	pushd "$configMachineDisksPath" 1>/dev/null 2>/dev/null
-		
-		local diskFile
-		local disk
-		for diskFile in *.disk
-		do
-			if [ ! -f "$diskFile" ]; then
-				continue
-			fi
-			
-			disk="${diskFile%%.disk}"
-			machineDisks+=("$disk")
-		done
-
-	popd 1>/dev/null 2>/dev/null
+	mapfile -t machineDisks < <(configuration_readNames "$configMachineDisksPath" "disk")
 }
 machineFunctions+=(readMachineDiskNames)
 
 machineNics=()
 function readMachineNicNames()
 {
-	machineNics=()
-	
-	pushd "$configMachineNicsPath" 1>/dev/null 2>/dev/null
-	
-		local nicFile
-		local nic
-		for nicFile in *.nic
-		do
-			if [ ! -f "$nicFile" ]; then
-				continue
-			fi
-		
-			disk="${nicFile%%.nic}"
-			machineNics+=("$nic")
-		done
-
-	popd 1>/dev/null 2>/dev/null
+	mapfile -t machineNics < <(configuration_readNames "$configMachineNicsPath" "nic")
 }
 machineFunctions+=(readMachineNicNames)
+
+function createNics()
+{
+	local nicCreateFunction
+	for nicCreateFunction in "${nicCreateFunctions[@]}"
+	do
+		$nicCreateFunction
+	done
+}
+machineFunctions+=(createNics)
 
 function createDisks()
 {
@@ -468,7 +430,7 @@ machineFunctions+=(installExtLinux)
 
 function recordHashesOfAllFiles()
 {
-	recordHashes "${cacheMachineDisksMountsPath}" "/" "$cacheMachineArtefactsPath"/installed-files.report.txt
+	recordHashes "${cacheMachineDisksMountsPath}" "/" "$cacheMachineArtefactsPath"/files-installed.report.txt
 }
 machineFunctions+=(recordHashesOfAllFiles)
 

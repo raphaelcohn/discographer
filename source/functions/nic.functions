@@ -10,7 +10,7 @@ nicCreateFunctions=()
 
 function defaultNicConfiguration()
 {
-	source "$configDefaultsPath"/nic-configuration.default
+	sourceDefaultConfiguration "nic"
 }
 nicCreateFunctions+=(defaultNicConfiguration)
 
@@ -48,7 +48,7 @@ nicCreateFunctions+=(verifyNicConfiguration)
 
 function captureInABashDictionaryMachineNicConfigurationForMountingAndUnmounting()
 {
-	machineConfigurationNicsMac["$nic"]="$machineNicMac"
-	machineConfigurationNicsVariant["$nic"]="$machineNicsVariant"
+	machineNicsConfigurationMac["$nic"]="$machineNicMac"
+	machineNicsConfigurationVariant["$nic"]="$machineNicsVariant"
 }
 nicCreateFunctions+=(captureInABashDictionaryMachineNicConfigurationForMountingAndUnmounting)

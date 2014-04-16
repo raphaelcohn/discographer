@@ -91,7 +91,7 @@ machineGroupFunctions+=(cleanUpMachineGroupsCache)
 
 function defaultMachineGroupConfiguration()
 {
-	:
+	sourceDefaultConfiguration "machine-group"
 }
 machineFunctions+=(defaultMachineGroupConfiguration)
 
@@ -101,35 +101,17 @@ function sourceMachineGroupConfiguration()
 }
 machineFunctions+=(sourceMachineGroupConfiguration)
 
-function exportMachineGroupConfiguration()
-{
-	:
-}
-machineFunctions+=(exportMachineGroupConfiguration)
-
 machineGroupPackageNames=()
 function readMachineGroupPackages()
 {
-	machineGroupPackageNames=()
-	local packageName
-	while IFS= read -r packageName
-	do
-		machineGroupPackageNames+=("$packageName")
-	done < <(cat "$configMachineGroupPackagesPath")
+	mapfile -t machineGroupPackageNames < <(configuration_readPackageNames)
 }
 machineGroupFunctions+=(readMachineGroupPackages)
 
 machineGroupRpmFiles=()
 function readMachineGroupRpmFiles()
 {
-	machineGroupRpmFiles=()
-	local rpmFile
-	pushd "$configMachinGroupeRpmsPath" 1>/dev/null 2>/dev/null
-		for rpmFile in *.rpm
-		do
-			machineGroupRpmFiles+=("$rpmFile")
-		done
-	popd  1>/dev/null 2>/dev/null
+	mapfile -t machineGroupRpmFiles < <(configuration_readRpmFiles "$configMachinGroupeRpmsPath")
 }
 machineGroupFunctions+=(readMachineGroupRpmFiles)
 
@@ -199,8 +181,8 @@ function buildMachines()
 			# not for configuration
 			declare -A machineDisksConfigurationPartitionImagePath
 			
-			declare -A machineConfigurationNicsMac
-			declare -A machineConfigurationNicsVariant
+			declare -A machineNicsConfigurationMac
+			declare -A machineNicsConfigurationVariant
 			
 			informationMessage INFO "${tab}${tab}${machine} ${machineFunction}"
 			$machineFunction
