@@ -69,12 +69,12 @@ diskCreateFunctions+=(captureInABashDictionaryMachineDiskConfigurationForMountin
 function createDiskImageSpareFile()
 {
 	rm -rf "${machineDisksConfigurationDiskImagePath["$disk"]}"
-	truncate -s "${machineDisksConfigurationSize"$disk"]}" "${machineDisksConfigurationDiskImagePath["$disk"]}"
+	truncate -s "${machineDisksConfigurationSize["$disk"]}" "${machineDisksConfigurationDiskImagePath["$disk"]}"
 	
 	local -ir machineDiskSizeInBytes="$(stat --format='%s' "${machineDisksConfigurationDiskImagePath["$disk"]}")"
 	local -ir dividedMachineDiskSize=$((machineDiskSizeInBytes/512))
 	local -ir rehydratedMachineDiskSize=$((dividedMachineDiskSize*512))
-	if [ $machineDiskSize -ne $rehydratedMachineDiskSize ]; then
+	if [ $machineDiskSizeInBytes -ne $rehydratedMachineDiskSize ]; then
 		informationMessage FAIL "Machine $machine disk $disk has a size that is not divisible by 512"
 		exitError 1
 	fi
@@ -83,7 +83,7 @@ function createDiskImageSpareFile()
 	local -ir dividedBlockSize=$((machineDiskBlockSizeInBytes/512))
 	local -ir rehydratedBlockSize=$((dividedBlockSize*512))
 	
-	if [ $machineDiskBlockSize -ne $rehydratedBlockSize ]; then
+	if [ $machineDiskBlockSizeInBytes -ne $rehydratedBlockSize ]; then
 		informationMessage FAIL "Machine $machine disk $disk has a block size that is not divisible by 512"
 		exitError 1
 	fi
