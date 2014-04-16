@@ -29,12 +29,18 @@ function yumWrapper()
 
 function yumInstall()
 {
-	declare -a packageNames="$@"
-	if [ ${#packageNames[@]} -eq 0 ]; then
+	declare -a packageNames=("$@")
+	if [ ${#packageNames} -eq 0 ]; then
 		return 0
 	fi
-	
-	yumWrapper install "${packageNames[@]}"
+
+	# We install packages individually like this so that if a package doesn't exist, we don't get an unintelligible error
+	# It does make installation slower
+	local packageName
+	for packageName in "${packageNames[@]}"
+	do
+		yumWrapper install "$packageName"
+	done
 }
 
 function yumLocalInstall()

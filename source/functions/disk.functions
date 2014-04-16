@@ -121,7 +121,9 @@ function createDiskImagePartitionTable()
 	# default for size is to end of disk
 	local -r size=","
 	
-	# id is either 0xXX or E, S, L or X (L is native, S is swap)
+	# id is either 0xXX or E, S, L or X (L is native, S is swap). Other useful types are Linux LVM and Linux RAID
+	# sfdisk Partition Types Use sfdisk --list-types to find the known types:-
+	
 	if [ "${machineDisksConfigurationFilesystemType["$disk"]}" = "swap" ]; then
 		local -r id=,S
 	else
@@ -203,7 +205,7 @@ function createDiskPartitionFilesystem()
 		extraOptions+=("${machineDisksConfigurationOptions["$disk"]}")
 	fi
 		
-	mkfs."${machineDisksConfigurationFilesystemType["$disk"]}" -F -q -b ${machineDisksConfigurationBlockSize["$disk"]} -L "${machineDisksConfigurationVolumeLabel16Bytes["$disk"]}" -U "${machineDisksConfigurationUuid["$disk"]}" "${extraOptions[@]}" "${machineDisksConfigurationPartitionImagePath["$disk"]}"
+	mkfs."${machineDisksConfigurationFilesystemType["$disk"]}" -F -q -b ${machineDisksConfigurationBlockSize["$disk"]} -L "${machineDisksConfigurationVolumeLabel16Bytes["$disk"]}" -U "${machineDisksConfigurationUuid["$disk"]}" "${extraOptions[@]}" "${machineDisksConfigurationPartitionImagePath["$disk"]}" 2>/dev/null
 }
 diskMountFunctions+=(createDiskPartitionFilesystem)
 

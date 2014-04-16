@@ -192,6 +192,7 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 # BUGS
 
 * We don't seem to be freeing kpartx mounts on crash exits
+	* We probably need to do kpartx -d /dev/loop{n} (uggh)
 * Yum installation has become broken
 * We aren't specifying capacity in OVF
 * We aren't setting VMDK UUIDs
@@ -216,6 +217,8 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 		* support for install tar balls over root?
 		* gem installs?
 		* pip / easyinstall (python)?
+* Packages
+	* comments, whitespace, empty lines in packages files like https://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-bash-variable
 * Metadata
 	* qemu-kvm needs boot order
 	* virtualbox and OVF need boot-order
@@ -223,12 +226,20 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 	* support vmware VMC
 	* support vmware teams
 	* Parallels machine creation
+* Wiki
+	* Output build reports, etc as wiki mark-up suitable for use with git pages - allowing us to manage server estate details with git!
 * Hypervisors
 	* Support KVM / RHEV
 	* Support Xen / AWS
 * performance
 	* support parallel machine building (using bash background jobs) (note that there's a max of 10 loopback devices; we use several per machine)
-	* support caching downloaded RPMs / repo structure (? symlink out of the mount point, then blow away ?)
+		* Look at 2nd comment on https://www.linuxquestions.org/questions/red-hat-31/how-to-increase-the-loop-devices-number-541717/
+	* make yum installation faster
+		* shared cache
+			* challenge is that the repos can be different per machine
+		* shared downloaded rpms
+		* ? use yumdownloader to download rpms (and deps) to a shared local rpm folder?
+		* wget the CentOS, etc, repos?
 * Disks
 	* Fully support XFS
 	* Fully support BTRFS
