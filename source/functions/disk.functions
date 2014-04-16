@@ -48,7 +48,7 @@ diskCreateFunctions+=(verifyDiskImageConfiguration)
 
 function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting()
 {
-	machineDisksConfigurationSize"$disk"]="$machineDiskSize"
+	machineDisksConfigurationSize["$disk"]="$machineDiskSize"
 	machineDisksConfigurationMountPoint["$disk"]="$machineDiskMountPoint"
 	machineDisksConfigurationFilesystemType["$disk"]="$machineDiskFilesystemType"
 	machineDisksConfigurationBlockSize["$disk"]="$machineDiskBlockSize"
@@ -190,7 +190,6 @@ diskMountFunctions+=(createDiskPartitionMountpoint)
 
 function createDiskPartitionFilesystem()
 {
-	set -x
 	if mountPointIsSpecial; then
 		mkswap -f -L "${machineDisksConfigurationVolumeLabel16Bytes["$disk"]}" -U "${machineDisksConfigurationUuid["$disk"]}" "${machineDisksConfigurationPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
 		return 0
