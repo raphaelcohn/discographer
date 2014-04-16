@@ -28,7 +28,7 @@ function verifyNicConfiguration()
 		machineNicMac="Something generated"
 	fi
 	
-	case "$machineNicsVariant" in
+	case "$machineNicVariant" in
 		
 		virtual)
 			# virtio on KVM/QEMU/VirtualBox, VMXNET3 on VMware
@@ -41,14 +41,12 @@ function verifyNicConfiguration()
 		;;
 		
 	esac
-	
-	machineNicsVariant
 }
 nicConfigureFunctions+=(verifyNicConfiguration)
 
 function captureInABashDictionaryMachineNicConfigurationForMountingAndUnmounting()
 {
 	machineNicsConfigurationMac["$nic"]="$machineNicMac"
-	machineNicsConfigurationVariant["$nic"]="$machineNicsVariant"
+	machineNicsConfigurationVariant["$nic"]="$machineNicVariant"
 }
 nicConfigureFunctions+=(captureInABashDictionaryMachineNicConfigurationForMountingAndUnmounting)

@@ -177,7 +177,7 @@ machineFunctions+=(validateMachineConfiguration)
 machinePackageNames=()
 function readMachinePackages()
 {
-	mapfile -t machinePackageNames < <(configuration_readPackageNames)
+	mapfile -t machinePackageNames < <(configuration_readPackageNames "$configMachinePackagesPath")
 }
 machineFunctions+=(readMachinePackages)
 

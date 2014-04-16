@@ -1,7 +1,7 @@
 function validateHypervisorNameAndOutputFormat()
 {
 	local -r hypervisorName="$1"
-	local -r 
+	
 	case "$machineHypervisorName" in
 		
 		kvm)

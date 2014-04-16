@@ -104,7 +104,7 @@ machineFunctions+=(sourceMachineGroupConfiguration)
 machineGroupPackageNames=()
 function readMachineGroupPackages()
 {
-	mapfile -t machineGroupPackageNames < <(configuration_readPackageNames)
+	mapfile -t machineGroupPackageNames < <(configuration_readPackageNames "$configMachineGroupPackagesPath")
 }
 machineGroupFunctions+=(readMachineGroupPackages)
 
