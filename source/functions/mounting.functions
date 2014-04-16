@@ -94,7 +94,7 @@ function unmountBind()
 	if [ -z "$exiting" ]; then
 		unregisterMountPointToRemoveOnExit
 	fi
-	umount "$mountPath" || true
+	umount "$mountPath"
 }
 
 function unmountDisk()
@@ -109,7 +109,7 @@ function unmountDisk()
 		unregisterMountPointToRemoveOnExit
 	fi
 	
-	kpartx -d -s "$diskFilePath" || true
+	kpartx -d -v "$diskFilePath"
 }
 
 mountPointsToRemoveOnExitPaths=()
@@ -125,8 +125,8 @@ function registerMountPointToRemoveOnExit()
 
 function unregisterMountPointToRemoveOnExit()
 {
-	unset bindMountPointsToRemoveOnExit[$((${#mountPointsToRemoveOnExitPaths[*]}-1))]
-	unset bindMountPointsToRemoveOnExit[$((${#mountPointsToRemoveOnExitFunctions[*]}-1))]
+	unset mountPointsToRemoveOnExitPaths[$((${#mountPointsToRemoveOnExitPaths[*]}-1))]
+	unset mountPointsToRemoveOnExitFunctions[$((${#mountPointsToRemoveOnExitFunctions[*]}-1))]
 }
 
 function removeMountPointsOnExit()

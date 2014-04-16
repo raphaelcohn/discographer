@@ -214,6 +214,7 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 		* control timestamps of files (eg set a file's atime / mtime etc)
 	* users/groups
 		* install /etc/shadow et al
+	* a list of urls for RPMs with crypto hashes and signatures
 	* support other installs
 		* support deb / debootstrap
 		* support for install tar balls over root?

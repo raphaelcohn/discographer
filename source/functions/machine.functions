@@ -204,10 +204,14 @@ machineFunctions+=(readMachineDiskNames)
 
 function configureNics()
 {
-	local nicConfigureFunction
-	for nicConfigureFunction in "${nicConfigureFunctions[@]}"
+	local nic
+	for nic in "${machineNics[@]}"
 	do
-		$nicConfigureFunction
+		local nicConfigureFunction
+		for nicConfigureFunction in "${nicConfigureFunctions[@]}"
+		do
+			$nicConfigureFunction
+		done
 	done
 }
 machineFunctions+=(configureNics)
