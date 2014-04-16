@@ -109,11 +109,7 @@ function unmountDisk()
 		unregisterMountPointToRemoveOnExit
 	fi
 	
-	(
-		flock --exclusive 200
-		
-		kpartx -d -s "$diskFilePath" || true
-	) 200>"$kpartxLockFilePath"
+	kpartx -d -s "$diskFilePath" || true
 }
 
 mountPointsToRemoveOnExitPaths=()
