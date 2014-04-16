@@ -188,7 +188,12 @@ function readMachineRpmFiles()
 }
 machineFunctions+=(readMachineRpmFiles)
 
-run nicConfigureFunctions
+machineNics=()
+function readMachineNicNames()
+{
+	mapfile -t machineNics < <(configuration_readNames "$configMachineNicsPath" "nic")
+}
+machineFunctions+=(readMachineNicNames)
 
 machineDisks=()
 function readMachineDiskNames()
@@ -196,13 +201,6 @@ function readMachineDiskNames()
 	mapfile -t machineDisks < <(configuration_readNames "$configMachineDisksPath" "disk")
 }
 machineFunctions+=(readMachineDiskNames)
-
-machineNics=()
-function readMachineNicNames()
-{
-	mapfile -t machineNics < <(configuration_readNames "$configMachineNicsPath" "nic")
-}
-machineFunctions+=(readMachineNicNames)
 
 function configureNics()
 {
