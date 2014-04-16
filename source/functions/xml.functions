@@ -1,9 +1,9 @@
-function indent()
+function xml_indent()
 {
 	indentation="${indentation}${tab}"
 }
 
-function undent()
+function xml_undent()
 {
 	indentation="${indentation:0:${#indentation}-1}"
 }
@@ -20,22 +20,22 @@ function xml_version()
 
 function xml_start()
 {
-	indented "<${1}>"
-	indent
+	xml_indented "<${1}>"
+	xml_indent
 }
 
 function xml_end()
 {
-	undent
-	indented "</${1}>"
+	xml_undent
+	xml_indented "</${1}>"
 }
 
 function xml_selfclose()
 {
-	indented "<${1}/>"
+	xml_indented "<${1}/>"
 }
 
 function xml_value()
 {
-	indented "<${1}>${2}</<${1}>"
+	xml_indented "<${1}>${2}</<${1}>"
 }

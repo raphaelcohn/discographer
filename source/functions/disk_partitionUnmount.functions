@@ -1,0 +1,14 @@
+disk_partitionUnmount_functions=()
+
+function disk_partitionUnmount_unmountSyncDisk()
+{
+	# Does not flush ext3 journal
+	sync
+}
+disk_partitionUnmount_functions+=(disk_partitionUnmount_unmountSyncDisk)
+
+function disk_partitionUnmount_Partition()
+{
+	unmountLoopback "${machineDisksConfigurationImageMountPath["$disk"]}"
+}
+disk_partitionUnmount_functions+=(disk_partitionUnmount_Partition)

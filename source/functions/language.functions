@@ -1,4 +1,4 @@
-function setLanguageDefaults()
+function language_setDefaults()
 {
 	unset LANG
 	unset LC_COLLATE

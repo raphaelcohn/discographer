@@ -1,6 +1,6 @@
-mainFunctions=()
+main_functions=()
 
-function setSomePaths()
+function main_setSomePaths()
 {
 	configDefaultsPath="$configPath"/defaults
 	if [ ! -d "$configDefaultsPath" ]; then
@@ -8,9 +8,9 @@ function setSomePaths()
 		exit 1
 	fi
 }
-mainFunctions+=(setSomePaths)
+main_functions+=(main_setSomePaths)
 
-function setYumConfigPaths()
+function main_setYumConfigPaths()
 {
 	export configYumPath="$configPath"/yum
 	if [ ! -d "$configYumPath" ]; then
@@ -26,17 +26,17 @@ function setYumConfigPaths()
 	export cacheYumPath="$cachePath"/yum
 	mkdir -m 0755 -p "$cacheYumPath"
 }
-mainFunctions+=(setYumConfigPaths)
+main_functions+=(main_setYumConfigPaths)
 
-function setMachineGroupsPath()
+function main_setMachineGroupsPath()
 {
 	readonly machineGroupsPath="$configPath"/machine-groups
 	mkdir -m 0755 -p "$machineGroupsPath"
 }
-mainFunctions+=(setMachineGroupsPath)
+main_functions+=(main_setMachineGroupsPath)
 
 knownMachineGroups=()
-function determineKnownMachineGroups()
+function main_determineKnownMachineGroups()
 {
 	knownMachineGroups=()
 	pushd "$machineGroupsPath" 1>/dev/null 2>/dev/null
@@ -50,29 +50,29 @@ function determineKnownMachineGroups()
 		done
 	popd 1>/dev/null 2>/dev/null
 }
-mainFunctions+=(determineKnownMachineGroups)
+main_functions+=(main_determineKnownMachineGroups)
 
-function buildMachineGroups()
+function main_buildMachineGroups()
 {
 	local machineGroup
-	local machineGroupFunction
+	local machine_group_function
 	for machineGroup in "${machineGroups[@]}"
 	do
-		for machineGroupFunction in "${machineGroupFunctions[@]}"
+		for machine_group_function main_in "${machine_group_functions[@]}"
 		do
-			informationMessage INFO "${tab}${machineGroup} ${machineGroupFunction}"
-			$machineGroupFunction
+			informationMessage INFO "${tab}${machineGroup} ${machine_group_function}"
+			$machine_group_function
 		done
 	done
 }
-mainFunctions+=(buildMachineGroups)
+main_functions+=(main_buildMachineGroups)
 
-function executeMainFunctions()
+function main_executeMainFunctions()
 {
-	local mainFunction
-	for mainFunction in "${mainFunctions[@]}"
+	local main_function
+	for main_function main_in "${main_functions[@]}"
 	do
-		informationMessage INFO "${mainFunction}"
-		$mainFunction
+		informationMessage INFO "${main_function}"
+		$main_function
 	done
 }

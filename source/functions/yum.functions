@@ -1,63 +1,6 @@
+yum_functions=()
 
-# Silly releasever nonsense:-
-# https://www.linuxquestions.org/questions/linux-software-2/yum-variables-%24distribution-%24releasever-%24basearch-how-to-check-648050/
-# https://unix.stackexchange.com/questions/19701/yum-how-can-i-view-variables-like-releasever-basearch-yum0
-
-# http://www.philchen.com/2009/02/14/how-to-create-an-amazon-elastic-compute-cloud-ec2-machine-image-ami
-# http://geek.co.il/2010/03/14/how-to-build-a-chroot-jail-environment-for-centos
-
-# rpm -q --whatprovides /usr/sbin/chroot to find a file
-
-
-yumFunctions=()
-
-function yumWrapper()
-{
-	if [ "$(uname)" = "Darwin" ]; then
-		# yum does not exist in brew; installing via source has problems (msgfmt, broken Makefile, broken install utility; Python versioning)
-		return 0
-	fi
-	
-	if [ "$beVerbose" = no ]; then
-		local -r yumVerbosity=" --quiet"
-	else
-		local -r yumVerbosity=""
-	fi
-	
-	yum${yumVerbosity} --config="$configMachineYumConfigFile" "$@"
-}
-
-function yumInstall()
-{
-	declare -a packageNames=("$@")
-	if [ ${#packageNames} -eq 0 ]; then
-		return 0
-	fi
-
-	# We install packages individually like this so that if a package doesn't exist, we don't get an unintelligible error
-	# It does make installation slower
-	local packageName
-	for packageName in "${packageNames[@]}"
-	do
-		yumWrapper install "$packageName"
-	done
-}
-
-function yumLocalInstall()
-{
-	local -r rpmsFolder="$1"
-	shift 1
-	declare -a rpmFiles="$@"
-	if [ ${#rpmFiles[@]} -eq 0 ]; then
-		return 0
-	fi
-	
-	pushd "$rpmsFolder" 1>/dev/null 2>/dev/null
-		yumWrapper localinstall "${rpmFiles[@]}"
-	popd 1>/dev/null 2>/dev/null
-}
-
-function fillInMachineYumConfTemplate()
+function yum_fillInMachineYumConfTemplate()
 {
 	configMachineYumConfigFile="$cacheMachinePath"/yum.conf
 	
@@ -78,15 +21,15 @@ function fillInMachineYumConfTemplate()
 	
 	templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
 }
-yumFunctions+=(fillInMachineYumConfTemplate)
+yum_functions+=(yum_fillInMachineYumConfTemplate)
 
-function prepareRpmDb()
+function yum_prepareRpmDb()
 {
 	rpm --rebuilddb --root=${cacheMachineDisksMountsPath}
 }
-yumFunctions+=(prepareRpmDb)
+yum_functions+=(yum_prepareRpmDb)
 
-function downloadDistributionVersionRpm()
+function yum_downloadDistributionVersionRpm()
 {
 	cacheYumDistributionVersionRpmPath="$cacheYumPath"/"$machineDistributionReleaseRpm"
 	
@@ -94,15 +37,15 @@ function downloadDistributionVersionRpm()
 		curl "$machineDistributionReleaseRpmUrl" 1>"$cacheYumDistributionVersionRpmPath" 2>/dev/null
 	fi
 }
-yumFunctions+=(downloadDistributionVersionRpm)
+yum_functions+=(yum_downloadDistributionVersionRpm)
 
-function installDistributionVersionRpm()
+function yum_installDistributionVersionRpm()
 {
 	rpm --install --root=${cacheMachineDisksMountsPath} --nodeps --nosignature "$cacheYumDistributionVersionRpmPath"
 }
-yumFunctions+=(installDistributionVersionRpm)
+yum_functions+=(yum_installDistributionVersionRpm)
 
-function installYumRepositories()
+function yum_installYumRepositories()
 {
 	# Remove any shipped repos!
 	rm -rf "$yumConfigRepositoriesPath"/*.repo
@@ -120,48 +63,48 @@ function installYumRepositories()
 		
 	popd 1>/dev/null 2>/dev/null
 }
-yumFunctions+=(installYumRepositories)
+yum_functions+=(yum_installYumRepositories)
 
-function prepareYumCache()
+function yum_prepareYumCache()
 {
-	yumWrapper makecache
+	yum_wrapper makecache
 }
-yumFunctions+=(prepareYumCache)
+yum_functions+=(yum_prepareYumCache)
 
-function installMachineGroupRpms()
+function yum_installMachineGroupRpms()
 {
-	yumInstall "${machineGroupPackageNames[@]}"
+	yum_wrapper_install "${machineGroupPackageNames[@]}"
 }
-yumFunctions+=(installMachineGroupRpms)
+yum_functions+=(yum_installMachineGroupRpms)
 
-function installMachineGroupLocalRpms()
+function yum_installMachineGroupLocalRpms()
 {
-	yumLocalInstall "$configMachinGroupeRpmsPath" "${machineGroupRpmFiles[@]}"
+	yum_wrapper_localInstall "$configMachinGroupeRpmsPath" "${machineGroupRpmFiles[@]}"
 }
-yumFunctions+=(installMachineGroupLocalRpms)
+yum_functions+=(yum_installMachineGroupLocalRpms)
 
-function installMachineRpms()
+function yum_installMachineRpms()
 {
-	yumInstall "${machinePackageNames[@]}"
+	yum_wrapper_install "${machinePackageNames[@]}"
 }
-yumFunctions+=(installMachineGroupRpms)
+yum_functions+=(yum_installMachineRpms)
 
-function installMachineLocalRpms()
+function yum_installMachineLocalRpms()
 {
-	yumLocalInstall "$configMachineRpmsPath" "${machineRpmFiles[@]}"
+	yum_wrapper_localInstall "$configMachineRpmsPath" "${machineRpmFiles[@]}"
 }
-yumFunctions+=(installMachineLocalRpms)
+yum_functions+=(yum_installMachineLocalRpms)
 
-function cleanUpYum()
+function yum_cleanUp()
 {
-	yumWrapper clean all
+	yum_wrapper clean all
 }
-yumFunctions+=(cleanUpYum)
+yum_functions+=(yum_cleanUp)
 
-function recordInstalledRpms()
+function yum_recordInstalledRpms()
 {
 	local -r reportFile="$cacheMachineArtefactsPath"/rpms-installed.report.txt
 	printf "Package.Architecture\tVersion\tOrigin\n" >"$reportFile"
-	yumWrapper list installed 2>/dev/null | tail -n +11 | awk -v OFS='\t' '{print $1,$2,$3}' >>"$reportFile"
+	yum_wrapper list installed 2>/dev/null | tail -n +11 | awk -v OFS='\t' '{print $1,$2,$3}' >>"$reportFile"
 }
-yumFunctions+=(recordInstalledRpms)
+yum_functions+=(yum_recordInstalledRpms)

@@ -1,0 +1,45 @@
+function yum_wrapper()
+{
+	if [ "$(uname)" = "Darwin" ]; then
+		# yum does not exist in brew; installing via source has problems (msgfmt, broken Makefile, broken install utility; Python versioning)
+		return 0
+	fi
+	
+	if [ "$beVerbose" = no ]; then
+		local -r yumVerbosity=" --quiet"
+	else
+		local -r yumVerbosity=""
+	fi
+	
+	yum${yumVerbosity} --config="$configMachineYumConfigFile" "$@" 1>/dev/null 2>/dev/null
+}
+
+function yum_wrapper_install()
+{
+	declare -a packageNames=("$@")
+	if [ ${#packageNames} -eq 0 ]; then
+		return 0
+	fi
+
+	# We install packages individually like this so that if a package doesn't exist, we don't get an unintelligible error
+	# It does make installation slower
+	local packageName
+	for packageName in "${packageNames[@]}"
+	do
+		yum_wrapper install "$packageName"
+	done
+}
+
+function yum_wrapper_localInstall()
+{
+	local -r rpmsFolder="$1"
+	shift 1
+	declare -a rpmFiles="$@"
+	if [ ${#rpmFiles[@]} -eq 0 ]; then
+		return 0
+	fi
+	
+	pushd "$rpmsFolder" 1>/dev/null 2>/dev/null
+		yum_wrapper localinstall "${rpmFiles[@]}"
+	popd 1>/dev/null 2>/dev/null
+}

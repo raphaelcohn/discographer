@@ -1,14 +1,14 @@
-dependencyFunctions=()
+dependency_functions=()
 
-function ensureWeAreRunningBash4()
+function dependency_ensureWeAreRunningBash4()
 {
 	if [ ${BASH_VERSINFO[0]} != "4" ]; then
 		exitError "$ourName: You are not running bash 4."
 	fi
 }
-dependencyFunctions+=(ensureWeAreRunningBash4)
+dependency_functions+=(dependency_ensureWeAreRunningBash4)
 
-function determineDistribution()
+function dependency_determineDistribution()
 {
 	if which lsb_release 1>/dev/null 2>/dev/null; then
 		readonly lsbDistributor="$(lsb_release --id --short)"
@@ -36,9 +36,9 @@ function determineDistribution()
 	informationMessage FAIL "Could not determine distribution"
 	exit 1
 }
-dependencyFunctions+=(determineDistribution)
+dependency_functions+=(dependency_determineDistribution)
 
-function verifyHostSystemRequirementsUsingDependencyChecks()
+function dependency_verifyHostSystemRequirementsUsingDependencyChecks()
 {
 	dependencies=()
 	
@@ -102,13 +102,13 @@ function verifyHostSystemRequirementsUsingDependencyChecks()
 	
 	export PATH="$ourPath"
 }
-dependencyFunctions+=(verifyHostSystemRequirementsUsingDependencyChecks)
+dependency_functions+=(dependency_verifyHostSystemRequirementsUsingDependencyChecks)
 
-function installDependencies()
+function dependency_installDependencies()
 {
-	local dependencyFunction
-	for dependencyFunction in "${dependencyFunctions[@]}"
+	local dependency_function
+	for dependency_function in "${dependency_functions[@]}"
 	do
-		$dependencyFunction
+		$dependency_function
 	done
 }

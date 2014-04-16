@@ -250,6 +250,7 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 		* shared downloaded rpms
 		* ? use yumdownloader to download rpms (and deps) to a shared local rpm folder?
 		* wget the CentOS, etc, repos?
+		* http://wiki.centos.org/HowTos/CreateLocalRepos
 * Disks
 	* Fully support XFS
 	* Fully support BTRFS
@@ -258,6 +259,7 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 	* Creation of RAID volumes
 	* support resizing file systems when using disk partitions
 	* support compressed vmdk images
+	* Can we support ZFS?
 * Configuration
 	* Machine machineOperatingSystemId / machineOperatingSystemName / machineUuid / machineLastStateChangeTimestamp
 	* capture IP and DNS information

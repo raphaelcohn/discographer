@@ -1,4 +1,4 @@
-function sourceGenerators()
+function generators_source()
 {
 	local -r generatorsKind="$1"
 	local -r generatorsPath="$2"
@@ -34,7 +34,7 @@ function sourceGenerators()
 	popd 1>/dev/null 2>/dev/null
 }
 
-function runInMounts()
+function generators_runInMounts()
 {
 	mountBind /dev "$cacheMachineFilesystemImageMountPath"/dev
 	mountBind /dev/pts "$cacheMachineFilesystemImageMountPath"/dev/pts
@@ -53,7 +53,7 @@ function runInMounts()
 	unmountBind "$cacheMachineFilesystemImageMountPath"/dev
 }
 
-function runInChroot()
+function generators_runInChroot()
 {
-	runInMounts chroot "$cacheMachineFilesystemImageMountPath" "$@"
+	generators_runInMounts chroot "$cacheMachineFilesystemImageMountPath" "$@"
 }

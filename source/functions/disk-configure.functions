@@ -1,0 +1,67 @@
+disk_configure_functions=()
+
+function disk_configure_defaultConfiguration()
+{
+	configuration_sourceDefaultConfiguration "disk"
+}
+disk_configure_functions+=(disk_configure_defaultConfiguration)
+
+function disk_configure_sourceConfiguration()
+{
+	source "$configMachineDisksPath"/"$disk".disk
+}
+disk_configure_functions+=(disk_configure_sourceConfiguration)
+
+function disk_configure_verifyConfiguration()
+{
+	if [ ${#machineDiskVolumeLabel16Bytes} -gt 16 ]; then
+		informationMessage FAIL "Machine $machine has a disk $disk with a label greater than 16 characters (defaults to disk name) in parameters or disk folder"
+		exit 1
+	fi
+	
+	case "$machineDiskFilesystemType" in
+		
+		ext[2-4])
+			:
+		;;
+		
+		btrfs)
+			:
+		;;
+		
+		xfs)
+			:
+		;;
+		
+		swap)
+			:
+		;;
+		
+		*)
+			informationMessage FAIL "Machine $machine has a disk $disk with an unknown filesystem type $machineDiskFilesystemType"
+			exit 1
+		;;
+	
+	esac
+}
+disk_configure_functions+=(disk_configure_verifyConfiguration)
+
+function disk_configure_captureInABashDictionaryConfiguration()
+{
+	machineDisksConfigurationSize["$disk"]="$machineDiskSize"
+	machineDisksConfigurationMountPoint["$disk"]="$machineDiskMountPoint"
+	machineDisksConfigurationFilesystemType["$disk"]="$machineDiskFilesystemType"
+	machineDisksConfigurationBlockSize["$disk"]="$machineDiskBlockSize"
+	machineDisksConfigurationDiskImagePath["$disk"]="$cacheMachineDisksPath"/"$disk".img
+	machineDisksConfigurationImageMountPath["$disk"]="${cacheMachineDisksMountsPath}${machineDiskMountPoint}"
+	machineDisksConfigurationVolumeLabel16Bytes["$disk"]="$machineDiskVolumeLabel16Bytes"
+	machineDisksConfigurationUuid["$disk"]="$machineDiskUuid"
+	machineDisksConfigurationOptions["$disk"]="$machineDiskOptions"
+	machineDisksConfigurationMountOptions["$disk"]="$machineDiskMountOptions"
+	machineDisksConfigurationDumpOptions["$disk"]="$machineDiskDumpOptions"
+	machineDisksConfigurationFsckOptions["$disk"]="$machineDiskFsckOptions"
+	machineDisksConfigurationShrinkDisk["$disk"]="$machineDiskShrink"
+	machineDisksConfigurationBootable["$disk"]="$machineDiskBootable"
+	machineDisksConfigurationPartitionImagePath["$disk"]=""
+}
+disk_configure_functions+=(disk_configure_captureInABashDictionaryConfiguration)

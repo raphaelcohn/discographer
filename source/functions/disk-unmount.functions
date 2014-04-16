@@ -1,0 +1,104 @@
+disk_unmount_functions=()
+
+function disk_unmount_optimiseDisk()
+{
+	case "${machineDisksConfigurationFilesystemType["$disk"]}" in
+	
+		ext2|ext3|ext4)
+			e2fsck -D -f "${machineDisksConfigurationPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
+			tune2fs -f -c 0 -C 0 -i 36m -M "${machineDisksConfigurationPartitionImagePath["$disk"]}" -u 0 -g 0 "${machineDisksConfigurationPartitionImagePath["$disk"]}"
+		;;
+	
+		*)
+			return 0
+		;;
+	esac
+}
+disk_unmount_functions+=(disk_unmount_optimiseDisk)
+
+function disk_unmount_shrinkDiskImage()
+{
+	if [ "${machineDisksConfigurationShrinkDisk["$disk"]}" != "yes" ]; then
+		return 0
+	fi
+	
+	# Values match man partx (except for unpartitioned)
+	case "$machineHypervisorDiskPartioning" in
+		
+		unpartitioned)
+			:
+		;;
+		
+		bsd|solaris|unixware)
+			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported for extlinux"
+			exitError 1
+		;;
+		
+		gpt)
+			informationMessage FAIL "GPT partitioning is unsupported at this time for extlinux"
+			exitError 1
+		;;
+		
+		dos)
+			informationMessage WARN "Dish shrinking is not currently possible when using DOS partition tables"
+			return 0
+		;;
+	
+	esac
+	
+	case "${machineDisksConfigurationFilesystemType["$disk"]}" in
+		
+		ext2|ext3|ext4)
+			:
+		;;
+		
+		*)
+			return 0
+		;;
+	esac
+	
+	machineDiskBlockSize=${machineDisksConfigurationBlockSize["$disk"]}
+	
+	local -ir minimumSize="$(resize2fs -P "${machineDisksConfigurationPartitionImagePath["$disk"]}" 2>/dev/null | awk '{print $7}')"
+	resize2fs -M "${machineDisksConfigurationPartitionImagePath["$disk"]}" 2>/dev/null
+	
+	local -ir shrinkSizeInBytes=$((minimumSize*machineDiskBlockSize))
+	truncate -s $shrinkSizeInBytes "${machineDisksConfigurationDiskImagePath["$disk"]}"
+}
+disk_unmount_functions+=(disk_unmount_shrinkDiskImage)
+
+function disk_unmount_image()
+{
+	# Values match man partx (except for unpartitioned)
+	case "$machineHypervisorDiskPartioning" in
+		
+		unpartitioned)
+			# Does nothing
+			:
+		;;
+		
+		dos)
+			# unmountDisk should tak the original disk image path, not the loopback device created, but doesn't...
+			#unmountDisk "${machineDisksConfigurationDiskImagePath["$disk"]}"
+			unmountDisk "${machineDisksConfigurationLoopbackDevice["$disk"]}"
+		;;
+		
+		bsd|solaris|unixware)
+			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported"
+			exitError 1
+		;;
+		
+		gpt)
+			informationMessage FAIL "GPT partitioning is unsupported at this time"
+			exitError 1
+		;;
+	
+	esac
+}
+disk_unmount_functions+=(disk_unmount_image)
+
+function disk_unmount_convertImage()
+{
+	convertDiskImage_${machineHypervisorDiskExtension}
+}
+disk_unmount_functions+=(disk_unmount_convertImage)

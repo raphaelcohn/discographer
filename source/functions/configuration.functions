@@ -1,4 +1,4 @@
-function sourceDefaultConfiguration()
+function configuration_sourceDefaultConfiguration()
 {
 	source "$configDefaultsPath"/"$1".default.configuration
 }

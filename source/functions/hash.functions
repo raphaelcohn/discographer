@@ -1,4 +1,4 @@
-function recordHashes()
+function hash_recordHashes()
 {
 	local -r prefix="$1"
 	local -r path="$2"
@@ -7,7 +7,7 @@ function recordHashes()
 	local -r topLevelFolder="${prefix}${path}"
 	local -ir prefixLength=${#prefix}
 	
-	recordHashLine Type Uid Gid Mode MTime CTime Meta Version Chattr Acl DefaultAcl Selinux Capabilities Size MD5 SHA1 SHA256 SHA512
+	hash_recordHashLine Type Uid Gid Mode MTime CTime Meta Version Chattr Acl DefaultAcl Selinux Capabilities Size MD5 SHA1 SHA256 SHA512
 	
 	# Done this way to try to overcome an open files bug
 	temporaryFileToRemoveOnExit
@@ -19,26 +19,26 @@ function recordHashes()
 	do
 		# symlinks first as all other tests cause de-referencing of symlinks
 		if [ -h "$fileObject" ]; then
-			recordHashSymlink
+			hash_recordHashSymlink
 		elif [ -f "$fileObject" ]; then
-			recordHashFile
+			hash_recordHashFile
 		elif [ -d "$fileObject" ]; then
-			recordHashFolder
+			hash_recordHashFolder
 		elif [ -b "$fileObject" ]; then
-			recordHashDevice b
+			hash_recordHashDevice b
 		elif [ -c "$fileObject" ]; then
-			recordHashDevice c
+			hash_recordHashDevice c
 		elif [ -p "$fileObject" ]; then
-			recordHashNamedPipe
+			hash_recordHashNamedPipe
 		elif [ -S "$fileObject" ]; then
-			recordHashSocket
+			hash_recordHashSocket
 		else
-			recordHashUnknown
+			hash_recordHashUnknown
 		fi
 	done <"$sortedAsciiNullSeparatedFiles"
 }
 
-function recordHashLine()
+function hash_recordHashLine()
 {
 	if [ $# -ne 18 ]; then
 		echo "Not 18 arguments" 1>&2
@@ -69,15 +69,10 @@ function recordHashLine()
 	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" "$defaultacl" "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512" "${fileObject:$prefixLength}" >>"$hashesFile"
 }
 
-function readHashesLine()
-{
-	IFS=$'\t' read -r -d $'\0' HashesLine_Type HashesLine_Uid HashesLine_Gid HashesLine_Mode HashesLine_MTime HashesLine_CTime HashesLine_Meta HashesLine_Version HashesLine_Chattr HashesLine_Acl HashesLine_DefaultAcl HashesLine_Selinux HashesLine_Capabilities HashesLine_Size HashesLine_MD5 HashesLine_SHA1 HashesLine_SHA256 HashesLine_SHA512 HashesLine_File
-}
-
 # birthTime %W seems to not be known for most files (outputs 0)
 # atime %X is not very useful
 
-function recordHashSymlink()
+function hash_recordHashSymlink()
 {
 	local uid gid mode mtime ctime size
 	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z %s" "$fileObject")
@@ -92,10 +87,10 @@ function recordHashSymlink()
 	local -r sha256="$(echo -n "$meta" | sha256sum | awk 'NR==1 {print $1}')"
 	local -r sha512="$(echo -n "$meta" | sha512sum | awk 'NR==1 {print $1}')"
 	
-	recordHashLine l "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' '' '' "$selinux" '' "$size" "$md5" "$sha1" "$sha256" "$sha512"
+	hash_recordHashLine l "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' '' '' "$selinux" '' "$size" "$md5" "$sha1" "$sha256" "$sha512"
 }
 
-function recordHashFile()
+function hash_recordHashFile()
 {
 	local uid gid mode mtime ctime size
 	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z %s" "$fileObject")
@@ -123,10 +118,10 @@ function recordHashFile()
 	local -r sha256="$(sha256sum "$fileObject" | awk 'NR==1 {print $1}')"
 	local -r sha512="$(sha512sum "$fileObject" | awk 'NR==1 {print $1}')"
 		
-	recordHashLine f "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" '' "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512"
+	hash_recordHashLine f "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" '' "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512"
 }
 
-function recordHashFolder()
+function hash_recordHashFolder()
 {
 	# Whilst directories do have a size, it's very much a function of the file system
 	local uid gid mode mtime ctime
@@ -158,10 +153,10 @@ function recordHashFolder()
 	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
 	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 	
-	recordHashLine d "$uid" "$gid" "$mode" "$mtime" "$ctime" '' "$version" "$chattr" "$acl" "$defaultAcl" "$selinux" '' "$size" '' '' '' ''
+	hash_recordHashLine d "$uid" "$gid" "$mode" "$mtime" "$ctime" '' "$version" "$chattr" "$acl" "$defaultAcl" "$selinux" '' "$size" '' '' '' ''
 }
 
-function recordHashDevice()
+function hash_recordHashDevice()
 {
 	local -r fileType="$1"
 	
@@ -180,10 +175,10 @@ function recordHashDevice()
 	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
 	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 	
-	recordHashLine "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
+	hash_recordHashLine "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
 }
 
-function recordHashNamedPipe()
+function hash_recordHashNamedPipe()
 {
 	# Whilst directories do have a size, it's very much a function of the file system
 	local uid gid mode mtime ctime
@@ -200,10 +195,10 @@ function recordHashNamedPipe()
 	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
 	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 		
-	recordHashLine p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
+	hash_recordHashLine p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
 }
 
-function recordHashSocket()
+function hash_recordHashSocket()
 {
 	local uid gid mode mtime ctime
 	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z" "$fileObject")
@@ -216,10 +211,10 @@ function recordHashSocket()
 		local -r acl=""
 	fi
 	
-	recordHashLine p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' '' '' '' '' '' '' ''
+	hash_recordHashLine p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' '' '' '' '' '' '' ''
 }
 
-function recordHashUnknown()
+function hash_recordHashUnknown()
 {
 	exitError "Unknown file type $fileObject"
 }

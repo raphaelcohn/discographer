@@ -1,7 +1,7 @@
 machines=()
-machineFunctions=()
+machine_functions=()
 
-function verifyMachineNameIsValidDnsLabel()
+function machine_verifyMachineNameIsValidDnsLabel()
 {
 	local -ir hostnameLength=${#machine}
 	if [ $hostnameLength -lt 2 ]; then
@@ -47,9 +47,9 @@ function verifyMachineNameIsValidDnsLabel()
 		exit 1
 	fi
 }
-machineFunctions+=(verifyMachineNameIsValidDnsLabel)
+machine_functions+=(machine_verifyMachineNameIsValidDnsLabel)
 
-function prepareMachinePaths()
+function machine_prepareMachinePaths()
 {
 	export configMachinePath="$machinesPath"/"$machine"
 	if [ ! -d "$configMachinePath" ]; then
@@ -128,9 +128,9 @@ function prepareMachinePaths()
 	cacheMachineArtefactsPath="$cacheMachinePath"/artefacts
 	mkdir -m 0755 -p "$cacheMachineArtefactsPath"
 }
-machineFunctions+=(prepareMachinePaths)
+machine_functions+=(machine_prepareMachinePaths)
 
-function cleanUpMachinesCache()
+function machine_cleanUpMachinesCache()
 {
 	pushd "$cacheMachineGroupMachinesPath" 1>/dev/null 2>/dev/null
 		local cachedMachine
@@ -154,55 +154,55 @@ function cleanUpMachinesCache()
 		done
 	popd 1>/dev/null 2>/dev/null
 }
-machineFunctions+=(cleanUpMachinesCache)
+machine_functions+=(machine_cleanUpMachinesCache)
 
-function defaultMachineConfiguration()
+function machine_defaultMachineConfiguration()
 {
-	sourceDefaultConfiguration "machine"
+	configuration_sourceDefaultConfiguration "machine"
 }
-machineFunctions+=(defaultMachineConfiguration)
+machine_functions+=(machine_defaultMachineConfiguration)
 
-function sourceMachineConfiguration()
+function machine_sourceMachineConfiguration()
 {
 	source "$configMachineConfigurationPath"
 }
-machineFunctions+=(sourceMachineConfiguration)
+machine_functions+=(machine_sourceMachineConfiguration)
 
-function validateMachineConfiguration()
+function machine_validateMachineConfiguration()
 {
 	validateHypervisorNameAndOutputFormat
 }
-machineFunctions+=(validateMachineConfiguration)
+machine_functions+=(machine_validateMachineConfiguration)
 
 machinePackageNames=()
-function readMachinePackages()
+function machine_readMachinePackages()
 {
 	mapfile -t machinePackageNames < <(configuration_readPackageNames "$configMachinePackagesPath")
 }
-machineFunctions+=(readMachinePackages)
+machine_functions+=(machine_readMachinePackages)
 
 machineRpmFiles=()
-function readMachineRpmFiles()
+function machine_readMachineRpmFiles()
 {
 	mapfile -t machineRpmFiles < <(configuration_readRpmFiles "$configMachineRpmsPath")
 }
-machineFunctions+=(readMachineRpmFiles)
+machine_functions+=(machine_readMachineRpmFiles)
 
 machineNics=()
-function readMachineNicNames()
+function machine_readMachineNicNames()
 {
 	mapfile -t machineNics < <(configuration_readNames "$configMachineNicsPath" "nic")
 }
-machineFunctions+=(readMachineNicNames)
+machine_functions+=(machine_readMachineNicNames)
 
 machineDisks=()
-function readMachineDiskNames()
+function machine_readMachineDiskNames()
 {
 	mapfile -t machineDisks < <(configuration_readNames "$configMachineDisksPath" "disk")
 }
-machineFunctions+=(readMachineDiskNames)
+machine_functions+=(machine_readMachineDiskNames)
 
-function configureNics()
+function machine_configureNics()
 {
 	local nic
 	for nic in "${machineNics[@]}"
@@ -210,45 +210,46 @@ function configureNics()
 		local nicConfigureFunction
 		for nicConfigureFunction in "${nicConfigureFunctions[@]}"
 		do
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${nicConfigureFunction}"
 			$nicConfigureFunction
 		done
 	done
 }
-machineFunctions+=(configureNics)
+machine_functions+=(machine_configureNics)
 
-function configureDisks()
+function machine_configureDisks()
 {
 	local disk
 	for disk in "${machineDisks[@]}"
 	do
-		local diskConfigureFunction
-		for diskConfigureFunction in "${diskConfigureFunctions[@]}"
+		local disk_configure_function
+		for disk_configure_function in "${disk_configure_functions[@]}"
 		do
-			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskConfigureFunction}"
-			$diskConfigureFunction
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${disk_configure_function}"
+			$disk_configure_function
 		done
 	done
 }
-machineFunctions+=(configureDisks)
+machine_functions+=(machine_configureDisks)
 
-function createDisks()
+function machine_mountDisks()
 {
 	local disk
 	for disk in "${machineDisks[@]}"
 	do
-		local diskCreateFunction
-		for diskCreateFunction in "${diskCreateFunctions[@]}"
+		local disk_mount_function
+		for disk_mount_function in "${disk_mount_functions[@]}"
 		do
-			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskCreateFunction}"
-			$diskCreateFunction
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${disk_mount_function}"
+			$disk_mount_function
 		done
 	done
 }
-machineFunctions+=(createDisks)
+machine_functions+=(machine_mountDisks)
 
 machineDiskMountPointsInForwardDiskOrder=()
 machineDiskMountPointsInReverseDiskOrder=()
-function recordSortedDiskMountPoints()
+function machine_recordSortedDiskMountPoints()
 {
 	machineDiskMountPointsInForwardDiskOrder=()
 	
@@ -267,62 +268,62 @@ function recordSortedDiskMountPoints()
 		machineDiskMountPointsInReverseDiskOrder+=("$disk")
 	done
 }
-machineFunctions+=(recordSortedDiskMountPoints)
+machine_functions+=(machine_recordSortedDiskMountPoints)
 
-function mountDisks()
+function machine_mountDiskPartitions()
 {
 	local disk
 	for disk in "${machineDiskMountPointsInForwardDiskOrder[@]}"
 	do
-		if mountPointIsSpecial; then
-			informationMessage INFO "${tab}${tab}${tab}${disk} (ignored)"
-			continue
-		fi
-		
-		local diskMountFuncton
-		for diskMountFuncton in "${diskMountFunctions[@]}"
+		local disk_partitionMount_function
+		for disk_partitionMount_function in "${disk_partitionMount_functions[@]}"
 		do
+			if mountPointIsSpecial; then
+				informationMessage INFO "${tab}${tab}${tab}${disk} (ignored)"
+				continue
+			fi
+			
 			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskMountFuncton}"
-			$diskMountFuncton
+			$disk_partitionMount_function
 		done
 	done
 }
-machineFunctions+=(mountDisks)
+machine_functions+=(machine_mountDiskPartitions)
 
-function installUnderlays()
+function machine_installUnderlays()
 {
 	installFilesystem "$configMachineGroupUnderlaysPath"
 	installFilesystem "$configMachineUnderlaysPath"
 }
-machineFunctions+=(installUnderlays)
+machine_functions+=(machine_installUnderlays)
 
-function installRpmsFromYum()
+function machine_installRpmsFromYum()
 {
-	local yumFunction
-	for yumFunction in "${yumFunctions[@]}"
+	local yum_function
+	for yum_function in "${yum_functions[@]}"
 	do
-		$yumFunction
+		$yum_function
 	done
 }
-machineFunctions+=(installRpmsFromYum)
+machine_functions+=(machine_installRpmsFromYum)
 
-function sourceMachineGenerators()
+function machine_sourceMachineGenerators()
 {
 	# Relies on cacheMachineOverlaysGeneratedPath
-	sourceGenerators "machine" "$configMachineGeneratorsPath"
+	generators_source "machine" "$configMachineGeneratorsPath"
 }
-machineFunctions+=(sourceMachineGenerators)
+machine_functions+=(machine_sourceMachineGenerators)
 
-function installOverlays()
+function machine_installOverlays()
 {
 	installFilesystem "$configMachineGroupOverlaysPath"
 	installFilesystem "$cacheMachineGroupOverlaysGeneratedPath"
 	installFilesystem "$configMachineOverlaysPath"
 	installFilesystem "$cacheMachineOverlaysGeneratedPath"
 }
-machineFunctions+=(installOverlays)
+machine_functions+=(machine_installOverlays)
 
-function determineRootDiskUuid()
+function machine_determineRootDiskUuid()
 {
 	machineRootDiskFilesystemUuid=""
 	local disk
@@ -339,18 +340,18 @@ function determineRootDiskUuid()
 		exitError 1
 	fi
 }
-machineFunctions+=(determineRootDiskUuid)
+machine_functions+=(machine_determineRootDiskUuid)
 
-function determinKernelAdditionalOptions()
+function machine_determinKernelAdditionalOptions()
 {
 	local machineKernelOptions="root=UUID=${machineRootDiskFilesystemUuid}"
 	if [ -n "$machineKernelAdditionalOptions" ]; then
 		machineKernelOptions="${machineKernelOptions} ${machineKernelAdditionalOptions}"
 	fi
 }
-machineFunctions+=(determinKernelAdditionalOptions)
+machine_functions+=(machine_determinKernelAdditionalOptions)
 
-function determineKernelAndInitRd()
+function machine_determineKernelAndInitRd()
 {
 	pushd "$cacheMachineDisksMountsPath" 1>/dev/null 2>/dev/null
 		
@@ -389,9 +390,9 @@ function determineKernelAndInitRd()
 	machineKernelFileName="$(purebash_basename "$machineKernelAbsolutePath")"
 	machineInitramfsFileName="$(purebash_basename "$machineInitramfsAbsolutePath")"
 }
-machineFunctions+=(determineKernelAndInitRd)
+machine_functions+=(machine_determineKernelAndInitRd)
 
-function copyKernelAndInitRdForUnpartitioned()
+function machine_copyKernelAndInitRdForUnpartitioned()
 {
 	if [ "$machineHypervisorDiskFormat" != "unpartitioned" ]; then
 		return 0
@@ -403,9 +404,9 @@ function copyKernelAndInitRdForUnpartitioned()
 	cp "${cacheMachineDisksMountsPath}${machineInitramfsAbsolutePath}" "$cacheMachineArtefactsPath"/"$machineInitramfsFileName"
 	ln -s "$machineInitramfsFileName" "$cacheMachineArtefactsPath"/initramfs.img
 }
-machineFunctions+=(copyKernelAndInitRdForUnpartitioned)
+machine_functions+=(machine_copyKernelAndInitRdForUnpartitioned)
 
-function installExtLinux()
+function machine_installExtLinux()
 {
 	# Values match man partx (except for unpartitioned)
 	case "$machineHypervisorDiskPartioning" in
@@ -434,24 +435,24 @@ function installExtLinux()
 	for disk in "$machineDisks"
 	do
 		if [ "${machineDisksConfigurationBootable["$disk"]}" = "yes" ]; then
-			local extlinuxFunction
-			for extlinuxFunction in "${extlinuxFunctions[@]}"
+			local extlinux_function
+			for extlinux_function in "${extlinux_functions[@]}"
 			do
 				# installExtlinux_determineInstallPath uses $disk
-				$extlinuxFunction
+				$extlinux_function
 			done
 		fi
 	done
 }
-machineFunctions+=(installExtLinux)
+machine_functions+=(machine_installExtLinux)
 
-function recordHashesOfAllFiles()
+function machine_recordHashesOfAllFiles()
 {
 	recordHashes "${cacheMachineDisksMountsPath}" "/" "$cacheMachineArtefactsPath"/files-installed.report.txt
 }
-machineFunctions+=(recordHashesOfAllFiles)
+machine_functions+=(machine_recordHashesOfAllFiles)
 
-function unmountDisks()
+function machine_unmountDiskPartitions()
 {
 	local disk
 	for disk in "${machineDiskMountPointsInReverseDiskOrder[@]}"
@@ -461,17 +462,32 @@ function unmountDisks()
 			continue
 		fi
 		
-		local diskUnmountFunction
-		for diskUnmountFunction in "${diskUnmountFunctions[@]}"
+		local disk_partitionUnmount_function
+		for disk_partitionUnmount_function in "${disk_partitionUnmount_functions[@]}"
 		do
-			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskUnmountFunction}"
-			$diskUnmountFunction
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${disk_partitionUnmount_function}"
+			$disk_partitionUnmount_function
 		done
 	done
 }
-machineFunctions+=(unmountDisks)
+machine_functions+=(machine_unmountDiskPartitions)
 
-function createMetadata()
+function machine_unmountDisks()
+{
+	local disk
+	for disk in "${machineDiskMountPointsInReverseDiskOrder[@]}"
+	do
+		local disk_unmount_function
+		for disk_unmount_function in "${disk_unmount_functions[@]}"
+		do
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${disk_unmount_function}"
+			$disk_unmount_function
+		done
+	done
+}
+machine_functions+=(machine_unmountDisks)
+
+function machine_createMetadata()
 {
 	if [ "$machineHypervisorMetadataOutputFormat" = "none" ]; then
 		return 0
@@ -479,4 +495,4 @@ function createMetadata()
 	
 	hypervisorMetadata_${machineHypervisorName}
 }
-machineFunctions+=(createMetadata)
+machine_functions+=(machine_createMetadata)

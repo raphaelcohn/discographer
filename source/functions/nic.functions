@@ -10,7 +10,7 @@ nicConfigureFunctions=()
 
 function defaultNicConfiguration()
 {
-	sourceDefaultConfiguration "nic"
+	configuration_sourceDefaultConfiguration "nic"
 }
 nicConfigureFunctions+=(defaultNicConfiguration)
 

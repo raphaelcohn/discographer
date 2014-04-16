@@ -1,6 +1,6 @@
-extlinuxFunctions=()
+extlinux_functions=()
 
-function installExtLinux_verify()
+function extlinux_verify()
 {
 	case "${machineDisksConfigurationFilesystemType["$disk"]}" in
 
@@ -19,9 +19,9 @@ function installExtLinux_verify()
 
 	esac
 }
-extlinuxFunctions+=(installExtLinux_verify)
+extlinux_functions+=(extlinux_verify)
 
-function installExtlinux_determineSyslinuxSharePath()
+function extlinux_determineSyslinuxSharePath()
 {
 	case "$pathName" in
 		
@@ -40,29 +40,29 @@ function installExtlinux_determineSyslinuxSharePath()
 	
 	esac
 }
-extlinuxFunctions+=(installExtlinux_determineSyslinuxSharePath)
+extlinux_functions+=(extlinux_determineSyslinuxSharePath)
 
-function installExtlinux_determineInstallPath()
+function extlinux_determineInstallPath()
 {
 	extlinuxInstallPath="$cacheMachineDisksMountsPath"/boot/extlinux
 	
 	extlinuxDiskImageDevicePath="${machineDisksConfigurationDiskImagePath["$disk"]}"
 }
-extlinuxFunctions+=(installExtlinux_determineInstallPath)
+extlinux_functions+=(extlinux_determineInstallPath)
 
-function installExtlinux_makePath()
+function extlinux_makePath()
 {
 	mkdir -m 0755 -p "$extlinuxInstallPath"
 }
-extlinuxFunctions+=(installExtlinux_makePath)
+extlinux_functions+=(extlinux_makePath)
 
-function installExtlinux_installMenuModules()
+function extlinux_installMenuModules()
 {
 	cp "$syslinuxSharePath"/{menu,vesamenu}.c32 "$extlinuxInstallPath"
 }
-extlinuxFunctions+=(installExtlinux_installMenuModules)
+extlinux_functions+=(extlinux_installMenuModules)
 
-function installExtlinux_createConfiguration()
+function extlinux_createConfiguration()
 {
 	if [ "$machineForceDefaultBoot" = "yes" ]; then
 		local -r prompt=0
@@ -92,19 +92,19 @@ function installExtlinux_createConfiguration()
 		      APPEND ${machineKernelOptions}
 	EOF
 }
-extlinuxFunctions+=(installExtlinux_createConfiguration)
+extlinux_functions+=(extlinux_createConfiguration)
 
-function installExtlinux_install()
+function extlinux_install()
 {
 	extlinux --install "$extlinuxInstallPath"
 }
-extlinuxFunctions+=(installExtlinux_install)
+extlinux_functions+=(extlinux_install)
 
-function installExtlinux_installMasterBootRecord()
+function extlinux_installMasterBootRecord()
 {
 	# Or boot from partition one
 	#printf '\1' | cat "$syslinuxSharePath"/altmbr.bin - | dd bs=440 count=1 iflag=fullblock conv=notrunc of="${machineDisksConfigurationDiskImagePath["$disk"]}"
 	dd bs=440 count=1 conv=notrunc if="$syslinuxSharePath"/mbr.bin of="${machineDisksConfigurationDiskImagePath["$disk"]}"
 	#cat "$syslinuxSharePath"/mbr.bin >"${machineDisksConfigurationDiskImagePath["$disk"]}"
 }
-extlinuxFunctions+=(installExtlinux_installMasterBootRecord)
+extlinux_functions+=(extlinux_installMasterBootRecord)
