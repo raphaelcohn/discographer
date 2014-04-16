@@ -182,12 +182,15 @@ function buildMachines()
 	do
 		for machineFunction in "${machineFunctions[@]}"
 		do
+			declare -A machineDisksConfigurationSize
+			declare -A machineDisksConfigurationMountPoint
 			declare -A machineDisksConfigurationFilesystemType
 			declare -A machineDisksConfigurationBlockSize
-			declare -A machineDisksConfigurationMountPoint
 			declare -A machineDisksConfigurationDiskImagePath
 			declare -A machineDisksConfigurationImageMountPath
+			declare -A machineDisksConfigurationVolumeLabel16Bytes
 			declare -A machineDisksConfigurationUuid
+			declare -A machineDisksConfigurationOptions
 			declare -A machineDisksConfigurationMountOptions
 			declare -A machineDisksConfigurationDumpOptions
 			declare -A machineDisksConfigurationFsckOptions
