@@ -6,19 +6,19 @@
 # 82545EM        Intel PRO/10000 MT Server  also known as E1000
 # virtio-net     Paravirtualized Network
 
-nicCreateFunctions=()
+nicConfigureFunctions=()
 
 function defaultNicConfiguration()
 {
 	sourceDefaultConfiguration "nic"
 }
-nicCreateFunctions+=(defaultNicConfiguration)
+nicConfigureFunctions+=(defaultNicConfiguration)
 
 function sourceNicConfiguration()
 {
 	source "$configMachineNicsPath"/"$nic".nic
 }
-nicCreateFunctions+=(sourceNicConfiguration)
+nicConfigureFunctions+=(sourceNicConfiguration)
 
 function verifyNicConfiguration()
 {
@@ -44,11 +44,11 @@ function verifyNicConfiguration()
 	
 	machineNicsVariant
 }
-nicCreateFunctions+=(verifyNicConfiguration)
+nicConfigureFunctions+=(verifyNicConfiguration)
 
 function captureInABashDictionaryMachineNicConfigurationForMountingAndUnmounting()
 {
 	machineNicsConfigurationMac["$nic"]="$machineNicMac"
 	machineNicsConfigurationVariant["$nic"]="$machineNicsVariant"
 }
-nicCreateFunctions+=(captureInABashDictionaryMachineNicConfigurationForMountingAndUnmounting)
+nicConfigureFunctions+=(captureInABashDictionaryMachineNicConfigurationForMountingAndUnmounting)

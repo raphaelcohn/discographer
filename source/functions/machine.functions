@@ -188,7 +188,7 @@ function readMachineRpmFiles()
 }
 machineFunctions+=(readMachineRpmFiles)
 
-run nicCreateFunctions
+run nicConfigureFunctions
 
 machineDisks=()
 function readMachineDiskNames()
@@ -204,15 +204,30 @@ function readMachineNicNames()
 }
 machineFunctions+=(readMachineNicNames)
 
-function createNics()
+function configureNics()
 {
-	local nicCreateFunction
-	for nicCreateFunction in "${nicCreateFunctions[@]}"
+	local nicConfigureFunction
+	for nicConfigureFunction in "${nicConfigureFunctions[@]}"
 	do
-		$nicCreateFunction
+		$nicConfigureFunction
 	done
 }
-machineFunctions+=(createNics)
+machineFunctions+=(configureNics)
+
+function configureDisks()
+{
+	local disk
+	for disk in "${machineDisks[@]}"
+	do
+		local diskConfigureFunction
+		for diskConfigureFunction in "${diskConfigureFunctions[@]}"
+		do
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskConfigureFunction}"
+			$diskConfigureFunction
+		done
+	done
+}
+machineFunctions+=(configureDisks)
 
 function createDisks()
 {

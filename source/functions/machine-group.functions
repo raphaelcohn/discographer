@@ -164,6 +164,11 @@ function buildMachines()
 	do
 		for machineFunction in "${machineFunctions[@]}"
 		do
+			# NICs
+			declare -A machineNicsConfigurationMac
+			declare -A machineNicsConfigurationVariant
+			
+			# Disks
 			declare -A machineDisksConfigurationSize
 			declare -A machineDisksConfigurationMountPoint
 			declare -A machineDisksConfigurationFilesystemType
@@ -180,9 +185,6 @@ function buildMachines()
 			declare -A machineDisksConfigurationBootable
 			# not for configuration
 			declare -A machineDisksConfigurationPartitionImagePath
-			
-			declare -A machineNicsConfigurationMac
-			declare -A machineNicsConfigurationVariant
 			
 			informationMessage INFO "${tab}${tab}${machine} ${machineFunction}"
 			$machineFunction

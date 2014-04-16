@@ -1,16 +1,16 @@
-diskCreateFunctions=()
+diskConfigureFunctions=()
 
 function defaultDiskImageConfiguration()
 {
 	sourceDefaultConfiguration "disk"
 }
-diskCreateFunctions+=(defaultDiskImageConfiguration)
+diskConfigureFunctions+=(defaultDiskImageConfiguration)
 
 function sourceDiskImageConfiguration()
 {
 	source "$configMachineDisksPath"/"$disk".disk
 }
-diskCreateFunctions+=(sourceDiskImageConfiguration)
+diskConfigureFunctions+=(sourceDiskImageConfiguration)
 
 function verifyDiskImageConfiguration()
 {
@@ -44,7 +44,7 @@ function verifyDiskImageConfiguration()
 	
 	esac
 }
-diskCreateFunctions+=(verifyDiskImageConfiguration)
+diskConfigureFunctions+=(verifyDiskImageConfiguration)
 
 function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting()
 {
@@ -64,7 +64,10 @@ function captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmountin
 	machineDisksConfigurationBootable["$disk"]="$machineDiskBootable"
 	machineDisksConfigurationPartitionImagePath["$disk"]=""
 }
-diskCreateFunctions+=(captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting)
+diskConfigureFunctions+=(captureInABashDictionaryMachineDiskConfigurationForMountingAndUnmounting)
+
+
+diskCreateFunctions=()
 
 function createDiskImageSpareFile()
 {
