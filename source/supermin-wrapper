@@ -12,6 +12,12 @@ function informationMessage()
 			echo "$ourName: $messageKind: $message"
 		;;
 		
+		DEBUG)
+			if [ "$beDebug" = "yes" ]; then
+				echo "$ourName: $messageKind: $message"
+			fi
+		;;
+		
 		*)
 			if [ "$beVerbose" = "yes" ]; then
 				echo "$ourName: $messageKind: $message"
@@ -130,6 +136,7 @@ function loadAnyConfiguration()
 	functionsPath="$crudeOurPath"/functions
 	pathsPath="$configPath"/paths
 	beVerbose="no"
+	beDebug="no"
 	
 	if [ -r /etc/"$ourName"/configuration ]; then
 		source /etc/"$ourName"/configuration
@@ -145,7 +152,7 @@ function parseCommandLine()
 	local OPTIND=1
 	local OPTARG
 	local option
-	while getopts :hvc:s:p:f:o: option
+	while getopts :hvdc:s:p:f:o: option
 	do
 		case "$option" in
 			
@@ -155,6 +162,10 @@ function parseCommandLine()
 			
 			v)
 				beVerbose="yes"
+			;;
+			
+			d)
+				beDebug="yes"
 			;;
 			
 			c)

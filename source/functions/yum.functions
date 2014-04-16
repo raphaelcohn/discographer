@@ -66,7 +66,7 @@ function fillInMachineYumConfTemplate()
 	
 	export yumConfigRepositoriesPath="$cacheMachineDisksMountsPath"/etc/yum.repos.d
 	
-	if [ "$beVerbose" = "yes" ]; then
+	if [ "$beDebug" = "yes" ]; then
 		export yumConfigDebugLevel=10
 		export yumConfigErrorLevel=10
 		export yumConfigRpmVerbository=debug
@@ -98,7 +98,7 @@ yumFunctions+=(downloadDistributionVersionRpm)
 
 function installDistributionVersionRpm()
 {
-	rpm --install --root=${cacheMachineDisksMountsPath} --nodeps "$cacheYumDistributionVersionRpmPath"
+	rpm --install --root=${cacheMachineDisksMountsPath} --nodeps --nosignature "$cacheYumDistributionVersionRpmPath"
 }
 yumFunctions+=(installDistributionVersionRpm)
 

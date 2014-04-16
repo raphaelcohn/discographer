@@ -167,12 +167,14 @@ function mountDiskImage()
 		unpartitioned)
 			# Does nothing
 			machineDisksConfigurationPartitionImagePath["$disk"]="${machineDisksConfigurationDiskImagePath["$disk"]}"
+			machineDisksConfigurationLoopbackDevice["$disk"]=""
 		;;
 		
 		dos)
-			local FUNCTION_RESULT
+			declare -a FUNCTION_RESULT=()
 			mountDisk "${machineDisksConfigurationDiskImagePath["$disk"]}"
-			machineDisksConfigurationPartitionImagePath["$disk"]="$FUNCTION_RESULT"
+			machineDisksConfigurationLoopbackDevice["$disk"]="${FUNCTION_RESULT[0]}"
+			machineDisksConfigurationPartitionImagePath["$disk"]="${FUNCTION_RESULT[1]}"
 		;;
 		
 		bsd|solaris|unixware)
@@ -312,8 +314,9 @@ function unmountDiskImage()
 		;;
 		
 		dos)
-			# unmountDisk takes the original disk image path, not the loopback device created, unlike unmountLoopback
-			unmountDisk "${machineDisksConfigurationDiskImagePath["$disk"]}"
+			# unmountDisk should tak the original disk image path, not the loopback device created, but doesn't...
+			#unmountDisk "${machineDisksConfigurationDiskImagePath["$disk"]}"
+			unmountDisk "${machineDisksConfigurationLoopbackDevice["$disk"]}"
 		;;
 		
 		bsd|solaris|unixware)

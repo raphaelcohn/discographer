@@ -31,10 +31,16 @@ function mountDisk()
 	local -r outputFile="$TMP_FILE"
 	kpartx -a -s -v "$diskFilePath" 1>"$outputFile"
 	
-	registerMountPointToRemoveOnExit "$diskFilePath" unmountDisk
+	local -r loopbackDeviceUsed="$(head -n 1 "$outputFile" | awk '{print $8}')"
+	FUNCTION_RESULT+=("$loopbackDeviceUsed")
+	
+	# ** Supposed to be the disk image, but doesn't seem to work **
+	registerMountPointToRemoveOnExit "$loopbackDeviceUsed" unmountDisk
+	#registerMountPointToRemoveOnExit "$diskFilePath" unmountDisk
 	
 	# Could do it all with awk, but that's too complex for now
-	FUNCTION_RESULT=/dev/mapper/"$(grep '^add map ' "$outputFile" | awk '{print $3}')"
+	local -r devMapperUsed=/dev/mapper/"$(grep '^add map ' "$outputFile" | awk '{print $3}')"
+	FUNCTION_RESULT+=("$devMapperUsed")
 }
 
 function mountLoopback()
@@ -109,6 +115,7 @@ function unmountDisk()
 		unregisterMountPointToRemoveOnExit
 	fi
 	
+	# Doesn't seem to work, but kpartx -d /dev/loopN does - so we need to find the loop
 	kpartx -d -v "$diskFilePath"
 }
 

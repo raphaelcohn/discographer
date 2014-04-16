@@ -185,6 +185,7 @@ function buildMachines()
 			declare -A machineDisksConfigurationBootable
 			# not for configuration
 			declare -A machineDisksConfigurationPartitionImagePath
+			declare -A machineDisksConfigurationLoopbackDevice
 			
 			informationMessage INFO "${tab}${tab}${machine} ${machineFunction}"
 			$machineFunction

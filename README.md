@@ -215,11 +215,16 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 	* users/groups
 		* install /etc/shadow et al
 	* a list of urls for RPMs with crypto hashes and signatures
+		* rpm supports download from a HTTP/FTP URL
+	* Integrate support for a proxy
+		* yum / rpm / download
 	* support other installs
 		* support deb / debootstrap
 		* support for install tar balls over root?
 		* gem installs?
 		* pip / easyinstall (python)?
+		* source ball installs - integrate with my lfs code
+	* support installation direct to mounted disk, NOT to generated overlay
 * Packages
 	* comments, whitespace, empty lines in packages files like https://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-bash-variable
 	* strip the install list (eg remove glibc, vim)
