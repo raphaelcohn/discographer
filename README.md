@@ -189,31 +189,55 @@ A yum log is contained in `${cachePath}/$[machineGroup}/${machine}/yum/log`.
 
 The wrapper uses a cache per machine. To remove the cache for a machine, delete the folder `${cachePath}/$[machineGroup}/${machine}`. To remove the entire cache, delete `${cachePath}`. Please note that lock files (`supermin.UID.lock`) are in `${cachePath}`, so it can only be safely removed if no instances of supermin (and by implication, supermin-wrapper), are running. The supermin-wrapper will automatically delete machines from the cache that are not defined in `${configPath}/${machineGroup}/machines`.
 
+# BUGS
+
+* We don't seem to be freeing kpartx mounts on crash exits
+* Yum installation has become broken
+* We aren't specifying capacity in OVF
+* We aren't setting VMDK UUIDs
+* native not supported for vmware, parallels
 
 # TODO
 
-* support deb / debootstrap
-* support one-off rpm/deb installation (ie local rpms)
-	* for yum, we could use createrepo and specify the RPM in the list with all the others (packages = fullname.version.rpm)
-	* support for install tar balls over root?
-	* gem installs?
-	* pip / easyinstall (python)?
-* support parallel machine building (using bash background jobs)
-* support caching downloaded RPMs / repo structure (? symlink out of the mount point, then blow away ?)
-* support resizing file system
-* check initrd / kernel installation (? kernel package)
-* need to delete files
-* support generating a packing list
-* generate vmdk * vmx
-* generate vmware teams
-* preserve / use file timestamps - touch with devices
-
-* chattr silent compression
-* chattr a+i
-* suid / guid applied only by exception
-* Specify DNS domain
-* other users / groups
-* kernel creation
-* initrd creation
-* swap, grub, LVM, RAID?
-* RESIZE ext4 disk image, so we can shrink to minimum
+* Documentation
+	* Fix the read me, it's really out-of-date
+	* Clean up generators (eg grub)
+* Installation
+	* support deleting files
+	* extended attribute control
+		* suid / guid whitelisting
+		* chattr (append-only, immutable, compression)
+		* file capabilities (CAP commands)
+		* control timestamps of files (eg set a file's atime / mtime etc)
+	* users/groups
+		* install /etc/shadow et al
+	* support other installs
+		* support deb / debootstrap
+		* support for install tar balls over root?
+		* gem installs?
+		* pip / easyinstall (python)?
+* Metadata
+	* qemu-kvm needs boot order
+	* virtualbox and OVF need boot-order
+	* Support vmware VMX
+	* support vmware VMC
+	* support vmware teams
+	* Parallels machine creation
+* Hypervisors
+	* Support KVM / RHEV
+	* Support Xen / AWS
+* performance
+	* support parallel machine building (using bash background jobs) (note that there's a max of 10 loopback devices; we use several per machine)
+	* support caching downloaded RPMs / repo structure (? symlink out of the mount point, then blow away ?)
+* Disks
+	* Fully support XFS
+	* Fully support BTRFS
+	* Creation of LVM volume groups and logical volumes
+	* Creation of LUKS volumes
+	* Creation of RAID volumes
+	* support resizing file systems when using disk partitions
+	* support compressed vmdk images
+* Configuration
+	* Machine machineOperatingSystemId / machineOperatingSystemName / machineUuid / machineLastStateChangeTimestamp
+	* capture IP and DNS information
+	* open-ended extra machine and machine-group configuration for generators

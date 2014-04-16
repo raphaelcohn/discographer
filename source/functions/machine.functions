@@ -362,6 +362,15 @@ function determineRootDiskUuid()
 }
 machineFunctions+=(determineRootDiskUuid)
 
+function determinKernelAdditionalOptions()
+{
+	local machineKernelOptions="root=UUID=${machineRootDiskFilesystemUuid}"
+	if [ -n "$machineKernelAdditionalOptions" ]; then
+		machineKernelOptions="${machineKernelOptions} ${machineKernelAdditionalOptions}"
+	fi
+}
+machineFunctions+=(determinKernelAdditionalOptions)
+
 function determineKernelAndInitRd()
 {
 	pushd "$cacheMachineDisksMountsPath" 1>/dev/null 2>/dev/null

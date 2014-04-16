@@ -64,8 +64,6 @@ extlinuxFunctions+=(installExtlinux_installMenuModules)
 
 function installExtlinux_createConfiguration()
 {
-	local -r machineForceDefaultBoot=no
-	
 	if [ "$machineForceDefaultBoot" = "yes" ]; then
 		local -r prompt=0
 		local -r noescape=1
@@ -75,7 +73,7 @@ function installExtlinux_createConfiguration()
 		local -r noescape=0
 		local -r allowOptions=1
 	fi
-
+	
 	cat >"$extlinuxInstallPath"/extlinux.conf <<-EOF
 		# Wait 50 1/10s of second (5s) before booting
 		UI menu
@@ -91,7 +89,7 @@ function installExtlinux_createConfiguration()
 		      SAY Booting the kernel ${machineKernelFileName} with initrd ${machineInitramfsFileName}
 		      KERNEL ${machineKernelAbsolutePath}
 		      INITRD ${machineInitramfsAbsolutePath}
-		      APPEND root=UUID=${machineRootDiskFilesystemUuid} selinux=0
+		      APPEND ${machineKernelOptions}
 	EOF
 }
 extlinuxFunctions+=(installExtlinux_createConfiguration)

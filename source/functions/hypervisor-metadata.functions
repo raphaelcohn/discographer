@@ -47,10 +47,10 @@ function hypervisorMetadata_qemu()
 			EOF
 			cat >"$qemuScript" <<-EOF
 				    exec -a "qemu-kvm-${machine}" qemu-kvm \
-				        -m 512 \
+				        -m ${machineRamSizeMegabytes} \
 				        -kernel "${machineKernelFileName}" \
 				        -initrd "${machineInitramfsFileName}" \
-				        -append 'root=UUID=${machineRootDiskFilesystemUuid} selinux=0 vga=773'
+				        -append "${machineKernelOptions}"
 			EOF
 			local disk
 			for disk in "${machineDisks[@]}"

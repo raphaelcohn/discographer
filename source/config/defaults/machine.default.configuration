@@ -6,9 +6,10 @@ machineDistributionReleaseRpmUrl=http://mirror.centos.org/centos/${machineDistri
 machineNetworkType=NAT
 machineCpuCount=1
 machineRamSizeMegabytes=2048
-
 machineDiskControllerHardwareKind=SATA
 machineDiskControllerHardwareImplementation=AHCI
+machineKernelAdditionalOptions="selinux=0 vga=773"
+machineForceDefaultBoot=no
 
 # Can we get this from machineDistribution?
 machineOperatingSystemId=94
