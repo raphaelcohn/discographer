@@ -20,17 +20,23 @@ function mountPointIsSpecial()
 	return 1
 }
 
+readonly kpartxLockFilePath=/var/lock/"$ourName".kpartx.lock
+
 function mountDisk()
 {
 	local -r diskFilePath="$1"
-	kpartx -a -s "$diskFilePath"
 	
+	# Should be executed after kpartx -a, but can't be, as flock runs in a subshell and so we'd be modified a copy of the variables...
 	registerMountPointToRemoveOnExit "$diskFilePath" unmountDisk
 	
-	local -r deviceMapper="$(kpartx -l -s "${machineDisksConfigurationDiskImagePath["$disk"]}" 2>/dev/null | awk '{print $1}')"
-	
-	echo -n "/dev/mapper/${deviceMapper}"
-	return 0
+	# Use an exclusive lock so we can add a mount and read the list
+	(
+		flock --exclusive 200
+		kpartx -a -s -v "$diskFilePath"
+		
+		local -r deviceMapper="$(kpartx -l -s "$diskFilePath" 2>/dev/null | awk '{print $1}')"
+		echo -n "/dev/mapper/${deviceMapper}"
+	) 200>"$kpartxLockFilePath"
 }
 
 function mountLoopback()
@@ -104,7 +110,12 @@ function unmountDisk()
 	if [ -z "$exiting" ]; then
 		unregisterMountPointToRemoveOnExit
 	fi
-	kpartx -d -s "$diskFilePath" || true
+	
+	(
+		flock --exclusive 200
+		
+		kpartx -d -s "$diskFilePath" || true
+	) 200>"$kpartxLockFilePath"
 }
 
 mountPointsToRemoveOnExitPaths=()
