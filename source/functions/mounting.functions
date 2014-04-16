@@ -26,21 +26,15 @@ function mountDisk()
 {
 	local -r diskFilePath="$1"
 	
-	set -x
+	# Done this way rather than as "$(kpartx ...)" so as to capture any exit codes due to lack of mount points
+	temporaryFileToRemoveOnExit
+	local -r outputFile="$TMP_FILE"
+	kpartx -a -s -v "$diskFilePath" 1>"$outputFile"
 	
-	# Should be executed after kpartx -a, but can't be, as flock runs in a subshell and so we'd be modified a copy of the variables...
 	registerMountPointToRemoveOnExit "$diskFilePath" unmountDisk
 	
-	# Use an exclusive lock so we can add a mount and read the list
-	(
-		flock --exclusive 200
-		kpartx -a -s -v "$diskFilePath"
-		
-		local -r deviceMapper="$(kpartx -l -s "$diskFilePath" 2>/dev/null | awk '{print $1}')"
-		echo -n "/dev/mapper/${deviceMapper}"
-	) 200>"$kpartxLockFilePath"
-	
-	exit 50
+	# Could do it all with awk, but that's too complex for now
+	FUNCTION_RESULT=/dev/mapper/"$(grep '^add map ' "$outputFile" | awk '{print $3}')"
 }
 
 function mountLoopback()

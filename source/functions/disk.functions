@@ -165,7 +165,9 @@ function mountDiskImage()
 		;;
 		
 		dos)
-			machineDisksConfigurationPartitionImagePath["$disk"]="$(mountDisk "${machineDisksConfigurationDiskImagePath["$disk"]}")"
+			local FUNCTION_RESULT
+			mountDisk "${machineDisksConfigurationDiskImagePath["$disk"]}"
+			machineDisksConfigurationPartitionImagePath["$disk"]="$FUNCTION_RESULT"
 		;;
 		
 		bsd|solaris|unixware)
