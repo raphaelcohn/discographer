@@ -70,7 +70,7 @@ main_functions+=(main_buildMachineGroups)
 function main_executeMainFunctions()
 {
 	local main_function
-	for main_function main_in "${main_functions[@]}"
+	for main_function in "${main_functions[@]}"
 	do
 		informationMessage INFO "${main_function}"
 		$main_function
