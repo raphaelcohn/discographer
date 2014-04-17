@@ -3,4 +3,4 @@ set -e
 
 rsync -a --quiet --exclude=.gitignore --exclude=cache /media/psf/supermin-wrapper/ ~/supermin-wrapper/
 mkdir -m 0755 -p ~/supermin-wrapper/source/cache
-exec ~/supermin-wrapper/source/supermin-wrapper -v examples
+exec ~/supermin-wrapper/source/supermin-wrapper -v -d examples
