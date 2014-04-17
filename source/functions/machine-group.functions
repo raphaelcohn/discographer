@@ -1,6 +1,6 @@
 machine_group_functions=()
 
-function machine_group_preparePaths()
+function machine_group_prepareConfigPaths()
 {
 	configMachineGroupPath="$machineGroupsPath"/"$machineGroup"
 	if [ ! -d "$configMachineGroupPath" ]; then
@@ -32,17 +32,6 @@ function machine_group_preparePaths()
 		exit 1
 	fi
 	
-	cacheMachineGroupPath="$cachePath"/machine-groups/"$machineGroup"
-	mkdir -m 0755 -p "$cacheMachineGroupPath"
-	
-	cacheMachineGroupMachinesPath="$cacheMachineGroupPath"/machines
-	rm -rf "$cacheMachineGroupMachinesPath"
-	mkdir -m 0755 -p "$cacheMachineGroupMachinesPath"
-	
-	cacheMachineGroupOverlaysGeneratedPath="$cacheMachineGroupPath"/overlays
-	rm -rf "$cacheMachineGroupOverlaysGeneratedPath"
-	mkdir -m 0755 -p "$cacheMachineGroupOverlaysGeneratedPath"
-	
 	configMachineGroupUnderlaysPath="$configMachineGroupPath"/underlays
 	if [ ! -d "$configMachineGroupUnderlaysPath" ]; then
 		informationMessage FAIL "Machine-group $machineGroup missing machine-group underlays folder $configMachineGroupUnderlaysPath"
@@ -54,14 +43,24 @@ function machine_group_preparePaths()
 		informationMessage FAIL "Machine-group $machineGroup missing machine-group overlays folder $configMachineGroupOverlaysPath"
 		exit 1
 	fi
-	
+}
+machine_group_functions+=(machine_group_prepareConfigPaths)
+
+function machine_group_prepareCachePaths()
+{
 	machinesPath="$configMachineGroupPath"/machines
 	if [ ! -d "$machinesPath" ]; then
 		informationMessage FAIL "Missing machine-group machines path $machinesPath"
 		exit 1
 	fi
+	
+	cacheMachineGroupPath="$cachePath"/machine-groups/"$machineGroup"
+
+	cacheMachineGroupMachinesPath="$cacheMachineGroupPath"/machines
+
+	cacheMachineGroupOverlaysGeneratedPath="$cacheMachineGroupPath"/overlays
 }
-machine_group_functions+=(machine_group_preparePaths)
+machine_group_functions+=(machine_group_prepareCachePaths)
 
 function machine_group_cleanUpCache()
 {
@@ -74,7 +73,7 @@ function machine_group_cleanUpCache()
 			fi
 			local -i found=0
 			local knownMachineGroup
-			for knownMachineGroup in "${knownMachineGroups[@]}"
+			for knownMachineGroup in "${main_knownMachineGroups[@]}"
 			do
 				if [ "$knownMachineGroup" = "$cachedMachineGroup" ]; then
 					found=1
@@ -89,11 +88,11 @@ function machine_group_cleanUpCache()
 }
 machine_group_functions+=(machine_group_cleanUpCache)
 
-function machine_group_machine_group_defaultConfiguration()
+function machine_group_defaultConfiguration()
 {
 	configuration_sourceDefaultConfiguration "machine-group"
 }
-machine_group_functions+=(machine_group_machine_group_defaultConfiguration)
+machine_group_functions+=(machine_group_defaultConfiguration)
 
 function machine_group_sourceConfiguration()
 {
@@ -101,24 +100,36 @@ function machine_group_sourceConfiguration()
 }
 machine_group_functions+=(machine_group_sourceConfiguration)
 
-machineGroupPackageNames=()
+machine_group_packageNames=()
 function machine_group_readPackages()
 {
-	mapfile -t machineGroupPackageNames < <(configuration_readPackageNames "$configMachineGroupPackagesPath")
+	mapfile -t machine_group_packageNames < <(configuration_readPackageNames "$configMachineGroupPackagesPath")
 }
 machine_group_functions+=(machine_group_readPackages)
 
-machineGroupRpmFiles=()
+machine_group_rpmFiles=()
 function machine_group_readRpmFiles()
 {
-	mapfile -t machineGroupRpmFiles < <(configuration_readRpmFiles "$configMachinGroupeRpmsPath")
+	mapfile -t machine_group_rpmFiles < <(configuration_readRpmFiles "$configMachinGroupeRpmsPath")
 }
 machine_group_functions+=(machine_group_readRpmFiles)
 
-knownMachines=()
+function machine_group_makeCacheFolders()
+{
+	mkdir -m 0755 -p "$cacheMachineGroupPath"
+	
+	rm -rf "$cacheMachineGroupMachinesPath"
+	mkdir -m 0755 -p "$cacheMachineGroupMachinesPath"
+	
+	rm -rf "$cacheMachineGroupOverlaysGeneratedPath"
+	mkdir -m 0755 -p "$cacheMachineGroupOverlaysGeneratedPath"
+}
+machine_group_functions+=(machine_group_makeCacheFolders)
+
+machine_group_knownMachines=()
 function machine_group_determineKnownMachines()
 {
-	knownMachines=()
+	machine_group_knownMachines=()
 	pushd "$machinesPath" 1>/dev/null 2>/dev/null
 		local knownMachine
 		for knownMachine in *
@@ -126,7 +137,7 @@ function machine_group_determineKnownMachines()
 			if [ ! -e "$knownMachine" ]; then
 				continue
 			fi
-			knownMachines+=(machine_group_"$knownMachine")
+			machine_group_knownMachines+=(machine_group_"$knownMachine")
 		done
 	popd 1>/dev/null 2>/dev/null
 }
@@ -139,6 +150,7 @@ function machine_group_sourceGenerators()
 }
 machine_group_functions+=(machine_group_sourceGenerators)
 
+machines=()
 function machine_group_determineMachines()
 {
 	machines=()
@@ -148,7 +160,7 @@ function machine_group_determineMachines()
 		for machineName in *
 		do
 			if [ -e "$machineName" ]; then
-				machines+=(machine_group_"$machineName")
+				machines+=("$machineName")
 			fi
 		done
 		
@@ -165,27 +177,27 @@ function machine_group_buildMachines()
 		for machine_function in "${machine_functions[@]}"
 		do
 			# NICs
-			declare -A machineNicsConfigurationMac
-			declare -A machineNicsConfigurationVariant
+			declare -A machine_nicsConfigurationMac
+			declare -A machine_nicsConfigurationVariant
 			
 			# Disks
-			declare -A machineDisksConfigurationSize
-			declare -A machineDisksConfigurationMountPoint
-			declare -A machineDisksConfigurationFilesystemType
-			declare -A machineDisksConfigurationBlockSize
-			declare -A machineDisksConfigurationDiskImagePath
-			declare -A machineDisksConfigurationImageMountPath
-			declare -A machineDisksConfigurationVolumeLabel16Bytes
-			declare -A machineDisksConfigurationUuid
-			declare -A machineDisksConfigurationOptions
-			declare -A machineDisksConfigurationMountOptions
-			declare -A machineDisksConfigurationDumpOptions
-			declare -A machineDisksConfigurationFsckOptions
-			declare -A machineDisksConfigurationShrinkDisk
-			declare -A machineDisksConfigurationBootable
+			declare -A machine_disksConfigurationSize
+			declare -A machine_disksConfigurationMountPoint
+			declare -A machine_disksConfigurationFilesystemType
+			declare -A machine_disksConfigurationBlockSize
+			declare -A machine_disksConfigurationDiskImagePath
+			declare -A machine_disksConfigurationImageMountPath
+			declare -A machine_disksConfigurationVolumeLabel16Bytes
+			declare -A machine_disksConfigurationUuid
+			declare -A machine_disksConfigurationOptions
+			declare -A machine_disksConfigurationMountOptions
+			declare -A machine_disksConfigurationDumpOptions
+			declare -A machine_disksConfigurationFsckOptions
+			declare -A machine_disksConfigurationShrinkDisk
+			declare -A machine_disksConfigurationBootable
 			# not for configuration
-			declare -A machineDisksConfigurationPartitionImagePath
-			declare -A machineDisksConfigurationLoopbackDevice
+			declare -A machine_disksConfigurationPartitionImagePath
+			declare -A machine_disksConfigurationLoopbackDevice
 			
 			informationMessage INFO "${tab}${tab}${machine} ${machine_function}"
 			$machine_function

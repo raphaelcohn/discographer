@@ -18,7 +18,7 @@ function ovf2_xml_Envelope_References()
 	xml_start "References"
 		
 		local -i diskIndex=1
-		for disk in "${machineDisks[@]}"
+		for disk in "${machine_disks[@]}"
 		do
 			xml_selfclose "File ovf:href='${disk}.vmdk' ovf:id='file${diskIndex}'"
 			diskIndex=$((diskIndex+1))
@@ -32,7 +32,7 @@ function ovf2_xml_Envelope_DiskSection()
 	xml_start "DiskSection"
 	
 		local -i diskIndex=1
-		for disk in "${machineDisks[@]}"
+		for disk in "${machine_disks[@]}"
 		do
 			xml_selfclose "File ovf:href='disk${diskIndex}.${machineHypervisorDiskExtension}' ovf:id='file${diskIndex}'"
 			
@@ -50,7 +50,7 @@ echo "************** FFIX ME (DISK CAPACITY) **************"
 			# virt-builder: install latest kernel and initrd
 			# virt-resize: resize a disk
 			
-			local diskUuid="${machineDisksConfigurationUuid["$disk"]}"
+			local diskUuid="${machine_disksConfigurationUuid["$disk"]}"
 			
 			xml_selfclose "Disk ovf:capacity='17179869184' ovf:diskId='${disk}' ovf:fileRef='file${diskIndex}' ovf:format='http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized' vbox:uuid='${diskUuid}'"
 			
@@ -295,7 +295,7 @@ function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemDiskControll
 	local -i index=0
 	local -i diskIndex=1
 	local disk
-	for disk in "${machineDisks[@]}"
+	for disk in "${machine_disks[@]}"
 	do
 		instanceId=$((instanceId+1))
 		
@@ -322,11 +322,11 @@ function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_EthernetPortItem
 		
 		local nic
 		local ethernetControllerHardware
-		for nic in "${machineNics[@]}"
+		for nic in "${machine_nics[@]}"
 		do
 			instanceId=$((instanceId+1))
 			
-			if [ "${machineNicsConfigurationVariant["$nic"]}" = "virtual" ]; then
+			if [ "${machine_nicsConfigurationVariant["$nic"]}" = "virtual" ]; then
 				ethernetControllerHardware="virtio-net"
 			else
 				ethernetControllerHardware="E1000"

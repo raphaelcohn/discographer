@@ -53,7 +53,7 @@ function hypervisor_metadata_qemu()
 				        -append "${machineKernelOptions}"
 			EOF
 			local disk
-			for disk in "${machineDisks[@]}"
+			for disk in "${machine_disks[@]}"
 			do
 				echo '\ ' >>"$qemuScript"
 				echo -n "        -drive file=${disk}.${machineHypervisorDiskExtension},format=raw,if=virtio" >>"$qemuScript"

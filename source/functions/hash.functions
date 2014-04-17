@@ -216,5 +216,6 @@ function hash_recordHashSocket()
 
 function hash_recordHashUnknown()
 {
-	exitError "Unknown file type $fileObject"
+	informationMessage FAIL "Unknown file type $fileObject"
+	exitError 1 
 }

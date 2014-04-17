@@ -1,7 +1,7 @@
 machines=()
 machine_functions=()
 
-function machine_verifyMachineNameIsValidDnsLabel()
+function machine_verifyNameIsValidDnsLabel()
 {
 	local -ir hostnameLength=${#machine}
 	if [ $hostnameLength -lt 2 ]; then
@@ -47,11 +47,11 @@ function machine_verifyMachineNameIsValidDnsLabel()
 		exit 1
 	fi
 }
-machine_functions+=(machine_verifyMachineNameIsValidDnsLabel)
+machine_functions+=(machine_verifyNameIsValidDnsLabel)
 
-function machine_prepareMachinePaths()
+function machine_prepareConfigPaths()
 {
-	export configMachinePath="$machinesPath"/"$machine"
+	configMachinePath="$machinesPath"/"$machine"
 	if [ ! -d "$configMachinePath" ]; then
 		informationMessage FAIL "Machine $machine missing machine config path $configMachinePath"
 		exit 1
@@ -110,27 +110,24 @@ function machine_prepareMachinePaths()
 		informationMessage FAIL "Machine $machine missing repositories folder $configMachineRepositoriesPath"
 		exit 1
 	fi
-	
+}
+machine_functions+=(machine_prepareConfigPaths)
+
+function machine_prepareCachePaths()
+{
 	cacheMachinePath="$cacheMachineGroupMachinesPath"/"$machine"
-	mkdir -m 0755 -p "$cacheMachinePath"
 	
 	cacheMachineOverlaysGeneratedPath="$cacheMachinePath"/overlays
-	rm -rf "$cacheMachineOverlaysGeneratedPath"
-	mkdir -m 0755 -p "$cacheMachineOverlaysGeneratedPath"
 	
 	cacheMachineDisksPath="$cacheMachinePath"/disks
-	mkdir -m 0755 -p "$cacheMachineDisksPath"
 	
-	export cacheMachineDisksMountsPath="$cacheMachinePath"/disks-mountpoint
-	rm -rf "$cacheMachineDisksMountsPath"
-	mkdir -m 0755 -p "$cacheMachineDisksMountsPath"
+	cacheMachineDisksMountsPath="$cacheMachinePath"/disks-mountpoint
 	
 	cacheMachineArtefactsPath="$cacheMachinePath"/artefacts
-	mkdir -m 0755 -p "$cacheMachineArtefactsPath"
 }
-machine_functions+=(machine_prepareMachinePaths)
+machine_functions+=(machine_prepareCachePaths)
 
-function machine_cleanUpMachinesCache()
+function machine_cleanUpCache()
 {
 	pushd "$cacheMachineGroupMachinesPath" 1>/dev/null 2>/dev/null
 		local cachedMachine
@@ -141,7 +138,7 @@ function machine_cleanUpMachinesCache()
 			fi
 			local -i found=0
 			local knownMachine
-			for knownMachine in "${knownMachines[@]}"
+			for knownMachine in "${machine_group_knownMachines[@]}"
 			do
 				if [ "$knownMachine" = "$cachedMachine" ]; then
 					found=1
@@ -154,58 +151,58 @@ function machine_cleanUpMachinesCache()
 		done
 	popd 1>/dev/null 2>/dev/null
 }
-machine_functions+=(machine_cleanUpMachinesCache)
+machine_functions+=(machine_cleanUpCache)
 
-function machine_defaultMachineConfiguration()
+function machine_defaultConfiguration()
 {
 	configuration_sourceDefaultConfiguration "machine"
 }
-machine_functions+=(machine_defaultMachineConfiguration)
+machine_functions+=(machine_defaultConfiguration)
 
-function machine_sourceMachineConfiguration()
+function machine_sourceConfiguration()
 {
 	source "$configMachineConfigurationPath"
 }
-machine_functions+=(machine_sourceMachineConfiguration)
+machine_functions+=(machine_sourceConfiguration)
 
-function machine_validateMachineConfiguration()
+function machine_validateConfiguration()
 {
 	hypervisor_validateHypervisorNameAndOutputFormat
 }
-machine_functions+=(machine_validateMachineConfiguration)
+machine_functions+=(machine_validateConfiguration)
 
-machinePackageNames=()
-function machine_readMachinePackages()
+machine_packageNames=()
+function machine_readPackages()
 {
-	mapfile -t machinePackageNames < <(configuration_readPackageNames "$configMachinePackagesPath")
+	mapfile -t machine_packageNames < <(configuration_readPackageNames "$configMachinePackagesPath")
 }
-machine_functions+=(machine_readMachinePackages)
+machine_functions+=(machine_readPackages)
 
-machineRpmFiles=()
-function machine_readMachineRpmFiles()
+machine_rpmFiles=()
+function machine_readRpmFiles()
 {
-	mapfile -t machineRpmFiles < <(configuration_readRpmFiles "$configMachineRpmsPath")
+	mapfile -t machine_rpmFiles < <(configuration_readRpmFiles "$configMachineRpmsPath")
 }
-machine_functions+=(machine_readMachineRpmFiles)
+machine_functions+=(machine_readRpmFiles)
 
-machineNics=()
-function machine_readMachineNicNames()
+machine_nics=()
+function machine_readNicNames()
 {
-	mapfile -t machineNics < <(configuration_readNames "$configMachineNicsPath" "nic")
+	mapfile -t machine_nics < <(configuration_readNames "$configMachineNicsPath" "nic")
 }
-machine_functions+=(machine_readMachineNicNames)
+machine_functions+=(machine_readNicNames)
 
-machineDisks=()
-function machine_readMachineDiskNames()
+machine_disks=()
+function machine_readDiskNames()
 {
-	mapfile -t machineDisks < <(configuration_readNames "$configMachineDisksPath" "disk")
+	mapfile -t machine_disks < <(configuration_readNames "$configMachineDisksPath" "disk")
 }
-machine_functions+=(machine_readMachineDiskNames)
+machine_functions+=(machine_readDiskNames)
 
 function machine_configureNics()
 {
 	local nic
-	for nic in "${machineNics[@]}"
+	for nic in "${machine_nics[@]}"
 	do
 		local nic_configure_function
 		for nic_configure_function in "${nic_configure_functions[@]}"
@@ -220,7 +217,7 @@ machine_functions+=(machine_configureNics)
 function machine_configureDisks()
 {
 	local disk
-	for disk in "${machineDisks[@]}"
+	for disk in "${machine_disks[@]}"
 	do
 		local disk_configure_function
 		for disk_configure_function in "${disk_configure_functions[@]}"
@@ -232,10 +229,28 @@ function machine_configureDisks()
 }
 machine_functions+=(machine_configureDisks)
 
+function machine_makeCacheFolders()
+{
+	mkdir -m 0755 -p "$cacheMachinePath"
+	
+	rm -rf "$cacheMachineOverlaysGeneratedPath"
+	mkdir -m 0755 -p "$cacheMachineOverlaysGeneratedPath"
+	
+	rm -rf "$cacheMachineDisksPath"
+	mkdir -m 0755 -p "$cacheMachineDisksPath"
+	
+	rm -rf "$cacheMachineDisksMountsPath"
+	mkdir -m 0755 -p "$cacheMachineDisksMountsPath"
+	
+	rm -rf "$cacheMachineArtefactsPath"
+	mkdir -m 0755 -p "$cacheMachineArtefactsPath"
+}
+machine_functions+=(machine_makeCacheFolders)
+
 function machine_mounting_mountDisks()
 {
 	local disk
-	for disk in "${machineDisks[@]}"
+	for disk in "${machine_disks[@]}"
 	do
 		local disk_mount_function
 		for disk_mount_function in "${disk_mount_functions[@]}"
@@ -247,25 +262,25 @@ function machine_mounting_mountDisks()
 }
 machine_functions+=(machine_mounting_mountDisks)
 
-machineDiskMountPointsInForwardDiskOrder=()
-machineDiskMountPointsInReverseDiskOrder=()
+machine_diskMountPointsInForwardDiskOrder=()
+machine_diskMountPointsInReverseDiskOrder=()
 function machine_recordSortedDiskMountPoints()
 {
-	machineDiskMountPointsInForwardDiskOrder=()
+	machine_diskMountPointsInForwardDiskOrder=()
 	
 	local mountPoint
 	local disk
 	while IFS=' ' read -r mountPoint disk
 	do
-		machineDiskMountPointsInForwardDiskOrder+=("$disk")
+		machine_diskMountPointsInForwardDiskOrder+=("$disk")
 	done < <(mounting_sortDiskMountPointsInForwardOrder)
 	
-	machineDiskMountPointsInReverseDiskOrder=()
+	machine_diskMountPointsInReverseDiskOrder=()
 	local -i index
-	for (( index=$((${#machineDiskMountPointsInForwardDiskOrder[*]}-1)); index>=0; index-- ))
+	for (( index=$((${#machine_diskMountPointsInForwardDiskOrder[*]}-1)); index>=0; index-- ))
 	do
-		disk=${machineDiskMountPointsInForwardDiskOrder[$index]}
-		machineDiskMountPointsInReverseDiskOrder+=("$disk")
+		disk=${machine_diskMountPointsInForwardDiskOrder[$index]}
+		machine_diskMountPointsInReverseDiskOrder+=("$disk")
 	done
 }
 machine_functions+=(machine_recordSortedDiskMountPoints)
@@ -273,7 +288,7 @@ machine_functions+=(machine_recordSortedDiskMountPoints)
 function machine_mounting_mountDiskPartitions()
 {
 	local disk
-	for disk in "${machineDiskMountPointsInForwardDiskOrder[@]}"
+	for disk in "${machine_diskMountPointsInForwardDiskOrder[@]}"
 	do
 		local disk_partitionMount_function
 		for disk_partitionMount_function in "${disk_partitionMount_functions[@]}"
@@ -327,10 +342,10 @@ function machine_determineRootDiskUuid()
 {
 	machineRootDiskFilesystemUuid=""
 	local disk
-	for disk in "${machineDisks[@]}"
+	for disk in "${machine_disks[@]}"
 	do
-		if [ "${machineDisksConfigurationMountPoint["$disk"]}" = "/" ]; then
-			machineRootDiskFilesystemUuid="${machineDisksConfigurationUuid["$disk"]}"
+		if [ "${machine_disksConfigurationMountPoint["$disk"]}" = "/" ]; then
+			machineRootDiskFilesystemUuid="${machine_disksConfigurationUuid["$disk"]}"
 			break
 		fi
 	done
@@ -432,9 +447,9 @@ function machine_installExtLinux()
 	esac
 	
 	local disk
-	for disk in "$machineDisks"
+	for disk in "$machine_disks"
 	do
-		if [ "${machineDisksConfigurationBootable["$disk"]}" = "yes" ]; then
+		if [ "${machine_disksConfigurationBootable["$disk"]}" = "yes" ]; then
 			local extlinux_function
 			for extlinux_function in "${extlinux_functions[@]}"
 			do
@@ -455,7 +470,7 @@ machine_functions+=(machine_recordHashesOfAllFiles)
 function machine_mounting_unmountDiskPartitions()
 {
 	local disk
-	for disk in "${machineDiskMountPointsInReverseDiskOrder[@]}"
+	for disk in "${machine_diskMountPointsInReverseDiskOrder[@]}"
 	do
 		if mounting_mountPointIsSpecial; then
 			informationMessage INFO "${tab}${tab}${tab}${disk} (ignored)"
@@ -475,7 +490,7 @@ machine_functions+=(machine_mounting_unmountDiskPartitions)
 function machine_mounting_unmountDisks()
 {
 	local disk
-	for disk in "${machineDiskMountPointsInReverseDiskOrder[@]}"
+	for disk in "${machine_diskMountPointsInReverseDiskOrder[@]}"
 	do
 		local disk_unmount_function
 		for disk_unmount_function in "${disk_unmount_functions[@]}"

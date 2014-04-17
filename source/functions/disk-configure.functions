@@ -48,20 +48,20 @@ disk_configure_functions+=(disk_configure_verifyConfiguration)
 
 function disk_configure_captureInABashDictionaryConfiguration()
 {
-	machineDisksConfigurationSize["$disk"]="$machineDiskSize"
-	machineDisksConfigurationMountPoint["$disk"]="$machineDiskMountPoint"
-	machineDisksConfigurationFilesystemType["$disk"]="$machineDiskFilesystemType"
-	machineDisksConfigurationBlockSize["$disk"]="$machineDiskBlockSize"
-	machineDisksConfigurationDiskImagePath["$disk"]="$cacheMachineDisksPath"/"$disk".img
-	machineDisksConfigurationImageMountPath["$disk"]="${cacheMachineDisksMountsPath}${machineDiskMountPoint}"
-	machineDisksConfigurationVolumeLabel16Bytes["$disk"]="$machineDiskVolumeLabel16Bytes"
-	machineDisksConfigurationUuid["$disk"]="$machineDiskUuid"
-	machineDisksConfigurationOptions["$disk"]="$machineDiskOptions"
-	machineDisksConfigurationMountOptions["$disk"]="$machineDiskMountOptions"
-	machineDisksConfigurationDumpOptions["$disk"]="$machineDiskDumpOptions"
-	machineDisksConfigurationFsckOptions["$disk"]="$machineDiskFsckOptions"
-	machineDisksConfigurationShrinkDisk["$disk"]="$machineDiskShrink"
-	machineDisksConfigurationBootable["$disk"]="$machineDiskBootable"
-	machineDisksConfigurationPartitionImagePath["$disk"]=""
+	machine_disksConfigurationSize["$disk"]="$machineDiskSize"
+	machine_disksConfigurationMountPoint["$disk"]="$machineDiskMountPoint"
+	machine_disksConfigurationFilesystemType["$disk"]="$machineDiskFilesystemType"
+	machine_disksConfigurationBlockSize["$disk"]="$machineDiskBlockSize"
+	machine_disksConfigurationDiskImagePath["$disk"]="$cacheMachineDisksPath"/"$disk".img
+	machine_disksConfigurationImageMountPath["$disk"]="${cacheMachineDisksMountsPath}${machineDiskMountPoint}"
+	machine_disksConfigurationVolumeLabel16Bytes["$disk"]="$machineDiskVolumeLabel16Bytes"
+	machine_disksConfigurationUuid["$disk"]="$machineDiskUuid"
+	machine_disksConfigurationOptions["$disk"]="$machineDiskOptions"
+	machine_disksConfigurationMountOptions["$disk"]="$machineDiskMountOptions"
+	machine_disksConfigurationDumpOptions["$disk"]="$machineDiskDumpOptions"
+	machine_disksConfigurationFsckOptions["$disk"]="$machineDiskFsckOptions"
+	machine_disksConfigurationShrinkDisk["$disk"]="$machineDiskShrink"
+	machine_disksConfigurationBootable["$disk"]="$machineDiskBootable"
+	machine_disksConfigurationPartitionImagePath["$disk"]=""
 }
 disk_configure_functions+=(disk_configure_captureInABashDictionaryConfiguration)

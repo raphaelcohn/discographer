@@ -40,7 +40,7 @@ dependency_functions+=(dependency_determineDistribution)
 
 function dependency_verifyHostSystemRequirementsUsingDependencyChecks()
 {
-	dependencies=()
+	declare -a dependencies=()
 	
 	readonly pathNames="$pathsPath"/"$pathName"
 	if [ ! -d "$pathNames" ]; then
@@ -54,7 +54,7 @@ function dependency_verifyHostSystemRequirementsUsingDependencyChecks()
 	fi
 	source "$pathNamesFunction"
 	
-	installPackages=()
+	declare -a installPackages=()
 	local packagePath
 	local packageName
 	local symlink

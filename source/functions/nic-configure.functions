@@ -46,7 +46,7 @@ nic_configure_functions+=(nic_configure_verifyConfiguration)
 
 function nic_configure_captureInABashDictionaryConfiguration()
 {
-	machineNicsConfigurationMac["$nic"]="$machineNicMac"
-	machineNicsConfigurationVariant["$nic"]="$machineNicVariant"
+	machine_nicsConfigurationMac["$nic"]="$machineNicMac"
+	machine_nicsConfigurationVariant["$nic"]="$machineNicVariant"
 }
 nic_configure_functions+=(nic_configure_captureInABashDictionaryConfiguration)

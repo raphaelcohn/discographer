@@ -44,9 +44,9 @@ function virtualbox_xml_VirtualBox_Machine_MediaRegistry()
 		xml_start "HardDisks"
 			
 			local disk
-			for disk in "${machineDisks[@]}"
+			for disk in "${machine_disks[@]}"
 			do
-				local diskUuid="${machineDisksConfigurationUuid["$disk"]}"
+				local diskUuid="${machine_disksConfigurationUuid["$disk"]}"
 				local diskFormat="${machineHypervisorDiskFormat^^}"
 				xml_selfclose "HardDisk uuid='{${diskUuid}}' location='${disk}.${machineHypervisorDiskExtension}' format='${diskFormat}' type='Normal'"
 			done
@@ -200,11 +200,11 @@ function virtualbox_xml_VirtualBox_Machine_Hardware_Network()
 		local machineNicMac
 		local ethernetControllerHardware
 		local -i index=0
-		for nic in "${machineNics[@]}"
+		for nic in "${machine_nics[@]}"
 		do
-			machineNicMac="${machineNicsConfigurationMac["$nic"]}"
+			machineNicMac="${machine_nicsConfigurationMac["$nic"]}"
 			
-			if [ "${machineNicsConfigurationVariant["$nic"]}" = "virtual" ]; then
+			if [ "${machine_nicsConfigurationVariant["$nic"]}" = "virtual" ]; then
 				ethernetControllerHardware="virtio-net"
 			else
 				# Same as E1000, but virtualbox uses a different name here...
@@ -331,9 +331,9 @@ function virtualbox_xml_VirtualBox_Machine_Hardware_GuestProperties()
 		local -i index=0
 		local nic
 		local machineNicMac
-		for nic in "${machineNics[@]}"
+		for nic in "${machine_nics[@]}"
 		do
-			machineNicMac="${machineNicsConfigurationMac["$nic"]}"
+			machineNicMac="${machine_nicsConfigurationMac["$nic"]}"
 			xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/MAC' value='${machineNicMac}' timestamp='1394700173568774000' flags=''"
 			xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/Status' value='Up' timestamp='1394700173568774000' flags=''"
 			#xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/V4/Broadcast' value='10.0.2.255' timestamp='1394700173564802000' flags=''"
@@ -344,7 +344,7 @@ function virtualbox_xml_VirtualBox_Machine_Hardware_GuestProperties()
 			index=$((index+1))
 		done
 		
-		local -ir nicCount="${#machineNics[@]}"
+		local -ir nicCount="${#machine_nics[@]}"
 		xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/Count' value='${nicCount}' timestamp='1394731816650056000' flags=''"
 		
 		echo "************** FIX ME (VIRTUAL BOX GuestProperties - OS) **************"
@@ -365,7 +365,7 @@ function virtualbox_xml_VirtualBox_Machine_StorageControllers()
 	
 	xml_start "StorageControllers"
 		
-		local -ir diskCount=${#machineDisks[@]}
+		local -ir diskCount=${#machine_disks[@]}
 			
 			case "$machineDiskControllerHardwareKind" in
 
@@ -406,7 +406,7 @@ function virtualbox_xml_VirtualBox_Machine_StorageControllers()
 			local -i port
 			local -i device=
 			local disk
-			for disk in "${machineDisks[@]}"
+			for disk in "${machine_disks[@]}"
 			do
 					
 					# Disk id - where from?
@@ -451,7 +451,7 @@ function virtualbox_xml_VirtualBox_Machine_StorageControllers()
 				
 				xml_start "AttachedDevice type='HardDisk' port='${port}' device='${device}'"
 					
-					local diskUuid="${machineDisksConfigurationUuid["$disk"]}"
+					local diskUuid="${machine_disksConfigurationUuid["$disk"]}"
 					xml_selfclose "Image uuid='{$diskUuid}'"
 					
 				xml_end "AttachedDevice"

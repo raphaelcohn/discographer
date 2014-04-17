@@ -2,7 +2,7 @@ extlinux_functions=()
 
 function extlinux_verify()
 {
-	case "${machineDisksConfigurationFilesystemType["$disk"]}" in
+	case "${machine_disksConfigurationFilesystemType["$disk"]}" in
 
 		ext[2-4])
 			:
@@ -44,21 +44,19 @@ extlinux_functions+=(extlinux_determineSyslinuxSharePath)
 
 function extlinux_determineInstallPath()
 {
-	extlinuxInstallPath="$cacheMachineDisksMountsPath"/boot/extlinux
-	
-	extlinuxDiskImageDevicePath="${machineDisksConfigurationDiskImagePath["$disk"]}"
+	extlinux_installPath="$cacheMachineDisksMountsPath"/boot/extlinux
 }
 extlinux_functions+=(extlinux_determineInstallPath)
 
 function extlinux_makePath()
 {
-	mkdir -m 0755 -p "$extlinuxInstallPath"
+	mkdir -m 0755 -p "$extlinux_installPath"
 }
 extlinux_functions+=(extlinux_makePath)
 
 function extlinux_installMenuModules()
 {
-	cp "$syslinuxSharePath"/{menu,vesamenu}.c32 "$extlinuxInstallPath"
+	cp "$syslinuxSharePath"/{menu,vesamenu}.c32 "$extlinux_installPath"
 }
 extlinux_functions+=(extlinux_installMenuModules)
 
@@ -74,7 +72,7 @@ function extlinux_createConfiguration()
 		local -r allowOptions=1
 	fi
 	
-	cat >"$extlinuxInstallPath"/extlinux.conf <<-EOF
+	cat >"$extlinux_installPath"/extlinux.conf <<-EOF
 		# Wait 50 1/10s of second (5s) before booting
 		UI menu
 		PROMPT ${prompt}
@@ -96,15 +94,15 @@ extlinux_functions+=(extlinux_createConfiguration)
 
 function extlinux_install()
 {
-	extlinux --install "$extlinuxInstallPath"
+	extlinux --install "$extlinux_installPath"
 }
 extlinux_functions+=(extlinux_install)
 
 function extlinux_installMasterBootRecord()
 {
 	# Or boot from partition one
-	#printf '\1' | cat "$syslinuxSharePath"/altmbr.bin - | dd bs=440 count=1 iflag=fullblock conv=notrunc of="${machineDisksConfigurationDiskImagePath["$disk"]}"
-	dd bs=440 count=1 conv=notrunc if="$syslinuxSharePath"/mbr.bin of="${machineDisksConfigurationDiskImagePath["$disk"]}"
-	#cat "$syslinuxSharePath"/mbr.bin >"${machineDisksConfigurationDiskImagePath["$disk"]}"
+	#printf '\1' | cat "$syslinuxSharePath"/altmbr.bin - | dd bs=440 count=1 iflag=fullblock conv=notrunc of="${machine_disksConfigurationDiskImagePath["$disk"]}"
+	dd bs=440 count=1 conv=notrunc if="$syslinuxSharePath"/mbr.bin of="${machine_disksConfigurationDiskImagePath["$disk"]}"
+	#cat "$syslinuxSharePath"/mbr.bin >"${machine_disksConfigurationDiskImagePath["$disk"]}"
 }
 extlinux_functions+=(extlinux_installMasterBootRecord)
