@@ -11,33 +11,16 @@ main_functions+=(registerTrapHandlers)
 
 main_functions+=(dependency_installDependencies)
 
+main_configDefaultsPath=""
 function main_setSomePaths()
 {
-	configDefaultsPath="$configPath"/defaults
-	if [ ! -d "$configDefaultsPath" ]; then
-		informationMessage FAIL "Defaults config missing at path $configDefaultsPath"
+	main_configDefaultsPath="$configPath"/defaults
+	if [ ! -d "$main_configDefaultsPath" ]; then
+		informationMessage FAIL "Defaults config missing at path $main_configDefaultsPath"
 		exit 1
 	fi
 }
 main_functions+=(main_setSomePaths)
-
-function main_setYumConfigPaths()
-{
-	export configYumPath="$configPath"/yum
-	if [ ! -d "$configYumPath" ]; then
-		informationMessage FAIL "Yum config missing at path $configYumPath"
-		exit 1
-	fi
-	readonly configYumConfigFileTemplatePath="$configYumPath"/yum.conf.template
-	if [ ! -f "$configYumConfigFileTemplatePath" ]; then
-		informationMessage FAIL "Yum config file template missing at path $configYumConfigFileTemplatePath"
-		exit 1
-	fi
-	
-	export cacheYumPath="$cachePath"/yum
-	mkdir -m 0755 -p "$cacheYumPath"
-}
-main_functions+=(main_setYumConfigPaths)
 
 function main_setMachineGroupsPath()
 {

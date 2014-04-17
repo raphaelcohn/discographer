@@ -9,8 +9,8 @@ persistdir=${machine_cacheDisksMountPath}/var/lib/yum
 logfile=${machine_cacheDisksMountPath}/var/log/yum.log
 #protected_packages=yum glob:${machine_cacheDisksMountPath}/etc/yum/protected.d/*.conf
 
-releasever=${yumConfigDistributionMajorRevision}
-distroverpkg=${yumConfigDistributionVersionPackage}
+releasever=${configuration_machine_distributionMajorRevision}
+distroverpkg=${configuration_machine_distribution}-release
 pkgpolicy=newest
 #group_package_types=default, mandatory
 

@@ -162,7 +162,7 @@ function machine_group_buildMachines()
 			declare -A machine_configuration_disksFsckOptions
 			declare -A machine_configuration_disksShrinkDisk
 			declare -A machine_configuration_disksBootable
-			# not for configuration
+			
 			declare -A machine_derived_disksImageMountPath
 			declare -A machine_derived_disksPartitionImagePath
 			declare -A machine_derived_disksLoopbackDevice

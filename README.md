@@ -146,7 +146,7 @@ When executing a machine, in addition to the above, the following environment va
 * `${machine_configGeneratorsPath}` - generator scriptlets for machine
 * `${machine_configOverlaysPath}` - where to find all root overlays for machine
 * `${generatedMachineRootOverlaysPath}` - where to put any generated files and folders for machine
-* `${configYumConfigFileTemplatePath}`
+* `${yum_configYumConfTemplateFilePath}`
 * `${machine_cachePath}`
 * `${cacheMachineMinimalAppliancePath}`
 * `${cacheMachineBuiltAppliancePath}`

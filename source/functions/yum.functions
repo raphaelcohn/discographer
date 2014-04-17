@@ -1,25 +1,61 @@
 yum_functions=()
 
-function yum_fillInMachineYumConfTemplate()
+yum_configYumConfTemplateFilePath=""
+function yum_prepareConfigPaths()
 {
-	configMachineYumConfigFile="$machine_cachePath"/yum.conf
-	
-	export yumConfigDistributionVersionPackage=${configuration_machine_distribution}-release
-	export yumConfigDistributionMajorRevision=${configuration_machine_distributionMajorRevision}
-	
-	export yumConfigRepositoriesPath="$machine_cacheDisksMountPath"/etc/yum.repos.d
-	
-	if [ "$beDebug" = "yes" ]; then
-		export yumConfigDebugLevel=10
-		export yumConfigErrorLevel=10
-		export yumConfigRpmVerbository=debug
-	else
-		export yumConfigDebugLevel=2
-		export yumConfigErrorLevel=2
-		export yumConfigRpmVerbository=info
+	yum_configYumPath="$configPath"/yum
+	if [ ! -d "$yum_configYumPath" ]; then
+		informationMessage FAIL "Yum config path missing at $yum_configYumPath"
+		exit 1
 	fi
 	
-	template_templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
+	yum_configYumConfTemplateFilePath="$yum_configYumPath"/yum.conf.template
+	if [ ! -f "$yum_configYumConfTemplateFilePath" ]; then
+		informationMessage FAIL "Yum config file template missing at path $yum_configYumConfTemplateFilePath"
+		exit 1
+	fi
+	
+	yum_configRepositoriesPath="$machine_cacheDisksMountPath"/etc/yum.repos.d
+	if [ ! -d "$yum_configRepositoriesPath" ]; then
+		informationMessage FAIL "Yum config repositories path missing at $yum_configRepositoriesPath"
+		exit 1
+	fi
+}
+yum_functions+=(yum_prepareConfigPaths)
+
+yum_cacheYumConfFilePath=""
+function yum_prepareCachePaths()
+{
+	yum_cachePath="$main_cachePath"/yum
+	
+	yum_cacheYumConfFilePath="$machine_cachePath"/yum.conf
+}
+yum_functions+=(yum_prepareCachePaths)
+
+function yum_makeCacheFolders()
+{
+	mkdir -m -0755 -p "$yum_cachePath"
+}
+machine_functions+=(yum_makeCacheFolders)
+
+function yum_fillInMachineYumConfTemplate()
+{
+	(
+		if [ "$beDebug" = "yes" ]; then
+			export yumConfigDebugLevel=10
+			export yumConfigErrorLevel=10
+			export yumConfigRpmVerbository=debug
+		else
+			export yumConfigDebugLevel=2
+			export yumConfigErrorLevel=2
+			export yumConfigRpmVerbository=info
+		fi
+		export machine_cacheDisksMountPath="$machine_cacheDisksMountPath"
+		export configuration_machine_distribution="$configuration_machine_distribution"
+		export configuration_machine_distributionMajorRevision="$configuration_machine_distributionMajorRevision"
+	
+		template_templateFile "$yum_configYumConfTemplateFilePath" >"$yum_cacheYumConfFilePath"
+	)
 }
 yum_functions+=(yum_fillInMachineYumConfTemplate)
 
@@ -29,26 +65,27 @@ function yum_prepareRpmDb()
 }
 yum_functions+=(yum_prepareRpmDb)
 
+yum_cacheDistributionVersionRpmFilePath=""
 function yum_downloadDistributionVersionRpm()
 {
-	cacheYumDistributionVersionRpmPath="$cacheYumPath"/"$configuration_machine_distributionReleaseRpm"
+	yum_cacheDistributionVersionRpmFilePath="$yum_cachePath"/"$configuration_machine_distributionReleaseRpm"
 	
-	if [ ! -f "$cacheYumDistributionVersionRpmPath" ]; then
-		curl "$configuration_machine_distributionReleaseRpmUrl" 1>"$cacheYumDistributionVersionRpmPath" 2>/dev/null
+	if [ ! -f "$yum_cacheDistributionVersionRpmFilePath" ]; then
+		curl "$configuration_machine_distributionReleaseRpmUrl" 1>"$yum_cacheDistributionVersionRpmFilePath" 2>/dev/null
 	fi
 }
 yum_functions+=(yum_downloadDistributionVersionRpm)
 
 function yum_installDistributionVersionRpm()
 {
-	rpm --install --root=${machine_cacheDisksMountPath} --nodeps --nosignature "$cacheYumDistributionVersionRpmPath"
+	rpm --install --root=${machine_cacheDisksMountPath} --nodeps --nosignature "$yum_cacheDistributionVersionRpmFilePath"
 }
 yum_functions+=(yum_installDistributionVersionRpm)
 
 function yum_installYumRepositories()
 {
 	# Remove any shipped repos!
-	rm -rf "$yumConfigRepositoriesPath"/*.repo
+	rm -rf "$yum_configRepositoriesPath"/*.repo
 	
 	pushd "$machine_configRepositoriesPath" 1>/dev/null 2>/dev/null
 		
@@ -57,7 +94,7 @@ function yum_installYumRepositories()
 		do
 			if [ -s "$file" ]; then
 				# cat ensures that we do not copy a symlink
-				cat "$file" >"$yumConfigRepositoriesPath"/"$file"
+				cat "$file" >"$yum_configRepositoriesPath"/"$file"
 			fi
 		done
 		

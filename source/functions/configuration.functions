@@ -1,6 +1,6 @@
 function configuration_sourceDefaultConfiguration()
 {
-	source "$configDefaultsPath"/"$1".default.configuration
+	source "$main_configDefaultsPath"/"$1".default.configuration
 }
 
 function configuration_readPackageNames()
