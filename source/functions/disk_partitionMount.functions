@@ -2,12 +2,12 @@ disk_partitionMount_functions=()
 
 function disk_partitionMount_createPartitionMountpoint()
 {
-	mkdir -m 0755 -p "${machine_disksConfigurationImageMountPath["$disk"]}"
+	mkdir -m 0755 -p "${machine_configuration_disksImageMountPath["$disk"]}"
 }
 disk_partitionMount_functions+=(disk_partitionMount_createPartitionMountpoint)
 
 function disk_partitionMount_mountPartition()
 {
-	mounting_mountLoopback "${machine_disksConfigurationFilesystemType["$disk"]}" "${machine_disksConfigurationPartitionImagePath["$disk"]}" "${machine_disksConfigurationImageMountPath["$disk"]}"
+	mounting_mountLoopback "${machine_configuration_disksFilesystemType["$disk"]}" "${machine_derived_disksPartitionImagePath["$disk"]}" "${machine_configuration_disksImageMountPath["$disk"]}"
 }
 disk_partitionMount_functions+=(disk_partitionMount_mountPartition)

@@ -8,18 +8,18 @@ disk_configure_functions+=(disk_configure_defaultConfiguration)
 
 function disk_configure_sourceConfiguration()
 {
-	source "$configMachineDisksPath"/"$disk".disk
+	source "$machine_configDisksPath"/"$disk".disk
 }
 disk_configure_functions+=(disk_configure_sourceConfiguration)
 
 function disk_configure_verifyConfiguration()
 {
-	if [ ${#machineDiskVolumeLabel16Bytes} -gt 16 ]; then
-		informationMessage FAIL "Machine $machine has a disk $disk with a label greater than 16 characters (defaults to disk name) in parameters or disk folder"
+	if [ ${#configuration_disk_volumeLabelMax16Bytes} -gt 16 ]; then
+		informationMessage FAIL "Machine ${machineName} has a disk $disk with a label greater than 16 characters (defaults to disk name) in parameters or disk folder"
 		exit 1
 	fi
 	
-	case "$machineDiskFilesystemType" in
+	case "$configuration_disk_filesystemType" in
 		
 		ext[2-4])
 			:
@@ -38,7 +38,7 @@ function disk_configure_verifyConfiguration()
 		;;
 		
 		*)
-			informationMessage FAIL "Machine $machine has a disk $disk with an unknown filesystem type $machineDiskFilesystemType"
+			informationMessage FAIL "Machine ${machineName} has a disk $disk with an unknown filesystem type $configuration_disk_filesystemType"
 			exit 1
 		;;
 	
@@ -48,20 +48,20 @@ disk_configure_functions+=(disk_configure_verifyConfiguration)
 
 function disk_configure_captureInABashDictionaryConfiguration()
 {
-	machine_disksConfigurationSize["$disk"]="$machineDiskSize"
-	machine_disksConfigurationMountPoint["$disk"]="$machineDiskMountPoint"
-	machine_disksConfigurationFilesystemType["$disk"]="$machineDiskFilesystemType"
-	machine_disksConfigurationBlockSize["$disk"]="$machineDiskBlockSize"
-	machine_disksConfigurationDiskImagePath["$disk"]="$cacheMachineDisksPath"/"$disk".img
-	machine_disksConfigurationImageMountPath["$disk"]="${cacheMachineDisksMountsPath}${machineDiskMountPoint}"
-	machine_disksConfigurationVolumeLabel16Bytes["$disk"]="$machineDiskVolumeLabel16Bytes"
-	machine_disksConfigurationUuid["$disk"]="$machineDiskUuid"
-	machine_disksConfigurationOptions["$disk"]="$machineDiskOptions"
-	machine_disksConfigurationMountOptions["$disk"]="$machineDiskMountOptions"
-	machine_disksConfigurationDumpOptions["$disk"]="$machineDiskDumpOptions"
-	machine_disksConfigurationFsckOptions["$disk"]="$machineDiskFsckOptions"
-	machine_disksConfigurationShrinkDisk["$disk"]="$machineDiskShrink"
-	machine_disksConfigurationBootable["$disk"]="$machineDiskBootable"
-	machine_disksConfigurationPartitionImagePath["$disk"]=""
+	machine_configuration_disksSize["$disk"]="$configuration_disk_size"
+	machine_configuration_disksMountPoint["$disk"]="$configuration_disk_mountPoint"
+	machine_configuration_disksFilesystemType["$disk"]="$configuration_disk_filesystemType"
+	machine_configuration_disksBlockSize["$disk"]="$configuration_disk_blockSize"
+	machine_configuration_disksDiskImagePath["$disk"]="$machine_cacheDisksPath"/"$disk".img
+	machine_configuration_disksImageMountPath["$disk"]="${machine_cacheDisksMountPath}${configuration_disk_mountPoint}"
+	machine_configuration_disksVolumeLabel16Bytes["$disk"]="$configuration_disk_volumeLabelMax16Bytes"
+	machine_configuration_disksUuid["$disk"]="$configuration_disk_uuid"
+	machine_configuration_disksOptions["$disk"]="$configuration_disk_filesystemOptions"
+	machine_configuration_disksMountOptions["$disk"]="$configuration_disk_fstabMountOptions"
+	machine_configuration_disksDumpOptions["$disk"]="$configuration_disk_fstabMountDumpOptions"
+	machine_configuration_disksFsckOptions["$disk"]="$configuration_disk_fstabMountFsckOptions"
+	machine_configuration_disksShrinkDisk["$disk"]="$configuration_disk_shrink"
+	machine_configuration_disksBootable["$disk"]="$configuration_disk_bootable"
+	machine_derived_disksPartitionImagePath["$disk"]=""
 }
 disk_configure_functions+=(disk_configure_captureInABashDictionaryConfiguration)

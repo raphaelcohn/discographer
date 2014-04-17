@@ -21,7 +21,7 @@ function virtualbox_xml_VirtualBox_Machine()
 		local -r ovfNamespace=""
 	fi
 	
-	xml_start "${vboxNamespace}Machine ${ovfNamespace}version='1.12-macosx' uuid='{${machineUuid}}' name='${machine}' OSType='${machineOperatingSystemName}' snapshotFolder='Snapshots' lastStateChange='${machineLastStateChangeTimestamp}'"
+	xml_start "${vboxNamespace}Machine ${ovfNamespace}version='1.12-macosx' uuid='{${configuration_machine_uuid}}' name='${machineName}' OSType='${configuration_machine_operatingSystemName}' snapshotFolder='Snapshots' lastStateChange='${configuration_machine_lastStateChangeTimestamp}'"
 		
 		if [ "$isOvf" = "yes" ]; then
 			indented "<ovf:Info>Complete VirtualBox machine configuration in VirtualBox format</ovf:Info>"
@@ -46,8 +46,8 @@ function virtualbox_xml_VirtualBox_Machine_MediaRegistry()
 			local disk
 			for disk in "${machine_disks[@]}"
 			do
-				local diskUuid="${machine_disksConfigurationUuid["$disk"]}"
-				local diskFormat="${machineHypervisorDiskFormat^^}"
+				local diskUuid="${machine_configuration_disksUuid["$disk"]}"
+				local diskFormat="${configuration_machine_hypervisorDiskFormat^^}"
 				xml_selfclose "HardDisk uuid='{${diskUuid}}' location='${disk}.${machineHypervisorDiskExtension}' format='${diskFormat}' type='Normal'"
 			done
 			
@@ -130,7 +130,7 @@ function virtualbox_xml_VirtualBox_Machine_Hardware_CPU()
 
 function virtualbox_xml_VirtualBox_Machine_Hardware_Memory()
 {
-	xml_selfclose "Memory RAMSize='${machineRamSizeMegabytes} PageFusion='false'"
+	xml_selfclose "Memory RAMSize='${configuration_machine_memoryMegabytes} PageFusion='false'"
 }
 
 function virtualbox_xml_VirtualBox_Machine_Hardware_HID()
@@ -197,21 +197,21 @@ function virtualbox_xml_VirtualBox_Machine_Hardware_Network()
 	xml_start "Network"
 		
 		local nic
-		local machineNicMac
+		local configuration_nic_mac
 		local ethernetControllerHardware
 		local -i index=0
 		for nic in "${machine_nics[@]}"
 		do
-			machineNicMac="${machine_nicsConfigurationMac["$nic"]}"
+			configuration_nic_mac="${machine_configuration_nicsMac["$nic"]}"
 			
-			if [ "${machine_nicsConfigurationVariant["$nic"]}" = "virtual" ]; then
+			if [ "${machine_configuration_nicsVariant["$nic"]}" = "virtual" ]; then
 				ethernetControllerHardware="virtio-net"
 			else
 				# Same as E1000, but virtualbox uses a different name here...
 				ethernetControllerHardware="82540EM"
 			fi
 			
-			xml_start "Adapter slot='${index}' enabled='true' MACAddress='${machineNicMac}' cable='true' speed='0' type='${ethernetControllerHardware}'"
+			xml_start "Adapter slot='${index}' enabled='true' MACAddress='${configuration_nic_mac}' cable='true' speed='0' type='${ethernetControllerHardware}'"
 				
 				xml_start "DisabledModes"
 					
@@ -330,11 +330,11 @@ function virtualbox_xml_VirtualBox_Machine_Hardware_GuestProperties()
 		
 		local -i index=0
 		local nic
-		local machineNicMac
+		local configuration_nic_mac
 		for nic in "${machine_nics[@]}"
 		do
-			machineNicMac="${machine_nicsConfigurationMac["$nic"]}"
-			xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/MAC' value='${machineNicMac}' timestamp='1394700173568774000' flags=''"
+			configuration_nic_mac="${machine_configuration_nicsMac["$nic"]}"
+			xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/MAC' value='${configuration_nic_mac}' timestamp='1394700173568774000' flags=''"
 			xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/Status' value='Up' timestamp='1394700173568774000' flags=''"
 			#xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/V4/Broadcast' value='10.0.2.255' timestamp='1394700173564802000' flags=''"
 			#xml_selfclose "GuestProperty name='/VirtualBox/GuestInfo/Net/${index}/V4/IP' value='10.0.2.15' timestamp='1394700173564402000' flags=''"
@@ -367,25 +367,25 @@ function virtualbox_xml_VirtualBox_Machine_StorageControllers()
 		
 		local -ir diskCount=${#machine_disks[@]}
 			
-			case "$machineDiskControllerHardwareKind" in
+			case "$configuration_machine_diskControllerKind" in
 
 				IDE)
 					if [ $diskCount -gt 4 ]; then
 						informationMessage FAIL "IDE disk controllers don't support more than 4 disks/devices"
 						exitError 1
 					fi
-					local -r controllerType="$machineDiskControllerHardwareImplementation"
+					local -r controllerType="$configuration_machine_diskControllerImplementation"
 					local -r ideEmulationAttributes=""
 				;;
 
 				SATA)
-					local -r controllerType="$machineDiskControllerHardwareImplementation"
+					local -r controllerType="$configuration_machine_diskControllerImplementation"
 					local -r ideEmulationAttributes=" IDE0MasterEmulationPort='0' IDE0SlaveEmulationPort='1' IDE1MasterEmulationPort='2' IDE1SlaveEmulationPort='3'"
 				;;
 
 				SAS)
-					if [ "$machineDiskControllerHardwareImplementation" != "lsilogicsas" ]; then
-						informationMessage FAIL "Machine disk controller hardware implementation (machineDiskControllerHardwareImplementation) $machineDiskControllerHardwareImplementation is not supported"
+					if [ "$configuration_machine_diskControllerImplementation" != "lsilogicsas" ]; then
+						informationMessage FAIL "Machine disk controller hardware implementation (configuration_machine_diskControllerImplementation) $configuration_machine_diskControllerImplementation is not supported"
 						exitError 1
 					fi
 					local -r controllerType=LsiLogicSas
@@ -394,13 +394,13 @@ function virtualbox_xml_VirtualBox_Machine_StorageControllers()
 				;;
 				
 				*)
-					informationMessage FAIL "Machine disk controller hardware kind (machineDiskControllerHardwareKind) $machineDiskControllerHardwareKind is not supported"
+					informationMessage FAIL "Machine disk controller hardware kind (configuration_machine_diskControllerKind) $configuration_machine_diskControllerKind is not supported"
 					exitError 1
 				;;
 			
 			esac
 			
-			xml_start "StorageController name='${machineDiskControllerHardwareKind}' type='${controllerType}' PortCount='${portCount}' useHostIOCache='true' Bootable='true'${ideEmulationAttributes}"
+			xml_start "StorageController name='${configuration_machine_diskControllerKind}' type='${controllerType}' PortCount='${portCount}' useHostIOCache='true' Bootable='true'${ideEmulationAttributes}"
 			
 			local -i count=0
 			local -i port
@@ -413,7 +413,7 @@ function virtualbox_xml_VirtualBox_Machine_StorageControllers()
 					
 				xml_end "AttachedDevice"
 				
-				if [ "$machineDiskControllerHardwareKind" != "IDE" ]; then
+				if [ "$configuration_machine_diskControllerKind" != "IDE" ]; then
 					port=$count
 				else
 					case $count in
@@ -451,7 +451,7 @@ function virtualbox_xml_VirtualBox_Machine_StorageControllers()
 				
 				xml_start "AttachedDevice type='HardDisk' port='${port}' device='${device}'"
 					
-					local diskUuid="${machine_disksConfigurationUuid["$disk"]}"
+					local diskUuid="${machine_configuration_disksUuid["$disk"]}"
 					xml_selfclose "Image uuid='{$diskUuid}'"
 					
 				xml_end "AttachedDevice"

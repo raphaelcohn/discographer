@@ -2,23 +2,23 @@ disk_mount_functions=()
 
 function disk_mount_createSpareFile()
 {
-	rm -rf "${machine_disksConfigurationDiskImagePath["$disk"]}"
-	truncate -s "${machine_disksConfigurationSize["$disk"]}" "${machine_disksConfigurationDiskImagePath["$disk"]}"
+	rm -rf "${machine_configuration_disksDiskImagePath["$disk"]}"
+	truncate -s "${machine_configuration_disksSize["$disk"]}" "${machine_configuration_disksDiskImagePath["$disk"]}"
 	
-	local -ir machineDiskSizeInBytes="$(stat --format='%s' "${machine_disksConfigurationDiskImagePath["$disk"]}")"
-	local -ir dividedMachineDiskSize=$((machineDiskSizeInBytes/512))
+	local -ir configuration_disk_sizeInBytes="$(stat --format='%s' "${machine_configuration_disksDiskImagePath["$disk"]}")"
+	local -ir dividedMachineDiskSize=$((configuration_disk_sizeInBytes/512))
 	local -ir rehydratedMachineDiskSize=$((dividedMachineDiskSize*512))
-	if [ $machineDiskSizeInBytes -ne $rehydratedMachineDiskSize ]; then
-		informationMessage FAIL "Machine $machine disk $disk has a size that is not divisible by 512"
+	if [ $configuration_disk_sizeInBytes -ne $rehydratedMachineDiskSize ]; then
+		informationMessage FAIL "Machine ${machineName} disk $disk has a size that is not divisible by 512"
 		exitError 1
 	fi
 	
-	local -ir machineDiskBlockSizeInBytes=${machine_disksConfigurationBlockSize["$disk"]}
-	local -ir dividedBlockSize=$((machineDiskBlockSizeInBytes/512))
+	local -ir configuration_disk_blockSizeInBytes=${machine_configuration_disksBlockSize["$disk"]}
+	local -ir dividedBlockSize=$((configuration_disk_blockSizeInBytes/512))
 	local -ir rehydratedBlockSize=$((dividedBlockSize*512))
 	
-	if [ $machineDiskBlockSizeInBytes -ne $rehydratedBlockSize ]; then
-		informationMessage FAIL "Machine $machine disk $disk has a block size that is not divisible by 512"
+	if [ $configuration_disk_blockSizeInBytes -ne $rehydratedBlockSize ]; then
+		informationMessage FAIL "Machine ${machineName} disk $disk has a block size that is not divisible by 512"
 		exitError 1
 	fi
 }
@@ -58,34 +58,34 @@ function disk_mount_createPartitionTable()
 	# id is either 0xXX or E, S, L or X (L is native, S is swap). Other useful types are Linux LVM and Linux RAID
 	# sfdisk Partition Types Use sfdisk --list-types to find the known types:-
 	
-	if [ "${machine_disksConfigurationFilesystemType["$disk"]}" = "swap" ]; then
+	if [ "${machine_configuration_disksFilesystemType["$disk"]}" = "swap" ]; then
 		local -r id=,S
 	else
 		local -r id=,L
 	fi
 	
 	# bootable is either * or -
-	if [ "${machine_disksConfigurationBootable["$disk"]}" = "yes" ]; then
+	if [ "${machine_configuration_disksBootable["$disk"]}" = "yes" ]; then
 		local -r bootable=',*'
 	else
 		local -r bootable=''
 	fi
 	
-	local -r partitionsMap="$cacheMachineArtefactsPath"/"$disk".partition-table.sfdisk.input.txt
+	local -r partitionsMap="$machine_cacheArtefactsPath"/"$disk".partition-table.sfdisk.input.txt
 	
 	# <start>,<size>,<id>,<bootable>,<c,h,s>,<c,h,s>
 	cat >"$partitionsMap" <<-EOF
 		${start}${size}${id}${bootable}
 	EOF
 	
-	pushd "$cacheMachineDisksPath" 1>/dev/null 2>/dev/null
+	pushd "$machine_cacheDisksPath" 1>/dev/null 2>/dev/null
 		
 		sfdisk -q "$disk".img 1>/dev/null 2>/dev/null <"$partitionsMap"
 		
 		# -uS reports in sectors of 512 bytes
 		# suppress errors about disk geometry
-		sfdisk -d "$disk".img 2>/dev/null | sed -e "s;${disk}.img;${disk};g" >"$cacheMachineArtefactsPath"/"$disk".partition-table.sfdisk.dump.txt
-		sfdisk --list "$disk".img 2>/dev/null | sed -e "s;${disk}.img;${disk};g" >"$cacheMachineArtefactsPath"/"$disk".partition-table.sfdisk.report.txt
+		sfdisk -d "$disk".img 2>/dev/null | sed -e "s;${disk}.img;${disk};g" >"$machine_cacheArtefactsPath"/"$disk".partition-table.sfdisk.dump.txt
+		sfdisk --list "$disk".img 2>/dev/null | sed -e "s;${disk}.img;${disk};g" >"$machine_cacheArtefactsPath"/"$disk".partition-table.sfdisk.report.txt
 	popd 1>/dev/null 2>/dev/null
 }
 disk_mount_functions+=(disk_mount_createPartitionTable)
@@ -97,15 +97,15 @@ function disk_mount_image()
 		
 		unpartitioned)
 			# Does nothing
-			machine_disksConfigurationPartitionImagePath["$disk"]="${machine_disksConfigurationDiskImagePath["$disk"]}"
-			machine_disksConfigurationLoopbackDevice["$disk"]=""
+			machine_derived_disksPartitionImagePath["$disk"]="${machine_configuration_disksDiskImagePath["$disk"]}"
+			machine_derived_disksLoopbackDevice["$disk"]=""
 		;;
 		
 		dos)
 			declare -a FUNCTION_RESULT=()
-			mounting_mountDisk "${machine_disksConfigurationDiskImagePath["$disk"]}"
-			machine_disksConfigurationLoopbackDevice["$disk"]="${FUNCTION_RESULT[0]}"
-			machine_disksConfigurationPartitionImagePath["$disk"]="${FUNCTION_RESULT[1]}"
+			mounting_mountDisk "${machine_configuration_disksDiskImagePath["$disk"]}"
+			machine_derived_disksLoopbackDevice["$disk"]="${FUNCTION_RESULT[0]}"
+			machine_derived_disksPartitionImagePath["$disk"]="${FUNCTION_RESULT[1]}"
 		;;
 		
 		bsd|solaris|unixware)
@@ -125,16 +125,16 @@ disk_mount_functions+=(disk_mount_image)
 function disk_mount_createDiskPartitionFilesystem()
 {
 	if mounting_mountPointIsSpecial; then
-		mkswap -f -L "${machine_disksConfigurationVolumeLabel16Bytes["$disk"]}" -U "${machine_disksConfigurationUuid["$disk"]}" "${machine_disksConfigurationPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
+		mkswap -f -L "${machine_configuration_disksVolumeLabel16Bytes["$disk"]}" -U "${machine_configuration_disksUuid["$disk"]}" "${machine_derived_disksPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
 		return 0
 	fi
 	
 	declare -a extraOptions=()
-	if [ -n "${machine_disksConfigurationOptions["$disk"]}" ]; then
+	if [ -n "${machine_configuration_disksOptions["$disk"]}" ]; then
 		extraOptions+=(-O)
-		extraOptions+=("${machine_disksConfigurationOptions["$disk"]}")
+		extraOptions+=("${machine_configuration_disksOptions["$disk"]}")
 	fi
 		
-	mkfs."${machine_disksConfigurationFilesystemType["$disk"]}" -F -q -b ${machine_disksConfigurationBlockSize["$disk"]} -L "${machine_disksConfigurationVolumeLabel16Bytes["$disk"]}" -U "${machine_disksConfigurationUuid["$disk"]}" "${extraOptions[@]}" "${machine_disksConfigurationPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
+	mkfs."${machine_configuration_disksFilesystemType["$disk"]}" -F -q -b ${machine_configuration_disksBlockSize["$disk"]} -L "${machine_configuration_disksVolumeLabel16Bytes["$disk"]}" -U "${machine_configuration_disksUuid["$disk"]}" "${extraOptions[@]}" "${machine_derived_disksPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
 }
 disk_mount_functions+=(disk_mount_createDiskPartitionFilesystem)

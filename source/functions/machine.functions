@@ -1,9 +1,8 @@
-machines=()
 machine_functions=()
 
 function machine_verifyNameIsValidDnsLabel()
 {
-	local -ir hostnameLength=${#machine}
+	local -ir hostnameLength=${#machineName}
 	if [ $hostnameLength -lt 2 ]; then
 		informationMessage FAIL "machine name must be at least 2 characters"
 		exit 1
@@ -28,20 +27,20 @@ function machine_verifyNameIsValidDnsLabel()
 	esac
 	
 	local convertedHostname
-	convertedHostname="$(printf "$machine" | tr -d 'A-Z')"
+	convertedHostname="$(printf "${machineName}" | tr -d 'A-Z')"
 	if [ ${#convertedHostname} != $hostnameLength ]; then
 		informationMessage FAIL "machine name must not contain upper case"
 		exit 1
 	fi
 	
-	convertedHostname="$(printf "$machine" | tr -d '.')"
+	convertedHostname="$(printf "${machineName}" | tr -d '.')"
 	if [ ${#convertedHostname} != $hostnameLength ]; then
 		informationMessage FAIL "machine name must not contain a domain name (ie period)"
 		exit 1
 	fi
 	
 	# Delete anything not in abc...
-	convertedHostname="$(printf "$machine" | tr -d -C 'abcdefghijklmnopqrstuvwxyz0123456789-')"
+	convertedHostname="$(printf "${machineName}" | tr -d -C 'abcdefghijklmnopqrstuvwxyz0123456789-')"
 	if [ ${#convertedHostname} != $hostnameLength ]; then
 		informationMessage FAIL "machine name must consist of a-z, 0-9 or hyphen"
 		exit 1
@@ -49,87 +48,102 @@ function machine_verifyNameIsValidDnsLabel()
 }
 machine_functions+=(machine_verifyNameIsValidDnsLabel)
 
+machine_configPath""
+machine_configConfigurationFilePath=""
+machine_configPackagesFilePath=""
+machine_configRpmsPath=""
+machine_configDisksPath=""
+machine_configNicsPath=""
+machine_configGeneratorsPath=""
+machine_configUnderlaysPath=""
+machine_configOverlaysPath=""
+machine_configRepositoriesPath=""
 function machine_prepareConfigPaths()
 {
-	configMachinePath="$machinesPath"/"$machine"
-	if [ ! -d "$configMachinePath" ]; then
-		informationMessage FAIL "Machine $machine missing machine config path $configMachinePath"
+	machine_configPath="$machine_group_machinesPath"/"${machineName}"
+	if [ ! -d "$machine_configPath" ]; then
+		informationMessage FAIL "Machine ${machineName} missing machine config path $machine_configPath"
 		exit 1
 	fi
 	
-	configMachineConfigurationPath="$configMachinePath"/configuration
-	if [ ! -f "$configMachineConfigurationPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine configuration file $configMachineConfigurationPath"
+	machine_configConfigurationFilePath="$machine_configPath"/configuration
+	if [ ! -f "$machine_configConfigurationFilePath" ]; then
+		informationMessage FAIL "Machine ${machineName} missing machine configuration file $machine_configConfigurationFilePath"
 		exit 1
 	fi
 	
-	configMachinePackagesPath="$configMachinePath"/packages
-	if [ ! -f "$configMachinePackagesPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine packages file $configMachinePackagesPath"
+	machine_configPackagesFilePath="$machine_configPath"/packages
+	if [ ! -f "$machine_configPackagesFilePath" ]; then
+		informationMessage FAIL "Machine ${machineName} missing machine packages file $machine_configPackagesFilePath"
 		exit 1
 	fi
 	
-	configMachineRpmsPath="$configMachinePath"/rpms
-	if [ ! -d "$configMachineRpmsPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine rpms folder $configMachineRpmsPath"
+	machine_configRpmsPath="$machine_configPath"/rpms
+	if [ ! -d "$machine_configRpmsPath" ]; then
+		informationMessage FAIL "Machine ${machineName} missing machine rpms folder $machine_configRpmsPath"
 		exit 1
 	fi
 	
-	configMachineDisksPath="$configMachinePath"/disks
-	if [ ! -d "$configMachineDisksPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine disks folder $configMachineDisksPath"
+	machine_configDisksPath="$machine_configPath"/disks
+	if [ ! -d "$machine_configDisksPath" ]; then
+		informationMessage FAIL "Machine ${machineName} missing machine disks folder $machine_configDisksPath"
 		exit 1
 	fi
 	
-	configMachineNicsPath="$configMachinePath"/nics
-	if [ ! -d "$configMachineNicsPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine nics folder $configMachineNicsPath"
+	machine_configNicsPath="$machine_configPath"/nics
+	if [ ! -d "$machine_configNicsPath" ]; then
+		informationMessage FAIL "Machine ${machineName} missing machine nics folder $machine_configNicsPath"
 		exit 1
 	fi
 	
-	configMachineGeneratorsPath="$configMachinePath"/generators
-	if [ ! -d "$configMachineGeneratorsPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine generators folder $configMachineGeneratorsPath"
+	machine_configGeneratorsPath="$machine_configPath"/generators
+	if [ ! -d "$machine_configGeneratorsPath" ]; then
+		informationMessage FAIL "Machine ${machineName} missing machine generators folder $machine_configGeneratorsPath"
 		exit 1
 	fi
 	
-	configMachineUnderlaysPath="$configMachinePath"/underlays
-	if [ ! -d "$configMachineUnderlaysPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine underlays folder $configMachineUnderlaysPath"
+	machine_configUnderlaysPath="$machine_configPath"/underlays
+	if [ ! -d "$machine_configUnderlaysPath" ]; then
+		informationMessage FAIL "Machine ${machineName} missing machine underlays folder $machine_configUnderlaysPath"
 		exit 1
 	fi
 	
-	configMachineOverlaysPath="$configMachinePath"/overlays
-	if [ ! -d "$configMachineOverlaysPath" ]; then
-		informationMessage FAIL "Machine $machine missing machine overlays folder $configMachineOverlaysPath"
+	machine_configOverlaysPath="$machine_configPath"/overlays
+	if [ ! -d "$machine_configOverlaysPath" ]; then
+		informationMessage FAIL "Machine ${machineName} missing machine overlays folder $machine_configOverlaysPath"
 		exit 1
 	fi
 	
-	configMachineRepositoriesPath="$configMachinePath"/repositories
-	if [ ! -d "$configMachineRepositoriesPath" ]; then
-		informationMessage FAIL "Machine $machine missing repositories folder $configMachineRepositoriesPath"
+	machine_configRepositoriesPath="$machine_configPath"/repositories
+	if [ ! -d "$machine_configRepositoriesPath" ]; then
+		informationMessage FAIL "Machine ${machineName} missing repositories folder $machine_configRepositoriesPath"
 		exit 1
 	fi
 }
 machine_functions+=(machine_prepareConfigPaths)
 
+machine_cachePath=""
+machine_cacheOverlaysGeneratedPath=""
+machine_cacheDisksPath=""
+machine_cacheDisksMountPath=""
+machine_cacheArtefactsPath=""
 function machine_prepareCachePaths()
 {
-	cacheMachinePath="$cacheMachineGroupMachinesPath"/"$machine"
+	machine_cachePath="$machine_group_cacheMachinesPath"/"${machineName}"
 	
-	cacheMachineOverlaysGeneratedPath="$cacheMachinePath"/overlays
+	machine_cacheOverlaysGeneratedPath="$machine_cachePath"/overlays/generated
 	
-	cacheMachineDisksPath="$cacheMachinePath"/disks
+	machine_cacheDisksPath="$machine_cachePath"/disks
 	
-	cacheMachineDisksMountsPath="$cacheMachinePath"/disks-mountpoint
+	machine_cacheDisksMountPath="$machine_cachePath"/disks-mountpoint
 	
-	cacheMachineArtefactsPath="$cacheMachinePath"/artefacts
+	machine_cacheArtefactsPath="$machine_cachePath"/artefacts
 }
 machine_functions+=(machine_prepareCachePaths)
 
 function machine_cleanUpCache()
 {
-	pushd "$cacheMachineGroupMachinesPath" 1>/dev/null 2>/dev/null
+	pushd "$machine_group_cacheMachinesPath" 1>/dev/null 2>/dev/null
 		local cachedMachine
 		for cachedMachine in *
 		do
@@ -161,7 +175,7 @@ machine_functions+=(machine_defaultConfiguration)
 
 function machine_sourceConfiguration()
 {
-	source "$configMachineConfigurationPath"
+	source "$machine_configConfigurationFilePath"
 }
 machine_functions+=(machine_sourceConfiguration)
 
@@ -174,28 +188,28 @@ machine_functions+=(machine_validateConfiguration)
 machine_packageNames=()
 function machine_readPackages()
 {
-	mapfile -t machine_packageNames < <(configuration_readPackageNames "$configMachinePackagesPath")
+	mapfile -t machine_packageNames < <(configuration_readPackageNames "$machine_configPackagesFilePath")
 }
 machine_functions+=(machine_readPackages)
 
 machine_rpmFiles=()
 function machine_readRpmFiles()
 {
-	mapfile -t machine_rpmFiles < <(configuration_readRpmFiles "$configMachineRpmsPath")
+	mapfile -t machine_rpmFiles < <(configuration_readRpmFiles "$machine_configRpmsPath")
 }
 machine_functions+=(machine_readRpmFiles)
 
 machine_nics=()
 function machine_readNicNames()
 {
-	mapfile -t machine_nics < <(configuration_readNames "$configMachineNicsPath" "nic")
+	mapfile -t machine_nics < <(configuration_readNames "$machine_configNicsPath" "nic")
 }
 machine_functions+=(machine_readNicNames)
 
 machine_disks=()
 function machine_readDiskNames()
 {
-	mapfile -t machine_disks < <(configuration_readNames "$configMachineDisksPath" "disk")
+	mapfile -t machine_disks < <(configuration_readNames "$machine_configDisksPath" "disk")
 }
 machine_functions+=(machine_readDiskNames)
 
@@ -231,19 +245,19 @@ machine_functions+=(machine_configureDisks)
 
 function machine_makeCacheFolders()
 {
-	mkdir -m 0755 -p "$cacheMachinePath"
+	mkdir -m 0755 -p "$machine_cachePath"
 	
-	rm -rf "$cacheMachineOverlaysGeneratedPath"
-	mkdir -m 0755 -p "$cacheMachineOverlaysGeneratedPath"
+	rm -rf "$machine_cacheOverlaysGeneratedPath"
+	mkdir -m 0755 -p "$machine_cacheOverlaysGeneratedPath"
 	
-	rm -rf "$cacheMachineDisksPath"
-	mkdir -m 0755 -p "$cacheMachineDisksPath"
+	rm -rf "$machine_cacheDisksPath"
+	mkdir -m 0755 -p "$machine_cacheDisksPath"
 	
-	rm -rf "$cacheMachineDisksMountsPath"
-	mkdir -m 0755 -p "$cacheMachineDisksMountsPath"
+	rm -rf "$machine_cacheDisksMountPath"
+	mkdir -m 0755 -p "$machine_cacheDisksMountPath"
 	
-	rm -rf "$cacheMachineArtefactsPath"
-	mkdir -m 0755 -p "$cacheMachineArtefactsPath"
+	rm -rf "$machine_cacheArtefactsPath"
+	mkdir -m 0755 -p "$machine_cacheArtefactsPath"
 }
 machine_functions+=(machine_makeCacheFolders)
 
@@ -307,8 +321,8 @@ machine_functions+=(machine_mounting_mountDiskPartitions)
 
 function machine_installUnderlays()
 {
-	underlay_overlay_installFilesystem "$configMachineGroupUnderlaysPath"
-	underlay_overlay_installFilesystem "$configMachineUnderlaysPath"
+	underlay_overlay_installFilesystem "$machine_group_configUnderlaysPath"
+	underlay_overlay_installFilesystem "$machine_configUnderlaysPath"
 }
 machine_functions+=(machine_installUnderlays)
 
@@ -324,17 +338,17 @@ machine_functions+=(machine_installRpmsFromYum)
 
 function machine_sourceMachineGenerators()
 {
-	# Relies on cacheMachineOverlaysGeneratedPath
-	generators_source "machine" "$configMachineGeneratorsPath"
+	# Relies on machine_cacheOverlaysGeneratedPath
+	generators_source "machine" "$machine_configGeneratorsPath"
 }
 machine_functions+=(machine_sourceMachineGenerators)
 
 function machine_installOverlays()
 {
-	underlay_overlay_installFilesystem "$configMachineGroupOverlaysPath"
-	underlay_overlay_installFilesystem "$cacheMachineGroupOverlaysGeneratedPath"
-	underlay_overlay_installFilesystem "$configMachineOverlaysPath"
-	underlay_overlay_installFilesystem "$cacheMachineOverlaysGeneratedPath"
+	underlay_overlay_installFilesystem "$machine_group_configOverlaysPath"
+	underlay_overlay_installFilesystem "$machine_group_cacheOverlaysGeneratedPath"
+	underlay_overlay_installFilesystem "$machine_configOverlaysPath"
+	underlay_overlay_installFilesystem "$machine_cacheOverlaysGeneratedPath"
 }
 machine_functions+=(machine_installOverlays)
 
@@ -344,8 +358,8 @@ function machine_determineRootDiskUuid()
 	local disk
 	for disk in "${machine_disks[@]}"
 	do
-		if [ "${machine_disksConfigurationMountPoint["$disk"]}" = "/" ]; then
-			machineRootDiskFilesystemUuid="${machine_disksConfigurationUuid["$disk"]}"
+		if [ "${machine_configuration_disksMountPoint["$disk"]}" = "/" ]; then
+			machineRootDiskFilesystemUuid="${machine_configuration_disksUuid["$disk"]}"
 			break
 		fi
 	done
@@ -360,15 +374,15 @@ machine_functions+=(machine_determineRootDiskUuid)
 function machine_determinKernelAdditionalOptions()
 {
 	local machineKernelOptions="root=UUID=${machineRootDiskFilesystemUuid}"
-	if [ -n "$machineKernelAdditionalOptions" ]; then
-		machineKernelOptions="${machineKernelOptions} ${machineKernelAdditionalOptions}"
+	if [ -n "$configuration_machine_kernelAdditionalOptions" ]; then
+		machineKernelOptions="${machineKernelOptions} ${configuration_machine_kernelAdditionalOptions}"
 	fi
 }
 machine_functions+=(machine_determinKernelAdditionalOptions)
 
 function machine_determineKernelAndInitRd()
 {
-	pushd "$cacheMachineDisksMountsPath" 1>/dev/null 2>/dev/null
+	pushd "$machine_cacheDisksMountPath" 1>/dev/null 2>/dev/null
 		
 		machineKernelAbsolutePath=""
 		local file
@@ -409,15 +423,15 @@ machine_functions+=(machine_determineKernelAndInitRd)
 
 function machine_copyKernelAndInitRdForUnpartitioned()
 {
-	if [ "$machineHypervisorDiskFormat" != "unpartitioned" ]; then
+	if [ "$configuration_machine_hypervisorDiskFormat" != "unpartitioned" ]; then
 		return 0
 	fi
 	
-	cp "${cacheMachineDisksMountsPath}${machineKernelAbsolutePath}" "$cacheMachineArtefactsPath"/"$machineKernelFileName"
-	ln -s "$machineKernelFileName" "$cacheMachineArtefactsPath"/vmlinuz
+	cp "${machine_cacheDisksMountPath}${machineKernelAbsolutePath}" "$machine_cacheArtefactsPath"/"$machineKernelFileName"
+	ln -s "$machineKernelFileName" "$machine_cacheArtefactsPath"/vmlinuz
 	
-	cp "${cacheMachineDisksMountsPath}${machineInitramfsAbsolutePath}" "$cacheMachineArtefactsPath"/"$machineInitramfsFileName"
-	ln -s "$machineInitramfsFileName" "$cacheMachineArtefactsPath"/initramfs.img
+	cp "${machine_cacheDisksMountPath}${machineInitramfsAbsolutePath}" "$machine_cacheArtefactsPath"/"$machineInitramfsFileName"
+	ln -s "$machineInitramfsFileName" "$machine_cacheArtefactsPath"/initramfs.img
 }
 machine_functions+=(machine_copyKernelAndInitRdForUnpartitioned)
 
@@ -449,7 +463,7 @@ function machine_installExtLinux()
 	local disk
 	for disk in "$machine_disks"
 	do
-		if [ "${machine_disksConfigurationBootable["$disk"]}" = "yes" ]; then
+		if [ "${machine_configuration_disksBootable["$disk"]}" = "yes" ]; then
 			local extlinux_function
 			for extlinux_function in "${extlinux_functions[@]}"
 			do
@@ -463,7 +477,7 @@ machine_functions+=(machine_installExtLinux)
 
 function machine_recordHashesOfAllFiles()
 {
-	recordHashes "${cacheMachineDisksMountsPath}" "/" "$cacheMachineArtefactsPath"/files-installed.report.txt
+	recordHashes "${machine_cacheDisksMountPath}" "/" "$machine_cacheArtefactsPath"/files-installed.report.txt
 }
 machine_functions+=(machine_recordHashesOfAllFiles)
 
@@ -504,10 +518,10 @@ machine_functions+=(machine_mounting_unmountDisks)
 
 function machine_createMetadata()
 {
-	if [ "$machineHypervisorMetadataOutputFormat" = "none" ]; then
+	if [ "$configuration_machine_hypervisorMetadataFormat" = "none" ]; then
 		return 0
 	fi
 	
-	hypervisor_metadata_${machineHypervisorName}
+	hypervisor_metadata_${configuration_machine_hypervisorName}
 }
 machine_functions+=(machine_createMetadata)

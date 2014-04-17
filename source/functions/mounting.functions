@@ -6,14 +6,14 @@ function mounting_sortDiskMountPointsInForwardOrder()
 		local disk
 		for disk in "${machine_disks[@]}"
 		do
-			echo "${machine_disksConfigurationMountPoint["$disk"]} ${disk}"
+			echo "${machine_configuration_disksMountPoint["$disk"]} ${disk}"
 		done
 	) | sort --ignore-nonprinting --stable --key 1,1
 }
 
 function mounting_mountPointIsSpecial()
 {
-	local -r mountPoint="${machine_disksConfigurationMountPoint["$disk"]}"
+	local -r mountPoint="${machine_configuration_disksMountPoint["$disk"]}"
 	if [ "${mountPoint:0:1}" != '/' ]; then
 		return 0
 	fi

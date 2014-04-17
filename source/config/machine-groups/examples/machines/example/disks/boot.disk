@@ -1,11 +1,11 @@
 # Size is as for the  truncate  command
-machineDiskSize=256M
-machineDiskMountPoint=/boot
-machineDiskFilesystemType=ext4
-machineDiskBlockSize=4096
-machineDiskUuid=b0a4c728-7bd6-495e-96da-2349d808923b
-machineDiskOptions=uninit_bg,extent,has_journal,resize_inode,sparse_super
-machineDiskMountOptions=defaults
-machineDiskDumpOptions=1
-machineDiskFsckOptions=2
-machineDiskShrink=yes
+configuration_disk_size=256M
+configuration_disk_mountPoint=/boot
+configuration_disk_filesystemType=ext4
+configuration_disk_blockSize=4096
+configuration_disk_uuid=b0a4c728-7bd6-495e-96da-2349d808923b
+configuration_disk_filesystemOptions=uninit_bg,extent,has_journal,resize_inode,sparse_super
+configuration_disk_fstabMountOptions=defaults
+configuration_disk_fstabMountDumpOptions=1
+configuration_disk_fstabMountFsckOptions=2
+configuration_disk_shrink=yes

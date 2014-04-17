@@ -4,7 +4,7 @@ mkdir -m 0755 -p "$grubPath"
 cat >"$grubPath"/grub.conf <<-EOF
 	default=0
 	timeout=0
-	title $machine
+	title ${machineName}
 	root (hd0)
 	kernel /boot/vmlinuz ro root=/dev/xvde1 rd_NO_PLYMOUTH selinux=0 console=hvc0 loglvl=all sync_console console_to_ring nomodeset
 	initrd /boot/initramfs

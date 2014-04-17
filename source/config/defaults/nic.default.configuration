@@ -1,2 +1,2 @@
-machineNicMac=generate
-machineNicVariant=virtual
+configuration_nic_mac=generate
+configuration_nic_variant=virtual

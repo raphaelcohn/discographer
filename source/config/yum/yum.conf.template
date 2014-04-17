@@ -2,12 +2,12 @@
 # cache /var/cache/yum
 # persist /var/lib/yum
 
-installroot=${cacheMachineDisksMountsPath}
-reposdir=${cacheMachineDisksMountsPath}/etc/yum.repos.d
-cachedir=${cacheMachineDisksMountsPath}/var/cache/yum
-persistdir=${cacheMachineDisksMountsPath}/var/lib/yum
-logfile=${cacheMachineDisksMountsPath}/var/log/yum.log
-#protected_packages=yum glob:${cacheMachineDisksMountsPath}/etc/yum/protected.d/*.conf
+installroot=${machine_cacheDisksMountPath}
+reposdir=${machine_cacheDisksMountPath}/etc/yum.repos.d
+cachedir=${machine_cacheDisksMountPath}/var/cache/yum
+persistdir=${machine_cacheDisksMountPath}/var/lib/yum
+logfile=${machine_cacheDisksMountPath}/var/log/yum.log
+#protected_packages=yum glob:${machine_cacheDisksMountPath}/etc/yum/protected.d/*.conf
 
 releasever=${yumConfigDistributionMajorRevision}
 distroverpkg=${yumConfigDistributionVersionPackage}

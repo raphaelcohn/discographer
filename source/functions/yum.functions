@@ -2,12 +2,12 @@ yum_functions=()
 
 function yum_fillInMachineYumConfTemplate()
 {
-	configMachineYumConfigFile="$cacheMachinePath"/yum.conf
+	configMachineYumConfigFile="$machine_cachePath"/yum.conf
 	
-	export yumConfigDistributionVersionPackage=${machineDistribution}-release
-	export yumConfigDistributionMajorRevision=${machineDistributionMajorRevision}
+	export yumConfigDistributionVersionPackage=${configuration_machine_distribution}-release
+	export yumConfigDistributionMajorRevision=${configuration_machine_distributionMajorRevision}
 	
-	export yumConfigRepositoriesPath="$cacheMachineDisksMountsPath"/etc/yum.repos.d
+	export yumConfigRepositoriesPath="$machine_cacheDisksMountPath"/etc/yum.repos.d
 	
 	if [ "$beDebug" = "yes" ]; then
 		export yumConfigDebugLevel=10
@@ -25,23 +25,23 @@ yum_functions+=(yum_fillInMachineYumConfTemplate)
 
 function yum_prepareRpmDb()
 {
-	rpm --rebuilddb --root=${cacheMachineDisksMountsPath}
+	rpm --rebuilddb --root=${machine_cacheDisksMountPath}
 }
 yum_functions+=(yum_prepareRpmDb)
 
 function yum_downloadDistributionVersionRpm()
 {
-	cacheYumDistributionVersionRpmPath="$cacheYumPath"/"$machineDistributionReleaseRpm"
+	cacheYumDistributionVersionRpmPath="$cacheYumPath"/"$configuration_machine_distributionReleaseRpm"
 	
 	if [ ! -f "$cacheYumDistributionVersionRpmPath" ]; then
-		curl "$machineDistributionReleaseRpmUrl" 1>"$cacheYumDistributionVersionRpmPath" 2>/dev/null
+		curl "$configuration_machine_distributionReleaseRpmUrl" 1>"$cacheYumDistributionVersionRpmPath" 2>/dev/null
 	fi
 }
 yum_functions+=(yum_downloadDistributionVersionRpm)
 
 function yum_installDistributionVersionRpm()
 {
-	rpm --install --root=${cacheMachineDisksMountsPath} --nodeps --nosignature "$cacheYumDistributionVersionRpmPath"
+	rpm --install --root=${machine_cacheDisksMountPath} --nodeps --nosignature "$cacheYumDistributionVersionRpmPath"
 }
 yum_functions+=(yum_installDistributionVersionRpm)
 
@@ -50,7 +50,7 @@ function yum_installYumRepositories()
 	# Remove any shipped repos!
 	rm -rf "$yumConfigRepositoriesPath"/*.repo
 	
-	pushd "$configMachineRepositoriesPath" 1>/dev/null 2>/dev/null
+	pushd "$machine_configRepositoriesPath" 1>/dev/null 2>/dev/null
 		
 		local file
 		for file in *.repo
@@ -79,7 +79,7 @@ yum_functions+=(yum_installMachineGroupRpms)
 
 function yum_installMachineGroupLocalRpms()
 {
-	yum_wrapper_localInstall "$configMachinGroupeRpmsPath" "${machine_group_rpmFiles[@]}"
+	yum_wrapper_localInstall "$machine_group_configRpmsPath" "${machine_group_rpmFiles[@]}"
 }
 yum_functions+=(yum_installMachineGroupLocalRpms)
 
@@ -91,7 +91,7 @@ yum_functions+=(yum_installMachineRpms)
 
 function yum_installMachineLocalRpms()
 {
-	yum_wrapper_localInstall "$configMachineRpmsPath" "${machine_rpmFiles[@]}"
+	yum_wrapper_localInstall "$machine_configRpmsPath" "${machine_rpmFiles[@]}"
 }
 yum_functions+=(yum_installMachineLocalRpms)
 
@@ -103,7 +103,7 @@ yum_functions+=(yum_cleanUp)
 
 function yum_recordInstalledRpms()
 {
-	local -r reportFile="$cacheMachineArtefactsPath"/rpms-installed.report.txt
+	local -r reportFile="$machine_cacheArtefactsPath"/rpms-installed.report.txt
 	printf "Package.Architecture\tVersion\tOrigin\n" >"$reportFile"
 	yum_wrapper list installed 2>/dev/null | tail -n +11 | awk -v OFS='\t' '{print $1,$2,$3}' >>"$reportFile"
 }

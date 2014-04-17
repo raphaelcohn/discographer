@@ -2,11 +2,11 @@ function ova2_generateOva()
 {
 	ovf2_generateOvf
 	
-	pushd "$cacheMachineArtefactsPath" 1>/dev/null 2>/dev/null
+	pushd "$machine_cacheArtefactsPath" 1>/dev/null 2>/dev/null
 	
-		tar --create --file "$cacheMachineArtefactsPath"/"$machine".ova "$machine".ovf *.vmdk "$machine".mf
+		tar --create --file "$machine_cacheArtefactsPath"/"${machineName}".ova "${machineName}".ovf *.vmdk "${machineName}".mf
 		
 	popd 1>/dev/null 2>/dev/null
 	
-	rm -rf "$cacheMachineArtefactsPath"/*.ovf "$cacheMachineArtefactsPath"/*.vmdk "$cacheMachineArtefactsPath"/*.mf
+	rm -rf "$machine_cacheArtefactsPath"/*.ovf "$machine_cacheArtefactsPath"/*.vmdk "$machine_cacheArtefactsPath"/*.mf
 }

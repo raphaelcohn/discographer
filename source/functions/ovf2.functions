@@ -6,14 +6,14 @@ function ovf2_generateOvf()
 
 function ovf2_generateOvfFile()
 {
-	ovf2_xml_Envelope >"$cacheMachineArtefactsPath"/"$machine".ovf
+	ovf2_xml_Envelope >"$machine_cacheArtefactsPath"/"${machineName}".ovf
 }
 
 function ovf2_generateOvfManifestEntry()
 {
 	local -r file="$1"
-	local -r mfFile="$cacheMachineArtefactsPath"/"$machine".mf
-	pushd "$cacheMachineArtefactsPath" 1>/dev/null 2>/dev/null
+	local -r mfFile="$machine_cacheArtefactsPath"/"${machineName}".mf
+	pushd "$machine_cacheArtefactsPath" 1>/dev/null 2>/dev/null
 	
 		local -r sha256Hash="$(sha256sum "$file" | awk '{print $1}')"
 		echo "SHA256 (${file})= ${sha256Hash}" >>"$mfFile"
@@ -24,7 +24,7 @@ function ovf2_generateOvfManifestEntry()
 function ovf2_generateOvfManifestFile()
 {
 	touch "$mfFile"
-	ovf2_generateOvfManifestEntry "$machine".ovf
+	ovf2_generateOvfManifestEntry "${machineName}".ovf
 	
 	local vmdkFile
 	for vmdkFile in *.vmdk

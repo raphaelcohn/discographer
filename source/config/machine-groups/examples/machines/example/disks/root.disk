@@ -1,15 +1,15 @@
 # Size is as for the  truncate  command
-machineDiskSize=1G
-machineDiskMountPoint=/
-machineDiskFilesystemType=ext4
-machineDiskBlockSize=4096
+configuration_disk_size=1G
+configuration_disk_mountPoint=/
+configuration_disk_filesystemType=ext4
+configuration_disk_blockSize=4096
 # defaults to disk name
-machineDiskVolumeLabel16Bytes=root
+configuration_disk_volumeLabelMax16Bytes=root
 # defaults to 48c2b730-62a5-4b06-99be-85c0ea4d53dd; use uuidgen to create a new one
-machineDiskUuid=48c2b730-62a5-4b06-99be-85c0ea4d53dd
+configuration_disk_uuid=48c2b730-62a5-4b06-99be-85c0ea4d53dd
 # defaults to uninit_bg,extent,has_journal,resize_inode,sparse_super
-machineDiskOptions=uninit_bg,extent,has_journal,resize_inode,sparse_super
-machineDiskMountOptions=defaults
-machineDiskDumpOptions=1
-machineDiskFsckOptions=1
-machineDiskShrink=yes
+configuration_disk_filesystemOptions=uninit_bg,extent,has_journal,resize_inode,sparse_super
+configuration_disk_fstabMountOptions=defaults
+configuration_disk_fstabMountDumpOptions=1
+configuration_disk_fstabMountFsckOptions=1
+configuration_disk_shrink=yes

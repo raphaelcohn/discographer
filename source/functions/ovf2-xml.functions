@@ -39,7 +39,7 @@ function ovf2_xml_Envelope_DiskSection()
 echo "************** FIX ME (SET VMDK DISK UUID in convertDisk_vmdk) **************"
 echo "************** FFIX ME (DISK CAPACITY) **************"
 echo "************** FFIX ME (DISK FORMAT URI) **************"
-			qemu-img info -f vmdk --output=human "$cacheMachineArtefactsPath"/"${disk}.${machineHypervisorDiskExtension}"
+			qemu-img info -f vmdk --output=human "$machine_cacheArtefactsPath"/"${disk}.${machineHypervisorDiskExtension}"
 echo "************** FIX ME (DISK UUID) **************"
 echo "************** FFIX ME (DISK CAPACITY) **************"
 			
@@ -50,7 +50,7 @@ echo "************** FFIX ME (DISK CAPACITY) **************"
 			# virt-builder: install latest kernel and initrd
 			# virt-resize: resize a disk
 			
-			local diskUuid="${machine_disksConfigurationUuid["$disk"]}"
+			local diskUuid="${machine_configuration_disksUuid["$disk"]}"
 			
 			xml_selfclose "Disk ovf:capacity='17179869184' ovf:diskId='${disk}' ovf:fileRef='file${diskIndex}' ovf:format='http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized' vbox:uuid='${diskUuid}'"
 			
@@ -65,7 +65,7 @@ function ovf2_xml_Envelope_NetworkSection()
 	xml_start "NetworkSection"
 		
 		xml_value Info "Logical networks used in the package"
-		xml_start "Network ovf:name='${machineNetworkType}'"
+		xml_start "Network ovf:name='${configuration_machine_networkKind}'"
 			
 			xml_value Description "Logical network used by this appliance."
 			
@@ -76,7 +76,7 @@ function ovf2_xml_Envelope_NetworkSection()
 
 function ovf2_xml_Envelope_VirtualSystem()
 {
-	xml_start "VirtualSystem ovf:id='${machine}'"
+	xml_start "VirtualSystem ovf:id='${machineName}'"
 		
 		xml_value Info "A virtual machine"
 		ovf2_xml_Envelope_VirtualSystem_ProductSection
@@ -85,7 +85,7 @@ function ovf2_xml_Envelope_VirtualSystem()
 		ovf2_xml_Envelope_VirtualSystem_OperatingSystemSection
 		ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection
 		
-		if [ "$machineHypervisorName" = "virtualbox" ]; then
+		if [ "$configuration_machine_hypervisorName" = "virtualbox" ]; then
 			virtualbox_xml_VirtualBox_Machine "yes"
 		fi
 		
@@ -97,7 +97,7 @@ function ovf2_xml_Envelope_VirtualSystem_ProductSection()
 	xml_start "ProductSection"
 		
 		xml_value Info "Meta-information about the installed software"
-		xml_value Product "${machine}"
+		xml_value Product "${machineName}"
 		xml_value Vendor "raphaelcohn"
 		xml_value Version "${machineVersion}"
 		xml_value ProductUr "${machineUrl}"
@@ -111,7 +111,7 @@ function ovf2_xml_Envelope_VirtualSystem_AnnotationSection()
 	xml_start "AnnotationSection"
 		
 		xml_value Info "A human-readable annotation"
-		xml_value Annotation "Immutable machine image for ${machine} produced by ${ourName}"
+		xml_value Annotation "Immutable machine image for ${machineName} produced by ${ourName}"
 		
 	xml_end "AnnotationSection"
 }
@@ -152,11 +152,11 @@ function ovf2_xml_Envelope_VirtualSystem_EulaSection()
 
 function ovf2_xml_Envelope_VirtualSystem_OperatingSystemSection()
 {
-	xml_start "OperatingSystemSection ovf:id='${machineOperatingSystemId}'"
+	xml_start "OperatingSystemSection ovf:id='${configuration_machine_operatingSystemId}'"
 		
 		xml_value Info "The kind of installed guest operating system"
-		xml_value Description "${machineOperatingSystemName}"
-		xml_indented "<vbox:OSType ovf:required='false'>${machineOperatingSystemName}</vbox:OSType>"
+		xml_value Description "${configuration_machine_operatingSystemName}"
+		xml_indented "<vbox:OSType ovf:required='false'>${configuration_machine_operatingSystemName}</vbox:OSType>"
 		
 	xml_end "OperatingSystemSection"
 }
@@ -186,8 +186,8 @@ function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_System()
 		
 		xml_value vssd:ElementName "Virtual Hardware Family"
 		xml_value vssd:InstanceID "${instanceId}"
-		xml_value vssd:VirtualSystemIdentifier "${machine}"
-		xml_value vssd:VirtualSystemType "${machineSystemType}"
+		xml_value vssd:VirtualSystemIdentifier "${machineName}"
+		xml_value vssd:VirtualSystemType "${configuration_machine_hypervisorOvfSystemType}"
 		
 	xml_end "System"
 }
@@ -198,11 +198,11 @@ function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemCpu()
 		
 		instanceId=$((instanceId+1))
 		
-		xml_value rasd:Caption "${machineCpuCount} virtual CPU"
+		xml_value rasd:Caption "${configuration_machine_cpusCount} virtual CPU"
 		xml_value rasd:Description "Number of virtual CPUs"
 		xml_value rasd:InstanceID "${instanceId}"
 		xml_value rasd:ResourceType "3"
-		xml_value rasd:VirtualQuantity "${machineCpuCount}"
+		xml_value rasd:VirtualQuantity "${configuration_machine_cpusCount}"
 	
 	xml_end "Item"
 }
@@ -214,32 +214,32 @@ function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemMemory()
 		instanceId=$((instanceId+1))
 		
 		xml_value rasd:AllocationUnits "MegaBytes"
-		xml_value rasd:Caption "${machineRamSizeMegabytes} MB of memory"
+		xml_value rasd:Caption "${configuration_machine_memoryMegabytes} MB of memory"
 		xml_value rasd:Description "Memory Size"
 		xml_value rasd:InstanceID "${instanceId}"
 		xml_value rasd:ResourceType "4"
-		xml_value rasd:VirtualQuantity "${machineRamSizeMegabytes}"
+		xml_value rasd:VirtualQuantity "${configuration_machine_memoryMegabytes}"
 		
 	xml_end "Item"
 }
 
 function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemDiskControllerAndStorageItems()
 {
-	case "$machineDiskControllerHardwareKind" in
+	case "$configuration_machine_diskControllerKind" in
 		
 		IDE)
 			local -r captionBase="ideController"
 			local -r descriptionBase="IDE"
 			local -r resourceType=5
 			local -r namespace=rasd
-			case "$machineDiskControllerHardwareImplementation" in
+			case "$configuration_machine_diskControllerImplementation" in
 				
 				PIIX3|PIIX4|ICH6)
 					:
 				;;
 				
 				*)
-					informationMessage FAIL "Machine disk controller hardware implementation (machineDiskControllerHardwareImplementation) $machineDiskControllerHardwareImplementation is not supported"
+					informationMessage FAIL "Machine disk controller hardware implementation (configuration_machine_diskControllerImplementation) $configuration_machine_diskControllerImplementation is not supported"
 					exitError 1
 				;;
 				
@@ -251,8 +251,8 @@ function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemDiskControll
 			local -r descriptionBase="SATA"
 			local -r resourceType=20
 			local -r namespace=rasd
-			if [ "$machineDiskControllerHardwareImplementation" != "AHCI" ]; then
-				informationMessage FAIL "Machine disk controller hardware implementation (machineDiskControllerHardwareImplementation) $machineDiskControllerHardwareImplementation is not supported"
+			if [ "$configuration_machine_diskControllerImplementation" != "AHCI" ]; then
+				informationMessage FAIL "Machine disk controller hardware implementation (configuration_machine_diskControllerImplementation) $configuration_machine_diskControllerImplementation is not supported"
 				exitError 1
 			fi
 		;;
@@ -262,14 +262,14 @@ function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemDiskControll
 			local -r descriptionBase="SCSI"
 			local -r resourceType=6
 			local -r namespace=sasd
-			if [ "$machineDiskControllerHardwareImplementation" != "lsilogicsas" ]; then
-				informationMessage FAIL "Machine disk controller hardware implementation (machineDiskControllerHardwareImplementation) $machineDiskControllerHardwareImplementation is not supported"
+			if [ "$configuration_machine_diskControllerImplementation" != "lsilogicsas" ]; then
+				informationMessage FAIL "Machine disk controller hardware implementation (configuration_machine_diskControllerImplementation) $configuration_machine_diskControllerImplementation is not supported"
 				exitError 1
 			fi
 		;;
 		
 		*)
-			informationMessage FAIL "Machine disk controller hardware kind (machineDiskControllerHardwareKind) $machineDiskControllerHardwareKind is not supported"
+			informationMessage FAIL "Machine disk controller hardware kind (configuration_machine_diskControllerKind) $configuration_machine_diskControllerKind is not supported"
 			exitError 1
 		;;
 		
@@ -285,7 +285,7 @@ function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemDiskControll
 		xml_value rasd:Caption "${captionBase}${index}"
 		xml_value rasd:Description "${descriptionBase} Controller"
 		xml_value rasd:InstanceID "${instanceId}"
-		xml_value rasd:ResourceSubType "${machineDiskControllerHardwareImplementation}"
+		xml_value rasd:ResourceSubType "${configuration_machine_diskControllerImplementation}"
 		xml_value rasd:ResourceType "${resourceType}"
 
 	xml_end "Item"
@@ -326,15 +326,15 @@ function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_EthernetPortItem
 		do
 			instanceId=$((instanceId+1))
 			
-			if [ "${machine_nicsConfigurationVariant["$nic"]}" = "virtual" ]; then
+			if [ "${machine_configuration_nicsVariant["$nic"]}" = "virtual" ]; then
 				ethernetControllerHardware="virtio-net"
 			else
 				ethernetControllerHardware="E1000"
 			fi
 			
 			xml_value epasd:AutomaticAllocation "true"
-			xml_value epasd:Caption "Ethernet adapter on '${machineNetworkType}'"
-			xml_value epasd:Connection "${machineNetworkType}"
+			xml_value epasd:Caption "Ethernet adapter on '${configuration_machine_networkKind}'"
+			xml_value epasd:Connection "${configuration_machine_networkKind}"
 			xml_value epasd:InstanceID "${instanceId}"
 			xml_value epasd:ResourceSubType "${machineEthernetControllerType}"
 			xml_value epasd:ResourceType "10"

@@ -63,15 +63,16 @@ function main_determineKnownMachineGroups()
 }
 main_functions+=(main_determineKnownMachineGroups)
 
+machineGroupNames=()
 function main_buildMachineGroups()
 {
-	local machineGroup
+	local machineGroupName
 	local machine_group_function
-	for machineGroup in "${machineGroups[@]}"
+	for machineGroupName in "${machineGroupNames[@]}"
 	do
 		for machine_group_function in "${machine_group_functions[@]}"
 		do
-			informationMessage INFO "${tab}${machineGroup} ${machine_group_function}"
+			informationMessage INFO "${tab}${machineGroupName} ${machine_group_function}"
 			$machine_group_function
 		done
 	done

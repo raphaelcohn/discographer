@@ -1,11 +1,11 @@
-ourOverlayPath="$cacheMachineOverlaysGeneratedPath"/fstab
+ourOverlayPath="$machine_cacheOverlaysGeneratedPath"/fstab
 
 mkdir -m 0755 -p "$ourOverlayPath"
 
 fstabFile="$ourOverlayPath"/fstab
 while IFS=' ' read -r mountPoint disk
 do
-	echo UUID=${machine_disksConfigurationUuid["$disk"]} ${mountPoint} ${machine_disksConfigurationFilesystemType["$disk"]} ${machine_disksConfigurationMountOptions["$disk"]} ${machine_disksConfigurationDumpOptions["$disk"]} ${machine_disksConfigurationDumpOptions["$disk"]} >>"$fstabFile"
+	echo UUID=${machine_configuration_disksUuid["$disk"]} ${mountPoint} ${machine_configuration_disksFilesystemType["$disk"]} ${machine_configuration_disksMountOptions["$disk"]} ${machine_configuration_disksDumpOptions["$disk"]} ${machine_configuration_disksDumpOptions["$disk"]} >>"$fstabFile"
 done < <(mounting_sortDiskMountPointsInForwardOrder)
 
 cat >>"$fstabFile" <<-EOF

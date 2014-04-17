@@ -1,10 +1,10 @@
 function hypervisor_disk_pathToOutputFile()
 {
 	local -r extension="$1"
-	local -r inputFile="${machine_disksConfigurationDiskImagePath["$disk"]}"
+	local -r inputFile="${machine_configuration_disksDiskImagePath["$disk"]}"
 	local -r withoutExtension="${inputFile%%.img}"
 	local -r fileName="$(purebash_basename "$withoutExtension")"
-	echo -n "$cacheMachineArtefactsPath"/"$fileName"."$extension"
+	echo -n "$machine_cacheArtefactsPath"/"$fileName"."$extension"
 }
 
 function hypervisor_disk_convertDiskImageHardLink()
@@ -12,14 +12,14 @@ function hypervisor_disk_convertDiskImageHardLink()
 	local -r extension="$1"
 	local -r format="$2"
 	shift 2
-	local -r inputFile="${machine_disksConfigurationDiskImagePath["$disk"]}"
+	local -r inputFile="${machine_configuration_disksDiskImagePath["$disk"]}"
 	local -r outputFile="$(hypervisor_disk_pathToOutputFile "$extension")"
 	
 	# Hard link; copy if that fails (eg on different disks)
 	ln "$inputFile" "$outputFile" 2>/dev/null || cp "$inputFile" "$outputFile"
 	rm -rf "$inputFile"
 	
-	machine_disksConfigurationDiskImagePath["$disk"]="$outputFile"
+	machine_configuration_disksDiskImagePath["$disk"]="$outputFile"
 }
 
 function hypervisor_disk_convertDiskImageUsingQemuImg()
@@ -28,13 +28,13 @@ function hypervisor_disk_convertDiskImageUsingQemuImg()
 	local -r format="$2"
 	shift 2
 	
-	local -r inputFile="${machine_disksConfigurationDiskImagePath["$disk"]}"
+	local -r inputFile="${machine_configuration_disksDiskImagePath["$disk"]}"
 	local -r outputFile="$(hypervisor_disk_pathToOutputFile "$extension")"
 
 	qemu-img convert -q -f raw -O "$extension" "$@" "$inputFile" "$outputFile"
 	rm -rf "$inputFile"
 
-	machine_disksConfigurationDiskImagePath["$disk"]="$outputFile"
+	machine_configuration_disksDiskImagePath["$disk"]="$outputFile"
 }
 
 function hypervisor_disk_convertDiskImage_unpartitioned()
@@ -56,7 +56,7 @@ function hypervisor_disk_convertDiskImage_vmdk()
 {
 	informationMessage WARN "********* FIXME: Need to create VMDK disk UUID *******************"
 	hypervisor_disk_convertDiskImageUsingQemuImg vmdk vmdk
-	#vmkfstools -J setuuid "$cacheMachineArtefactsPath"/"$disk".vmdk
+	#vmkfstools -J setuuid "$machine_cacheArtefactsPath"/"$disk".vmdk
 	# Apparently, virtual box can also do this for a vmdk...
 }
 
@@ -64,7 +64,7 @@ function hypervisor_disk_convertDiskImage_vdi()
 {
 	hypervisor_disk_convertDiskImageUsingQemuImg vdi vdi
 	# We also force the UUID of the VDI disk to match the file system UUID.
-	VBoxManage internalcommands sethduuid "$cacheMachineArtefactsPath"/"$disk".vdi "${machine_disksConfigurationUuid["$disk"]}"
+	VBoxManage internalcommands sethduuid "$machine_cacheArtefactsPath"/"$disk".vdi "${machine_configuration_disksUuid["$disk"]}"
 }
 
 function hypervisor_disk_convertDiskImage_hdd()

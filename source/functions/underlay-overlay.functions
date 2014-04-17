@@ -45,9 +45,9 @@ function underlay_overlay_installDeviceNodes()
 	while IFS=' ' read -r devicePath deviceUid deviceGid deviceMode deviceType deviceMajor deviceMinor
 	do
 		parentPath="$(purebash_dirname "$devicePath")"
-		mkdir -m 0755 -p "${cacheMachineDisksMountsPath}$parentPath"
+		mkdir -m 0755 -p "${machine_cacheDisksMountPath}$parentPath"
 		
-		completePath="${cacheMachineDisksMountsPath}$devicePath"
+		completePath="${machine_cacheDisksMountPath}$devicePath"
 		if [ -e "$completePath" ]; then
 			informationMessage WARN "${indentationLevel}Deleting duplicate device $devicePath"
 			rm -rf "$completePath"
@@ -105,7 +105,7 @@ function underlay_overlay_installDeviceNodes()
 function underlay_overlay_installFiles()
 {
 	local -r filesPath="$1"
-	rsync --quiet --archive --hard-links --acls --xattrs --devices --specials --sparse --numeric-ids --no-prune-empty-dirs --exclude=".gitignore" "$filesPath"/ "$cacheMachineDisksMountsPath"/
+	rsync --quiet --archive --hard-links --acls --xattrs --devices --specials --sparse --numeric-ids --no-prune-empty-dirs --exclude=".gitignore" "$filesPath"/ "$machine_cacheDisksMountPath"/
 }
 
 function underlay_overlay_installFilesystem()

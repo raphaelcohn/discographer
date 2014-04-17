@@ -16,19 +16,19 @@ nic_configure_functions+=(nic_configure_defaultConfiguration)
 
 function nic_configure_sourceConfiguration()
 {
-	source "$configMachineNicsPath"/"$nic".nic
+	source "$machine_configNicsPath"/"$nic".nic
 }
 nic_configure_functions+=(nic_configure_sourceConfiguration)
 
 function nic_configure_verifyConfiguration()
 {
-	if [ "$machineNicMac" = "generate" ]; then
+	if [ "$configuration_nic_mac" = "generate" ]; then
 		informationMessage "Generating machine NICs automatically is not yet supported"
 		exit 1
-		machineNicMac="Something generated"
+		configuration_nic_mac="Something generated"
 	fi
 	
-	case "$machineNicVariant" in
+	case "$configuration_nic_variant" in
 		
 		virtual)
 			# virtio on KVM/QEMU/VirtualBox, VMXNET3 on VMware
@@ -46,7 +46,7 @@ nic_configure_functions+=(nic_configure_verifyConfiguration)
 
 function nic_configure_captureInABashDictionaryConfiguration()
 {
-	machine_nicsConfigurationMac["$nic"]="$machineNicMac"
-	machine_nicsConfigurationVariant["$nic"]="$machineNicVariant"
+	machine_configuration_nicsMac["$nic"]="$configuration_nic_mac"
+	machine_configuration_nicsVariant["$nic"]="$configuration_nic_variant"
 }
 nic_configure_functions+=(nic_configure_captureInABashDictionaryConfiguration)

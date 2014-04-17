@@ -18,9 +18,9 @@ See `supermin-wrapper -h` for more detailed help. For reference, the variables w
 
 The `${cachePath}` should contain a .gitignore file with the value `*` in it, so that cached data is not accidentally checked in.
 
-The variable `${machine}` is used to refer to a machine. The value is the machine's hostname (DNS label) without domain. We don't currently validate that it is DNS-valid.
+The variable `${machineName}` is used to refer to a machine. The value is the machine's hostname (DNS label) without domain. We don't currently validate that it is DNS-valid.
 
-The variable `${machineGroup}` is used to refer to a group of machines. This need not be a DNS label.
+The variable `${machineGroupName}` is used to refer to a group of machines. This need not be a DNS label.
 
 
 ### Configuration
@@ -34,12 +34,12 @@ Many aspects of a machine's profile are common. To enable this, you can symlink 
 
 ## Defining a new machine
 
-Machines are defined in a folder at `${configPath}/${machineGroup}/machines/${machine}`.
+Machines are defined in a folder at `${configPath}/${machineGroupName}/machines/${machineName}`.
 
 
 ### Packages
 
-A machine is defined as a set of RPM packages. The packages to install are in a text file at `${configPath}/${machineGroup}/machines/${machine}/packages`. They are listed one-per-line (LF line endings), without version numbers or architectures. For example, a file containing:-
+A machine is defined as a set of RPM packages. The packages to install are in a text file at `${configPath}/${machineGroupName}/machines/${machineName}/packages`. They are listed one-per-line (LF line endings), without version numbers or architectures. For example, a file containing:-
 
     bash
     coreutils
@@ -51,7 +51,7 @@ The `packages` file may be a symlink. The source of these packages is controlled
 
 #### Yum and Repository Configuration
 
-RPM packages are installed using `yum`. A special configuration is used per-machine, to ensure isolation from the build machine. This needs to exist either as a folder or a symlink to a folder at `${configPath}/${machineGroup}/machines/${machine}/yum`. Conventionally, this is symlinked to `${configPath}/templates/machines/yum` as it rarely changes per-machine. This folder contains contents as follows:-
+RPM packages are installed using `yum`. A special configuration is used per-machine, to ensure isolation from the build machine. This needs to exist either as a folder or a symlink to a folder at `${configPath}/${machineGroupName}/machines/${machineName}/yum`. Conventionally, this is symlinked to `${configPath}/templates/machines/yum` as it rarely changes per-machine. This folder contains contents as follows:-
 
     yum.conf.template  (file template)
     repositories       (folder)
@@ -60,7 +60,7 @@ RPM packages are installed using `yum`. A special configuration is used per-mach
 
 #### `yum.conf.template`
 
-This file is a template `yum.conf`, which has variables marked `${configMachinePath}` and `${cacheMachinePath}` substituted before it is used (standard `$YUM0`, etc variables don't work). There should not normally be any need to deviate from that supplied in `${configPath}/templates/machines/yum/yum.conf.template`.
+This file is a template `yum.conf`, which has variables marked `${machine_configPath}` and `${machine_cachePath}` substituted before it is used (standard `$YUM0`, etc variables don't work). There should not normally be any need to deviate from that supplied in `${configPath}/templates/machines/yum/yum.conf.template`.
 
 
 #### `repositories`
@@ -70,7 +70,7 @@ This folder contains yum repo configuration snippets (end `.repo`) (examples can
 
 ### Init scripts
 
-To start a machine, it needs to have an `init` script. This should be an executable file or symlink defined at `${configPath}/${machineGroup}/machines/${machine}/init`. This file rarely changes, and is commonly symlinked to `${configPath}/templates/machines/init`.
+To start a machine, it needs to have an `init` script. This should be an executable file or symlink defined at `${configPath}/${machineGroupName}/machines/${machineName}/init`. This file rarely changes, and is commonly symlinked to `${configPath}/templates/machines/init`.
 
 
 ### Additional Files
@@ -85,7 +85,7 @@ The reason for the split is that devices (specifically, block device files, char
 
 #### Devices
 
-Devices are stored for each machine in the file `${configPath}/${machineGroup}/machines/${machine}/devices`. They are listed one-per-line (LF line endings) with a space-delimited format. For example:-
+Devices are stored for each machine in the file `${configPath}/${machineGroupName}/machines/${machineName}/devices`. They are listed one-per-line (LF line endings) with a space-delimited format. For example:-
 
     /dev/ram0 b 660 1 0
     /dev/tty0 c 620 4 0
@@ -106,7 +106,7 @@ The `devices` file may be a symlink.
 
 Root overlays are hierarchal folders and files that will overlay in `/` in the build machine image.
 
-Root overlays are folders or symlinks in `${configPath}/${machineGroup}/machines/${machine}/root-overlays`
+Root overlays are folders or symlinks in `${configPath}/${machineGroupName}/machines/${machineName}/root-overlays`
 
 Due to the design of the supermin-wrapper, any files starting with a period (`.`) (also known as hidden files) in the root of the overlay are not copied. This ensures things like `.gitignore` files are not copied in. Ordinarily, this shouldn't be an issue, because it is exceedingly rare for hidden files to exist in the root (`/`) of a Linux server.
 
@@ -123,77 +123,75 @@ Please note that most source control systems do not preserve file owners or user
 
 ### Generator Scriptlets
 
-Generator scriptlets are sniplets of bash code that supermin-wrapper sources for each machine or machine-group and executes. They can be used to create hostname files, hosts, install SSH private keys, etc. They execute before the root overlays are applied. Conventionally, the output of the sniplets should be placed into the root-overlay `${configPath}/${machineGroup}/machines/${machine}/root-overlays/generated`, but this isn't required; any folder in `${configPath}/${machineGroup}/machines/${machine}/root-overlays` will do.
+Generator scriptlets are sniplets of bash code that supermin-wrapper sources for each machine or machine-group and executes. They can be used to create hostname files, hosts, install SSH private keys, etc. They execute before the root overlays are applied. Conventionally, the output of the sniplets should be placed into the root-overlay `${configPath}/${machineGroupName}/machines/${machineName}/root-overlays/generated`, but this isn't required; any folder in `${configPath}/${machineGroupName}/machines/${machineName}/root-overlays` will do.
 
-Generator scriptlets are run in the order they appear to bash globbing in the folder `${configPath}/${machineGroup}/machines/${machine}/generator-scriptlets`. They may be either files or symlinks (conventionally, to files in `${configPath}/templates/machines/generator-scriptlets`, but one can just symlink `${configPath}/templates/machines/generator-scriptlets` to `${configPath}/${machineGroup}/machines/${machine}/generator-scriptlets` and run all supplied).
+Generator scriptlets are run in the order they appear to bash globbing in the folder `${configPath}/${machineGroupName}/machines/${machineName}/generator-scriptlets`. They may be either files or symlinks (conventionally, to files in `${configPath}/templates/machines/generator-scriptlets`, but one can just symlink `${configPath}/templates/machines/generator-scriptlets` to `${configPath}/${machineGroupName}/machines/${machineName}/generator-scriptlets` and run all supplied).
 
 #### Available Environment Variables
 When executing a machine-group generator-scriptlet, the following environment variables are available:-
 
-* `${configMachineGroupPath}` - where to find any additional configuration
-* `${cacheMachineGroupPath}`
+* `${machine_group_configPath}` - where to find any additional configuration
+* `${machine_group_cachePath}`
 * `${configMachineGroupDevicesPath}` - file or symlink to devices to install
-* `${configMachineGeneratorsPath}` - generator scriptlets for machine group
-* `${configMachineGroupOverlaysPath}` - where to find all root overlays
+* `${machine_configGeneratorsPath}` - generator scriptlets for machine group
+* `${machine_group_configOverlaysPath}` - where to find all root overlays
 * `${generatedMachineGroupRootOverlaysPath}` - where to put any generated files and folders for all machines
 
 When executing a machine, in addition to the above, the following environment variables are available:-
 
-* `${configMachinePath}`
-* `${configMachinePackagesPath}` - file containing packages to install
+* `${machine_configPath}`
+* `${machine_configPackagesFilePath}` - file containing packages to install
 * `${configMachineInitPath}` - file or symlink to init script to install
 * `${configMachineDevicesPath}` - file or symlink to devices to install
-* `${configMachineGeneratorsPath}` - generator scriptlets for machine
-* `${configMachineOverlaysPath}` - where to find all root overlays for machine
+* `${machine_configGeneratorsPath}` - generator scriptlets for machine
+* `${machine_configOverlaysPath}` - where to find all root overlays for machine
 * `${generatedMachineRootOverlaysPath}` - where to put any generated files and folders for machine
 * `${configYumConfigFileTemplatePath}`
-* `${cacheMachinePath}`
+* `${machine_cachePath}`
 * `${cacheMachineMinimalAppliancePath}`
 * `${cacheMachineBuiltAppliancePath}`
 * `${cacheMachineRpmInstallRootPath}`
 
 ## Output
 
-Output consists of machine images, intermediate files, cached package data and logs. All are stored in a cache at `${cachePath}/$[machineGroup}/${machine}`.
+Output consists of machine images, intermediate files, cached package data and logs. All are stored in a cache at `${cachePath}/$[machineGroup}/${machineName}`.
 
 
 ### Machine images
 
-Machine images are created in a folder at `${cachePath}/$[machineGroup}/${machine}/built-appliance`. Three files are normally present:-
+Machine images are created in a folder at `${cachePath}/$[machineGroup}/${machineName}/built-appliance`. Three files are normally present:-
 
     kernel
     initrd
     root
 
-The file `root` is an ext2 raw disk image (ie `dd`-friendly), and can be inspected by mounting it loopback (`sudo mount -o loop -t ext2 ${cachePath}/$[machineGroup}/${machine}/built-appliance/root `/mnt/my/path`). The `kernel` and `initrd` are simply copied from the build machine. They are not built. These files can be used without further ado by QEMU: `qemu-kvm -m 512 -kernel `${cachePath}/$[machineGroup}/${machine}/built-appliance/kernel` -initrd `${cachePath}/$[machineGroup}/${machine}/built-appliance/initrd` -append 'vga=773 selinux=0' -drive file=`${cachePath}/$[machineGroup}/${machine}/built-appliance/root`,format=raw,if=virtio`
+The file `root` is an ext2 raw disk image (ie `dd`-friendly), and can be inspected by mounting it loopback (`sudo mount -o loop -t ext2 ${cachePath}/$[machineGroup}/${machineName}/built-appliance/root `/mnt/my/path`). The `kernel` and `initrd` are simply copied from the build machine. They are not built. These files can be used without further ado by QEMU: `qemu-kvm -m 512 -kernel `${cachePath}/$[machineGroup}/${machineName}/built-appliance/kernel` -initrd `${cachePath}/$[machineGroup}/${machineName}/built-appliance/initrd` -append 'vga=773 selinux=0' -drive file=`${cachePath}/$[machineGroup}/${machineName}/built-appliance/root`,format=raw,if=virtio`
 
-If the command-line option `-o yes-chroot` is used, then instead the folder `${configPath}/${machineGroup}/machines/${machine}/built-appliance` will contain a complete root file system on the current disk. This option doesn't work if running as root, apparently because of a bug in supermin (to do with option specified to tar).
+If the command-line option `-o yes-chroot` is used, then instead the folder `${configPath}/${machineGroupName}/machines/${machineName}/built-appliance` will contain a complete root file system on the current disk. This option doesn't work if running as root, apparently because of a bug in supermin (to do with option specified to tar).
 
 
 ### Intermediate Files
 
-The folder `${cachePath}/$[machineGroup}/${machine}/minimal-appliance` contains intermediate files.
+The folder `${cachePath}/$[machineGroup}/${machineName}/minimal-appliance` contains intermediate files.
 
 
 ### Cached Package Data
 
-The folder `${cachePath}/$[machineGroup}/${machine}/yum` contains cached package data.
+The folder `${cachePath}/$[machineGroup}/${machineName}/yum` contains cached package data.
 
 
 ### Logs
 
-A yum log is contained in `${cachePath}/$[machineGroup}/${machine}/yum/log`.
+A yum log is contained in `${cachePath}/$[machineGroup}/${machineName}/yum/log`.
 
 
 ### Clearing the cache
 
-The wrapper uses a cache per machine. To remove the cache for a machine, delete the folder `${cachePath}/$[machineGroup}/${machine}`. To remove the entire cache, delete `${cachePath}`. Please note that lock files (`supermin.UID.lock`) are in `${cachePath}`, so it can only be safely removed if no instances of supermin (and by implication, supermin-wrapper), are running. The supermin-wrapper will automatically delete machines from the cache that are not defined in `${configPath}/${machineGroup}/machines`.
+The wrapper uses a cache per machine. To remove the cache for a machine, delete the folder `${cachePath}/$[machineGroup}/${machineName}`. To remove the entire cache, delete `${cachePath}`. Please note that lock files (`supermin.UID.lock`) are in `${cachePath}`, so it can only be safely removed if no instances of supermin (and by implication, supermin-wrapper), are running. The supermin-wrapper will automatically delete machines from the cache that are not defined in `${configPath}/${machineGroupName}/machines`.
 
 # BUGS
 
-* We don't seem to be freeing kpartx mounts on crash exits
-	* We probably need to do kpartx -d /dev/loop{n} (uggh)
-* Yum installation has become broken
+* We aren't specify vCPUs in QEMU
 * We aren't specifying capacity in OVF
 * We aren't setting VMDK UUIDs
 * native not supported for vmware, parallels
@@ -261,6 +259,6 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 	* support compressed vmdk images
 	* Can we support ZFS?
 * Configuration
-	* Machine machineOperatingSystemId / machineOperatingSystemName / machineUuid / machineLastStateChangeTimestamp
+	* Machine configuration_machine_operatingSystemId / configuration_machine_operatingSystemName / configuration_machine_uuid / configuration_machine_lastStateChangeTimestamp
 	* capture IP and DNS information
 	* open-ended extra machine and machine-group configuration for generators

@@ -1,70 +1,81 @@
 machine_group_functions=()
 
+machine_group_configPath=""
+machine_group_configPackagesFilePath=""
+machine_group_configRpmsPath=""
+machine_group_configConfigurationFilePath=""
+machine_group_configGeneratorsPath=""
+machine_group_configUnderlaysPath=""
+machine_group_configOverlaysPath=""
+machine_group_machinesPath=""
 function machine_group_prepareConfigPaths()
 {
-	configMachineGroupPath="$machineGroupsPath"/"$machineGroup"
-	if [ ! -d "$configMachineGroupPath" ]; then
-		informationMessage FAIL "Machine-group $machineGroup missing machine-group config path $configMachineGroupPath"
+	machine_group_configPath="$machineGroupsPath"/"${machineGroupName}"
+	if [ ! -d "$machine_group_configPath" ]; then
+		informationMessage FAIL "Machine-group ${machineGroupName} missing machine-group config path $machine_group_configPath"
 		exit 1
 	fi
 	
-	configMachineGroupPackagesPath="$configMachineGroupPath"/packages
-	if [ ! -f "$configMachineGroupPackagesPath" ]; then
-		informationMessage FAIL "Machine group $machineGroup missing machine-group packages file $configMachineGroupPackagesPath"
+	machine_group_configPackagesFilePath="$machine_group_configPath"/packages
+	if [ ! -f "$machine_group_configPackagesFilePath" ]; then
+		informationMessage FAIL "Machine group ${machineGroupName} missing machine-group packages file $machine_group_configPackagesFilePath"
 		exit 1
 	fi
 	
-	configMachinGroupeRpmsPath="$configMachineGroupPath"/rpms
-	if [ ! -d "$configMachinGroupeRpmsPath" ]; then
-		informationMessage FAIL "Machine-group $machineGroup missing machine-group rpms folder $configMachinGroupeRpmsPath"
+	machine_group_configRpmsPath="$machine_group_configPath"/rpms
+	if [ ! -d "$machine_group_configRpmsPath" ]; then
+		informationMessage FAIL "Machine-group ${machineGroupName} missing machine-group rpms folder $machine_group_configRpmsPath"
 		exit 1
 	fi
 	
-	configMachineGroupConfigurationPath="$configMachineGroupPath"/configuration
-	if [ ! -f "$configMachineGroupConfigurationPath" ]; then
-		informationMessage FAIL "Machine group $machineGroup missing machine-group configuration file $configMachineGroupPackagesPath"
+	machine_group_configConfigurationFilePath="$machine_group_configPath"/configuration
+	if [ ! -f "$machine_group_configConfigurationFilePath" ]; then
+		informationMessage FAIL "Machine group ${machineGroupName} missing machine-group configuration file $machine_group_configPackagesFilePath"
 		exit 1
 	fi
 
-	configMachineGroupGeneratorsPath="$configMachineGroupPath"/generators
-	if [ ! -d "$configMachineGroupGeneratorsPath" ]; then
-		informationMessage FAIL "Machine-group $machineGroup missing machine-group generators path $configMachineGroupGeneratorsPath"
+	machine_group_configGeneratorsPath="$machine_group_configPath"/generators
+	if [ ! -d "$machine_group_configGeneratorsPath" ]; then
+		informationMessage FAIL "Machine-group ${machineGroupName} missing machine-group generators path $machine_group_configGeneratorsPath"
 		exit 1
 	fi
 	
-	configMachineGroupUnderlaysPath="$configMachineGroupPath"/underlays
-	if [ ! -d "$configMachineGroupUnderlaysPath" ]; then
-		informationMessage FAIL "Machine-group $machineGroup missing machine-group underlays folder $configMachineGroupUnderlaysPath"
+	machine_group_configUnderlaysPath="$machine_group_configPath"/underlays
+	if [ ! -d "$machine_group_configUnderlaysPath" ]; then
+		informationMessage FAIL "Machine-group ${machineGroupName} missing machine-group underlays folder $machine_group_configUnderlaysPath"
 		exit 1
 	fi
 	
-	configMachineGroupOverlaysPath="$configMachineGroupPath"/overlays
-	if [ ! -d "$configMachineGroupOverlaysPath" ]; then
-		informationMessage FAIL "Machine-group $machineGroup missing machine-group overlays folder $configMachineGroupOverlaysPath"
+	machine_group_configOverlaysPath="$machine_group_configPath"/overlays
+	if [ ! -d "$machine_group_configOverlaysPath" ]; then
+		informationMessage FAIL "Machine-group ${machineGroupName} missing machine-group overlays folder $machine_group_configOverlaysPath"
+		exit 1
+	fi
+	
+	machine_group_machinesPath="$machine_group_configPath"/machines
+	if [ ! -d "$machine_group_machinesPath" ]; then
+		informationMessage FAIL "Missing machine-group machines path $machine_group_machinesPath"
 		exit 1
 	fi
 }
 machine_group_functions+=(machine_group_prepareConfigPaths)
 
+machine_group_cachePath=""
+machine_group_cacheMachinesPath=""
+machine_group_cacheOverlaysGeneratedPath=""
 function machine_group_prepareCachePaths()
 {
-	machinesPath="$configMachineGroupPath"/machines
-	if [ ! -d "$machinesPath" ]; then
-		informationMessage FAIL "Missing machine-group machines path $machinesPath"
-		exit 1
-	fi
-	
-	cacheMachineGroupPath="$cachePath"/machine-groups/"$machineGroup"
+	machine_group_cachePath="$cachePath"/machine-groups/"${machineGroupName}"
 
-	cacheMachineGroupMachinesPath="$cacheMachineGroupPath"/machines
+	machine_group_cacheMachinesPath="$machine_group_cachePath"/machines
 
-	cacheMachineGroupOverlaysGeneratedPath="$cacheMachineGroupPath"/overlays
+	machine_group_cacheOverlaysGeneratedPath="$machine_group_cachePath"/overlays/generated
 }
 machine_group_functions+=(machine_group_prepareCachePaths)
 
 function machine_group_cleanUpCache()
 {
-	pushd "$cacheMachineGroupPath"/.. 1>/dev/null 2>/dev/null
+	pushd "$machine_group_cachePath"/.. 1>/dev/null 2>/dev/null
 		local cachedMachineGroup
 		for cachedMachineGroup in *
 		do
@@ -96,33 +107,33 @@ machine_group_functions+=(machine_group_defaultConfiguration)
 
 function machine_group_sourceConfiguration()
 {
-	source "$configMachineGroupConfigurationPath"
+	source "$machine_group_configConfigurationFilePath"
 }
 machine_group_functions+=(machine_group_sourceConfiguration)
 
 machine_group_packageNames=()
 function machine_group_readPackages()
 {
-	mapfile -t machine_group_packageNames < <(configuration_readPackageNames "$configMachineGroupPackagesPath")
+	mapfile -t machine_group_packageNames < <(configuration_readPackageNames "$machine_group_configPackagesFilePath")
 }
 machine_group_functions+=(machine_group_readPackages)
 
 machine_group_rpmFiles=()
 function machine_group_readRpmFiles()
 {
-	mapfile -t machine_group_rpmFiles < <(configuration_readRpmFiles "$configMachinGroupeRpmsPath")
+	mapfile -t machine_group_rpmFiles < <(configuration_readRpmFiles "$machine_group_configRpmsPath")
 }
 machine_group_functions+=(machine_group_readRpmFiles)
 
 function machine_group_makeCacheFolders()
 {
-	mkdir -m 0755 -p "$cacheMachineGroupPath"
+	mkdir -m 0755 -p "$machine_group_cachePath"
 	
-	rm -rf "$cacheMachineGroupMachinesPath"
-	mkdir -m 0755 -p "$cacheMachineGroupMachinesPath"
+	rm -rf "$machine_group_cacheMachinesPath"
+	mkdir -m 0755 -p "$machine_group_cacheMachinesPath"
 	
-	rm -rf "$cacheMachineGroupOverlaysGeneratedPath"
-	mkdir -m 0755 -p "$cacheMachineGroupOverlaysGeneratedPath"
+	rm -rf "$machine_group_cacheOverlaysGeneratedPath"
+	mkdir -m 0755 -p "$machine_group_cacheOverlaysGeneratedPath"
 }
 machine_group_functions+=(machine_group_makeCacheFolders)
 
@@ -130,7 +141,7 @@ machine_group_knownMachines=()
 function machine_group_determineKnownMachines()
 {
 	machine_group_knownMachines=()
-	pushd "$machinesPath" 1>/dev/null 2>/dev/null
+	pushd "$machine_group_machinesPath" 1>/dev/null 2>/dev/null
 		local knownMachine
 		for knownMachine in *
 		do
@@ -145,22 +156,22 @@ machine_group_functions+=(machine_group_determineKnownMachines)
 
 function machine_group_sourceGenerators()
 {
-	# Relies on $cacheMachineGroupOverlaysGeneratedPath
-	generators_source "machine-group" "$configMachineGroupGeneratorsPath"
+	# Relies on $machine_group_cacheOverlaysGeneratedPath
+	generators_source "machine-group" "$machine_group_configGeneratorsPath"
 }
 machine_group_functions+=(machine_group_sourceGenerators)
 
-machines=()
+machine_group_machineNames=()
 function machine_group_determineMachines()
 {
-	machines=()
-	pushd "$machinesPath" 1>/dev/null 2>/dev/null
+	machine_group_machineNames=()
+	pushd "$machine_group_machinesPath" 1>/dev/null 2>/dev/null
 		
 		local machineName
 		for machineName in *
 		do
 			if [ -e "$machineName" ]; then
-				machines+=("$machineName")
+				machine_group_machineNames+=("$machineName")
 			fi
 		done
 		
@@ -170,36 +181,36 @@ machine_group_functions+=(machine_group_determineMachines)
 
 function machine_group_buildMachines()
 {
-	local machine
+	local machineName
 	local machine_function
-	for machine in "${machines[@]}"
+	for machineName in "${machine_group_machineNames[@]}"
 	do
 		for machine_function in "${machine_functions[@]}"
 		do
 			# NICs
-			declare -A machine_nicsConfigurationMac
-			declare -A machine_nicsConfigurationVariant
+			declare -A machine_configuration_nicsMac
+			declare -A machine_configuration_nicsVariant
 			
 			# Disks
-			declare -A machine_disksConfigurationSize
-			declare -A machine_disksConfigurationMountPoint
-			declare -A machine_disksConfigurationFilesystemType
-			declare -A machine_disksConfigurationBlockSize
-			declare -A machine_disksConfigurationDiskImagePath
-			declare -A machine_disksConfigurationImageMountPath
-			declare -A machine_disksConfigurationVolumeLabel16Bytes
-			declare -A machine_disksConfigurationUuid
-			declare -A machine_disksConfigurationOptions
-			declare -A machine_disksConfigurationMountOptions
-			declare -A machine_disksConfigurationDumpOptions
-			declare -A machine_disksConfigurationFsckOptions
-			declare -A machine_disksConfigurationShrinkDisk
-			declare -A machine_disksConfigurationBootable
+			declare -A machine_configuration_disksSize
+			declare -A machine_configuration_disksMountPoint
+			declare -A machine_configuration_disksFilesystemType
+			declare -A machine_configuration_disksBlockSize
+			declare -A machine_configuration_disksDiskImagePath
+			declare -A machine_configuration_disksImageMountPath
+			declare -A machine_configuration_disksVolumeLabel16Bytes
+			declare -A machine_configuration_disksUuid
+			declare -A machine_configuration_disksOptions
+			declare -A machine_configuration_disksMountOptions
+			declare -A machine_configuration_disksDumpOptions
+			declare -A machine_configuration_disksFsckOptions
+			declare -A machine_configuration_disksShrinkDisk
+			declare -A machine_configuration_disksBootable
 			# not for configuration
-			declare -A machine_disksConfigurationPartitionImagePath
-			declare -A machine_disksConfigurationLoopbackDevice
+			declare -A machine_derived_disksPartitionImagePath
+			declare -A machine_derived_disksLoopbackDevice
 			
-			informationMessage INFO "${tab}${tab}${machine} ${machine_function}"
+			informationMessage INFO "${tab}${tab}${machineName} ${machine_function}"
 			$machine_function
 		done
 	done

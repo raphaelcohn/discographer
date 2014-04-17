@@ -2,11 +2,11 @@ disk_unmount_functions=()
 
 function disk_unmount_optimiseDisk()
 {
-	case "${machine_disksConfigurationFilesystemType["$disk"]}" in
+	case "${machine_configuration_disksFilesystemType["$disk"]}" in
 	
 		ext2|ext3|ext4)
-			e2fsck -D -f "${machine_disksConfigurationPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
-			tune2fs -f -c 0 -C 0 -i 36m -M "${machine_disksConfigurationPartitionImagePath["$disk"]}" -u 0 -g 0 "${machine_disksConfigurationPartitionImagePath["$disk"]}"
+			e2fsck -D -f "${machine_derived_disksPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
+			tune2fs -f -c 0 -C 0 -i 36m -M "${machine_derived_disksPartitionImagePath["$disk"]}" -u 0 -g 0 "${machine_derived_disksPartitionImagePath["$disk"]}"
 		;;
 	
 		*)
@@ -18,7 +18,7 @@ disk_unmount_functions+=(disk_unmount_optimiseDisk)
 
 function disk_unmount_shrinkDiskImage()
 {
-	if [ "${machine_disksConfigurationShrinkDisk["$disk"]}" != "yes" ]; then
+	if [ "${machine_configuration_disksShrinkDisk["$disk"]}" != "yes" ]; then
 		return 0
 	fi
 	
@@ -46,7 +46,7 @@ function disk_unmount_shrinkDiskImage()
 	
 	esac
 	
-	case "${machine_disksConfigurationFilesystemType["$disk"]}" in
+	case "${machine_configuration_disksFilesystemType["$disk"]}" in
 		
 		ext2|ext3|ext4)
 			:
@@ -57,13 +57,13 @@ function disk_unmount_shrinkDiskImage()
 		;;
 	esac
 	
-	machineDiskBlockSize=${machine_disksConfigurationBlockSize["$disk"]}
+	configuration_disk_blockSize=${machine_configuration_disksBlockSize["$disk"]}
 	
-	local -ir minimumSize="$(resize2fs -P "${machine_disksConfigurationPartitionImagePath["$disk"]}" 2>/dev/null | awk '{print $7}')"
-	resize2fs -M "${machine_disksConfigurationPartitionImagePath["$disk"]}" 2>/dev/null
+	local -ir minimumSize="$(resize2fs -P "${machine_derived_disksPartitionImagePath["$disk"]}" 2>/dev/null | awk '{print $7}')"
+	resize2fs -M "${machine_derived_disksPartitionImagePath["$disk"]}" 2>/dev/null
 	
-	local -ir shrinkSizeInBytes=$((minimumSize*machineDiskBlockSize))
-	truncate -s $shrinkSizeInBytes "${machine_disksConfigurationDiskImagePath["$disk"]}"
+	local -ir shrinkSizeInBytes=$((minimumSize*configuration_disk_blockSize))
+	truncate -s $shrinkSizeInBytes "${machine_configuration_disksDiskImagePath["$disk"]}"
 }
 disk_unmount_functions+=(disk_unmount_shrinkDiskImage)
 
@@ -79,8 +79,8 @@ function disk_unmount_image()
 		
 		dos)
 			# mounting_unmountDisk should tak the original disk image path, not the loopback device created, but doesn't...
-			#mounting_unmountDisk "${machine_disksConfigurationDiskImagePath["$disk"]}"
-			mounting_unmountDisk "${machine_disksConfigurationLoopbackDevice["$disk"]}"
+			#mounting_unmountDisk "${machine_configuration_disksDiskImagePath["$disk"]}"
+			mounting_unmountDisk "${machine_derived_disksLoopbackDevice["$disk"]}"
 		;;
 		
 		bsd|solaris|unixware)
@@ -108,7 +108,7 @@ function disk_unmount_backupMasterBootRecord()
 		;;
 		
 		dos)
-			dd bs=512 count=1 conv=notrunc if="${machine_disksConfigurationDiskImagePath["$disk"]}" of="$cacheMachineArtefactsPath"/"$disk".mbr.bak
+			dd bs=512 count=1 conv=notrunc if="${machine_configuration_disksDiskImagePath["$disk"]}" of="$machine_cacheArtefactsPath"/"$disk".mbr.bak
 		;;
 		
 		bsd|solaris|unixware)

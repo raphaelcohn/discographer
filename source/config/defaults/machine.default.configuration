@@ -1,27 +1,27 @@
-machineDistribution=centos
-machineDistributionMajorRevision=6
-machineDistributionReleaseRpm=${machineDistribution}-release-${machineDistributionMajorRevision}-5.el6.centos.11.1.x86_64.rpm
-machineDistributionReleaseRpmUrl=http://mirror.centos.org/centos/${machineDistributionMajorRevision}/os/x86_64/Packages/${machineDistributionReleaseRpm}
+configuration_machine_distribution=centos
+configuration_machine_distributionMajorRevision=6
+configuration_machine_distributionReleaseRpm=${configuration_machine_distribution}-release-${configuration_machine_distributionMajorRevision}-5.el6.centos.11.1.x86_64.rpm
+configuration_machine_distributionReleaseRpmUrl=http://mirror.centos.org/centos/${configuration_machine_distributionMajorRevision}/os/x86_64/Packages/${configuration_machine_distributionReleaseRpm}
 
-machineNetworkType=NAT
-machineCpuCount=1
-machineRamSizeMegabytes=2048
-machineDiskControllerHardwareKind=SATA
-machineDiskControllerHardwareImplementation=AHCI
-machineKernelAdditionalOptions="selinux=0 vga=773"
-machineForceDefaultBoot=no
+configuration_machine_networkKind=NAT
+configuration_machine_cpusCount=1
+configuration_machine_memoryMegabytes=2048
 
-# Can we get this from machineDistribution?
-machineOperatingSystemId=94
-machineOperatingSystemName=Ubuntu_64
+configuration_machine_diskControllerKind=SATA
+configuration_machine_diskControllerImplementation=AHCI
+
+configuration_machine_kernelAdditionalOptions="selinux=0 vga=773"
+configuration_machine_forceDefaultBoot=no
+
+# Can we get this from configuration_machine_distribution?
+configuration_machine_operatingSystemId=94
+configuration_machine_operatingSystemName=Ubuntu_64
 
 
-machineHypervisorName=qemu
-machineHypervisorDiskFormat=qcow2
-machineHypervisorMetadataOutputFormat=native
+configuration_machine_hypervisorName=qemu
+configuration_machine_hypervisorDiskFormat=qcow2
+configuration_machine_hypervisorMetadataFormat=native
 
-machineSystemType=virtualbox-2.2
-machineUuid=fc257547-2062-44cd-9735-13b1994ced19
-machineLastStateChangeTimestamp=2014-03-13T17:30:21Z
-
-# Kernel root parameter: root=/dev/disk/by-label/root
+configuration_machine_hypervisorOvfSystemType=virtualbox-2.2
+configuration_machine_uuid=fc257547-2062-44cd-9735-13b1994ced19
+configuration_machine_lastStateChangeTimestamp=2014-03-13T17:30:21Z

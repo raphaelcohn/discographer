@@ -2,7 +2,7 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 {
 	local -r hypervisorName="$1"
 	
-	case "$machineHypervisorName" in
+	case "$configuration_machine_hypervisorName" in
 		
 		kvm)
 			# essentially the same as qemu, but produces a slightly different native format
@@ -25,10 +25,10 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 		
 		# Confine drive: http://www.elstel.org/qemu/
 		qemu)
-			case "$machineHypervisorDiskFormat" in
+			case "$configuration_machine_hypervisorDiskFormat" in
 				
 				auto|unpartitioned)
-					machineHypervisorDiskFormat=raw
+					configuration_machine_hypervisorDiskFormat=raw
 					machineHypervisorDiskExtension=unpartitioned
 					machineHypervisorDiskPartioning=unpartitioned
 				;;
@@ -44,13 +44,13 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 				;;
 				
 				*)
-					informationMessage FAIL "A machineHypervisorDiskFormat of $machineHypervisorDiskFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					informationMessage FAIL "A configuration_machine_hypervisorDiskFormat of $configuration_machine_hypervisorDiskFormat is not supported for a configuration_machine_hypervisorName of $configuration_machine_hypervisorName"
 					exitError1
 				;;
 				
 			esac
 			
-			case "$machineHypervisorMetadataOutputFormat" in
+			case "$configuration_machine_hypervisorMetadataFormat" in
 				
 				# native format will vary depending on whether we use unpartioned disks or not
 				none|native)
@@ -58,7 +58,7 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 				;;
 				
 				*)
-					informationMessage FAIL "A machineHypervisorFormat of $machineHypervisorMetadataOutputFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					informationMessage FAIL "A machineHypervisorFormat of $configuration_machine_hypervisorMetadataFormat is not supported for a configuration_machine_hypervisorName of $configuration_machine_hypervisorName"
 					exitError 1
 				;;
 				
@@ -67,22 +67,22 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 		
 		vmware)
 			
-			case "$machineHypervisorDiskFormat" in
+			case "$configuration_machine_hypervisorDiskFormat" in
 				
 				auto|vmdk)
-					machineHypervisorDiskFormat=vmdk
+					configuration_machine_hypervisorDiskFormat=vmdk
 					machineHypervisorDiskExtension=vmdk
 					machineHypervisorDiskPartioning=dos
 				;;
 				
 				*)
-					informationMessage FAIL "A machineHypervisorDiskFormat of $machineHypervisorDiskFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					informationMessage FAIL "A configuration_machine_hypervisorDiskFormat of $configuration_machine_hypervisorDiskFormat is not supported for a configuration_machine_hypervisorName of $configuration_machine_hypervisorName"
 					exitError1
 				;;
 				
 			esac
 			
-			case "$machineHypervisorMetadataOutputFormat" in
+			case "$configuration_machine_hypervisorMetadataFormat" in
 				
 				# native is probably vmx, might be vmc
 				none|native|ovf2|ova2)
@@ -90,7 +90,7 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 				;;
 				
 				*)
-					informationMessage FAIL "A machineHypervisorFormat of $machineHypervisorMetadataOutputFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					informationMessage FAIL "A machineHypervisorFormat of $configuration_machine_hypervisorMetadataFormat is not supported for a configuration_machine_hypervisorName of $configuration_machine_hypervisorName"
 					exitError 1
 				;;
 				
@@ -99,19 +99,19 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 		
 		virtualbox)
 			
-			case "$machineHypervisorDiskFormat" in
+			case "$configuration_machine_hypervisorDiskFormat" in
 				
 				auto)
-					case "$machineHypervisorMetadataOutputFormat" in
+					case "$configuration_machine_hypervisorMetadataFormat" in
 						
 						ovf2|ova2)
-							machineHypervisorMetadataOutputFormat=vmdk
+							configuration_machine_hypervisorMetadataFormat=vmdk
 							machineHypervisorDiskExtension=vmdk
 							machineHypervisorDiskPartioning=dos
 						;;
 						
 						*)
-							machineHypervisorDiskFormat=vdi
+							configuration_machine_hypervisorDiskFormat=vdi
 							machineHypervisorDiskExtension=vdi
 							machineHypervisorDiskPartioning=dos
 						;;
@@ -120,22 +120,22 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 				;;
 				
 				vdi)
-					machineHypervisorDiskFormat=vdi
+					configuration_machine_hypervisorDiskFormat=vdi
 					machineHypervisorDiskExtension=vdi
 					machineHypervisorDiskPartioning=dos
 				;;
 				
 				vmdk)
-					case "$machineHypervisorMetadataOutputFormat" in
+					case "$configuration_machine_hypervisorMetadataFormat" in
 						
 						ovf2|ova2)
-							machineHypervisorMetadataOutputFormat=vmdk
+							configuration_machine_hypervisorMetadataFormat=vmdk
 							machineHypervisorDiskExtension=vmdk
 							machineHypervisorDiskPartioning=dos
 						;;
 						
 						*)
-							informationMessage FAIL "A machineHypervisorDiskFormat of $machineHypervisorDiskFormat is not supported for a machineHypervisorName of $machineHypervisorName when machineHypervisorMetadataOutputFormat is $machineHypervisorMetadataOutputFormat"
+							informationMessage FAIL "A configuration_machine_hypervisorDiskFormat of $configuration_machine_hypervisorDiskFormat is not supported for a configuration_machine_hypervisorName of $configuration_machine_hypervisorName when configuration_machine_hypervisorMetadataFormat is $configuration_machine_hypervisorMetadataFormat"
 							exitError1
 						;;
 						
@@ -143,20 +143,20 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 				;;
 				
 				*)
-					informationMessage FAIL "A machineHypervisorDiskFormat of $machineHypervisorDiskFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					informationMessage FAIL "A configuration_machine_hypervisorDiskFormat of $configuration_machine_hypervisorDiskFormat is not supported for a configuration_machine_hypervisorName of $configuration_machine_hypervisorName"
 					exitError1
 				;;
 				
 			esac
 			
-			case "$machineHypervisorMetadataOutputFormat" in
+			case "$configuration_machine_hypervisorMetadataFormat" in
 				
 				none|native|ovf2|ova2)
 					:
 				;;
 				
 				*)
-					informationMessage FAIL "A machineHypervisorFormat of $machineHypervisorMetadataOutputFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					informationMessage FAIL "A machineHypervisorFormat of $configuration_machine_hypervisorMetadataFormat is not supported for a configuration_machine_hypervisorName of $configuration_machine_hypervisorName"
 					exitError 1
 				;;
 				
@@ -165,22 +165,22 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 		
 		parallels)
 			
-			case "$machineHypervisorDiskFormat" in
+			case "$configuration_machine_hypervisorDiskFormat" in
 				
 				auto|hdd)
-					machineHypervisorDiskFormat=hdd
+					configuration_machine_hypervisorDiskFormat=hdd
 					machineHypervisorDiskExtension=hdd
 					machineHypervisorDiskPartioning=dos
 				;;
 				
 				*)
-					informationMessage FAIL "A machineHypervisorDiskFormat of $machineHypervisorDiskFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					informationMessage FAIL "A configuration_machine_hypervisorDiskFormat of $configuration_machine_hypervisorDiskFormat is not supported for a configuration_machine_hypervisorName of $configuration_machine_hypervisorName"
 					exitError1
 				;;
 				
 			esac
 			
-			case "$machineHypervisorMetadataOutputFormat" in
+			case "$configuration_machine_hypervisorMetadataFormat" in
 				
 				none|native)
 					:
@@ -188,7 +188,7 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 				
 				# ovf2 / ova2 is not supported (yet) for parallels
 				*)
-					informationMessage FAIL "A machineHypervisorFormat of $machineHypervisorMetadataOutputFormat is not supported for a machineHypervisorName of $machineHypervisorName"
+					informationMessage FAIL "A machineHypervisorFormat of $configuration_machine_hypervisorMetadataFormat is not supported for a configuration_machine_hypervisorName of $configuration_machine_hypervisorName"
 					exitError 1
 				;;
 				
@@ -196,7 +196,7 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 		;;
 		
 		*)
-			informationMessage FAIL "A machineHypervisorName of $machineHypervisorName is not supported"
+			informationMessage FAIL "A configuration_machine_hypervisorName of $configuration_machine_hypervisorName is not supported"
 			exitError 1
 		;;
 	esac

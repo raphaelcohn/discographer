@@ -1,4 +1,5 @@
-machineDistribution=centos
-machineDistributionMajorRevision=6
-machineDistributionReleaseRpm=${machineDistribution}-release-${machineDistributionMajorRevision}-5.el6.centos.11.1.x86_64.rpm
-machineDistributionReleaseRpmUrl=http://mirror.centos.org/centos/${machineDistributionMajorRevision}/os/x86_64/Packages/${machineDistributionReleaseRpm}
+configuration_machine_distribution=centos
+configuration_machine_distributionMajorRevision=6
+configuration_machine_distributionReleaseRpm=${configuration_machine_distribution}-release-${configuration_machine_distributionMajorRevision}-5.el6.centos.11.1.x86_64.rpm
+configuration_machine_distributionReleaseRpmUrl=http://mirror.centos.org/centos/${configuration_machine_distributionMajorRevision}/os/x86_64/Packages/${configuration_machine_distributionReleaseRpm}
+

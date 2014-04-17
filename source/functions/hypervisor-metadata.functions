@@ -10,7 +10,7 @@ function hypervisor_metadata_xen()
 
 function hypervisor_metadata_qemu()
 {
-	case "$machineHypervisorMetadataOutputFormat" in
+	case "$configuration_machine_hypervisorMetadataFormat" in
 
 		native)
 			local -r qemuScript=""
@@ -46,8 +46,8 @@ function hypervisor_metadata_qemu()
 				    cd "$crudeOurPath" 1>/dev/null 2>/dev/null
 			EOF
 			cat >"$qemuScript" <<-EOF
-				    exec -a "qemu-kvm-${machine}" qemu-kvm \
-				        -m ${machineRamSizeMegabytes} \
+				    exec -a "qemu-kvm-${machineName}" qemu-kvm \
+				        -m ${configuration_machine_memoryMegabytes} \
 				        -kernel "${machineKernelFileName}" \
 				        -initrd "${machineInitramfsFileName}" \
 				        -append "${machineKernelOptions}"
@@ -74,7 +74,7 @@ function hypervisor_metadata_qemu()
 		;;
 
 		*)
-			informationMessage FAIL "qemu metadata machineHypervisorMetadataOutputFormat $machineHypervisorMetadataOutputFormat not supported"
+			informationMessage FAIL "qemu metadata configuration_machine_hypervisorMetadataFormat $configuration_machine_hypervisorMetadataFormat not supported"
 		;;
 
 	esac
@@ -82,7 +82,7 @@ function hypervisor_metadata_qemu()
 
 function hypervisor_metadata_vmware()
 {
-	case "$machineHypervisorMetadataOutputFormat" in
+	case "$configuration_machine_hypervisorMetadataFormat" in
 
 		native)
 			informationMessage WARN "*********** TODO: vmware native format [vmx or vmc] ****************"
@@ -97,7 +97,7 @@ function hypervisor_metadata_vmware()
 		;;
 		
 		*)
-			informationMessage FAIL "vmware metadata machineHypervisorMetadataOutputFormat $machineHypervisorMetadataOutputFormat not supported"
+			informationMessage FAIL "vmware metadata configuration_machine_hypervisorMetadataFormat $configuration_machine_hypervisorMetadataFormat not supported"
 		;;
 
 	esac
@@ -105,12 +105,12 @@ function hypervisor_metadata_vmware()
 
 function hypervisor_metadata_virtualbox()
 {
-	case "$machineHypervisorMetadataOutputFormat" in
+	case "$configuration_machine_hypervisorMetadataFormat" in
 	
 		native)
-			mkdir -m 0755 -p "$cacheMachineArtefactsPath"/Logs
-			mkdir -m 0755 -p "$cacheMachineArtefactsPath"/Snapshots
-			virtualbox_xml_VirtualBox >"$cacheMachineArtefactsPath"/"$machine".vbox
+			mkdir -m 0755 -p "$machine_cacheArtefactsPath"/Logs
+			mkdir -m 0755 -p "$machine_cacheArtefactsPath"/Snapshots
+			virtualbox_xml_VirtualBox >"$machine_cacheArtefactsPath"/"${machineName}".vbox
 		;;
 		
 		ovf2)
@@ -122,7 +122,7 @@ function hypervisor_metadata_virtualbox()
 		;;
 	
 		*)
-			informationMessage FAIL "virtualbox metadata machineHypervisorMetadataOutputFormat $machineHypervisorMetadataOutputFormat not supported"
+			informationMessage FAIL "virtualbox metadata configuration_machine_hypervisorMetadataFormat $configuration_machine_hypervisorMetadataFormat not supported"
 		;;
 	
 	esac
@@ -130,14 +130,14 @@ function hypervisor_metadata_virtualbox()
 
 function hypervisor_metadata_parallels()
 {
-	case "$machineHypervisorMetadataOutputFormat" in
+	case "$configuration_machine_hypervisorMetadataFormat" in
 		
 		native)
 			:
 		;;
 		
 		*)
-			informationMessage FAIL "parallels metadata machineHypervisorMetadataOutputFormat $machineHypervisorMetadataOutputFormat not supported"
+			informationMessage FAIL "parallels metadata configuration_machine_hypervisorMetadataFormat $configuration_machine_hypervisorMetadataFormat not supported"
 		;;
 		
 	esac
@@ -148,7 +148,7 @@ function hypervisor_metadata_parallels()
 
 function hypervisor_metadata_vmware_native()
 {
-	cat >"$cacheMachineArtefactsPath"/"${machine}.vmxf" <<-EOF
+	cat >"$machine_cacheArtefactsPath"/"${machineName}.vmxf" <<-EOF
 		<?xml version="1.0"?>
 		<Foundry>
 			<VM>
@@ -157,20 +157,20 @@ function hypervisor_metadata_vmware_native()
 					<clientMetaDataAttributes/>
 					<HistoryEventList/>
 				</ClientMetaData>
-				<vmxPathName type="string">${machine}.vmx</vmxPathName>
+				<vmxPathName type="string">${machineName}.vmx</vmxPathName>
 			</VM>
 		</Foundry>
 	EOF
 	
 	local -r machineGuestOs="rhel6-64"
 	
-	cat >"$cacheMachineArtefactsPath"/"${machine}.vmx" <<-EOF
+	cat >"$machine_cacheArtefactsPath"/"${machineName}.vmx" <<-EOF
 		.encoding = "UTF-8"
-		displayName = "${machine}"
-		extendedConfigFile = "${machine}.vmxf"
+		displayName = "${machineName}"
+		extendedConfigFile = "${machineName}.vmxf"
 		svga.vramSize = "8388608"
 		memSize = "2048"
-		nvram = "${machine}.nvram"
+		nvram = "${machineName}.nvram"
 		guestOS = "${machineGuestOs}"
 		cleanShutdown = "FALSE"
 		softPowerOff = "FALSE"
@@ -179,7 +179,7 @@ function hypervisor_metadata_vmware_native()
 		virtualHW.productCompatibility = "hosted"
 		uuid.bios = "42 05 e3 b8 29 4b 85 26-23 3c d5 da 8e fe cc bd"
 		vc.uuid = "50 05 b6 e6 87 c2 2f a2-42 30 47 5f 2c ce 4f a2"
-		sched.swap.derivedName = "/vmfs/volumes/531f2bfa-57b35c77-b683-005056b629c3/${machine}/${machine}-fd3c723e.vswp"
+		sched.swap.derivedName = "/vmfs/volumes/531f2bfa-57b35c77-b683-005056b629c3/${machineName}/${machineName}-fd3c723e.vswp"
 		uuid.location = "56 4d 92 b8 77 d5 59 9a-c5 98 3e 8e cd 4d 91 53"
 		tools.syncTime = "FALSE"
 		tools.upgrade.policy = "manual"
@@ -219,7 +219,7 @@ function hypervisor_metadata_vmware_native()
 		scsi0.present = "TRUE"
 		scsi0.sasWWID = "50 05 05 68 29 4b 85 20"
 		scsi0:0.deviceType = "scsi-hardDisk"
-		scsi0:0.fileName = "${machine}.vmdk"
+		scsi0:0.fileName = "${machineName}.vmdk"
 		scsi0:0.present = "TRUE"
 		scsi0:0.redo = ""
 		sata0.pciSlotNumber = "33"

@@ -3,7 +3,7 @@ mkdir -m 0755 -p "$sysconfigPath"
 
 cat >"$sysconfigPath"/network <<-EOF
 	NETWORKING=yes
-	HOSTNAME=$machine.localdomain
+	HOSTNAME=${machineName}.localdomain
 EOF
 
 sysconfigNetworkScriptsPath="$sysconfigPath"/network-scripts

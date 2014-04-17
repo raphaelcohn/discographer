@@ -1,11 +1,11 @@
 # Size is as for the  truncate  command
-machineDiskSize=256M
-machineDiskMountPoint=swap
-machineDiskFilesystemType=swap
-machineDiskBlockSize=4096
-machineDiskUuid=b5648dba-4758-4b59-8c13-6e12356a432e
-machineDiskOptions=
-machineDiskMountOptions=swap
-machineDiskDumpOptions=0
-machineDiskFsckOptions=0
-machineDiskShrink=no
+configuration_disk_size=256M
+configuration_disk_mountPoint=swap
+configuration_disk_filesystemType=swap
+configuration_disk_blockSize=4096
+configuration_disk_uuid=b5648dba-4758-4b59-8c13-6e12356a432e
+configuration_disk_filesystemOptions=
+configuration_disk_fstabMountOptions=swap
+configuration_disk_fstabMountDumpOptions=0
+configuration_disk_fstabMountFsckOptions=0
+configuration_disk_shrink=no
