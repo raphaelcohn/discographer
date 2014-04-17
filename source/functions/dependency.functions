@@ -112,3 +112,11 @@ function dependency_installDependencies()
 		$dependency_function
 	done
 }
+
+function dependency_isMacOSX()
+{
+	if [ "$(uname)" = "Darwin" ]; then
+		return 0
+	fi
+	return 1
+}

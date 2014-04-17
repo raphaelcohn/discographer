@@ -1,6 +1,6 @@
 function yum_wrapper()
 {
-	if [ "$(uname)" = "Darwin" ]; then
+	if dependency_isMacOSX; then
 		# yum does not exist in brew; installing via source has problems (msgfmt, broken Makefile, broken install utility; Python versioning)
 		return 0
 	fi
@@ -16,17 +16,17 @@ function yum_wrapper()
 
 function yum_wrapper_install()
 {
-	declare -a packageNames=("$@")
-	if [ ${#packageNames} -eq 0 ]; then
+	declare -a yumPackageNames=("$@")
+	if [ ${#yumPackageNames[@]} -eq 0 ]; then
 		return 0
 	fi
 
 	# We install packages individually like this so that if a package doesn't exist, we don't get an unintelligible error
 	# It does make installation slower
-	local packageName
-	for packageName in "${packageNames[@]}"
+	local yumPackageName
+	for yumPackageName in "${yumPackageNames[@]}"
 	do
-		yum_wrapper install "$packageName"
+		yum_wrapper install "$yumPackageName"
 	done
 }
 
@@ -34,12 +34,18 @@ function yum_wrapper_localInstall()
 {
 	local -r rpmsFolder="$1"
 	shift 1
-	declare -a rpmFiles="$@"
-	if [ ${#rpmFiles[@]} -eq 0 ]; then
+	declare -a yumRpmFiles="$@"
+	if [ ${#yumRpmFiles[@]} -eq 0 ]; then
 		return 0
 	fi
 	
 	pushd "$rpmsFolder" 1>/dev/null 2>/dev/null
-		yum_wrapper localinstall "${rpmFiles[@]}"
+		
+		local yumRpmFile
+		for yumRpmFile in "${yumRpmFiles[@]}"
+		do
+			yum_wrapper localinstall "$yumRpmFile"
+		done
+		
 	popd 1>/dev/null 2>/dev/null
 }

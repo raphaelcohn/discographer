@@ -24,6 +24,10 @@ function mounting_mountDisk()
 {
 	local -r diskFilePath="$1"
 	
+	if dependency_isMacOSX; then
+		return 0
+	fi
+	
 	# Done this way rather than as "$(kpartx ...)" so as to capture any exit codes due to lack of mount points
 	temporaryFileToRemoveOnExit
 	local -r outputFile="$TMP_FILE"
@@ -49,7 +53,7 @@ function mounting_mountLoopback()
 	
 	mkdir -m 0755 -p "$mountPath"
 	
-	if [ "$(uname)" = "Darwin" ]; then
+	if dependency_isMacOSX; then
 		#local -r devicePath="$(hdiutil attach -imagekey diskimage-class=CRawDiskImage -readwrite -noverify -noautopen -noautofsck -mountpoint "$mountPath" -nomount "$imagePath")"
 		#diskutil mount "$devicePath"
 		return 0
@@ -63,7 +67,7 @@ function mounting_mountBind()
 {
 	local -r mountPath="$1"
 	
-	if [ "$(uname)" = "Darwin" ]; then
+	if dependency_isMacOSX; then
 		return 0
 	fi
 	
@@ -76,8 +80,8 @@ function mounting_mountBind()
 function mounting_unmountLoopback()
 {
 	local -r mountPath="$1"
-
-	if [ "$(uname)" = "Darwin" ]; then
+	
+	if dependency_isMacOSX; then
 		return 0
 	fi
 	
@@ -91,7 +95,7 @@ function mounting_unmountBind()
 {
 	local -r mountPath="$1"
 	
-	if [ "$(uname)" = "Darwin" ]; then
+	if dependency_isMacOSX; then
 		return 0
 	fi
 	
@@ -105,7 +109,7 @@ function mounting_unmountDisk()
 {
 	local -r diskFilePath="$1"
 	
-	if [ "$(uname)" = "Darwin" ]; then
+	if dependency_isMacOSX; then
 		return 0
 	fi
 	
@@ -114,7 +118,8 @@ function mounting_unmountDisk()
 	fi
 	
 	# Doesn't seem to work, but kpartx -d /dev/loopN does - so we need to find the loop
-	kpartx -d -v "$diskFilePath"
+	kpartx -d "$diskFilePath"
+	losetup --detach "$diskFilePath"
 }
 
 mounting_mountPointsToRemoveOnExitPaths=()
