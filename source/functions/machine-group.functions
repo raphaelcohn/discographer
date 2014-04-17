@@ -61,7 +61,7 @@ function machine_group_prepareMachineGroupPaths()
 		exit 1
 	fi
 }
-machine_group_functions+=(prepareMachineGroupPaths)
+machine_group_functions+=(machine_group_prepareMachineGroupPaths)
 
 function machine_group_cleanUpMachineGroupsCache()
 {
@@ -87,33 +87,33 @@ function machine_group_cleanUpMachineGroupsCache()
 		done
 	popd 1>/dev/null 2>/dev/null
 }
-machine_group_functions+=(cleanUpMachineGroupsCache)
+machine_group_functions+=(machine_group_cleanUpMachineGroupsCache)
 
 function machine_group_machine_group_defaultMachineGroupConfiguration()
 {
 	configuration_sourceDefaultConfiguration "machine-group"
 }
-machine_group_functions+=(defaultMachineGroupConfiguration)
+machine_group_functions+=(machine_group_defaultMachineGroupConfiguration)
 
 function machine_group_sourceMachineGroupConfiguration()
 {
 	source "$configMachineGroupConfigurationPath"
 }
-machine_group_functions+=(sourceMachineGroupConfiguration)
+machine_group_functions+=(machine_group_sourceMachineGroupConfiguration)
 
 machineGroupPackageNames=()
 function machine_group_readMachineGroupPackages()
 {
 	mapfile -t machineGroupPackageNames < <(configuration_readPackageNames "$configMachineGroupPackagesPath")
 }
-machine_group_functions+=(readMachineGroupPackages)
+machine_group_functions+=(machine_group_readMachineGroupPackages)
 
 machineGroupRpmFiles=()
 function machine_group_readMachineGroupRpmFiles()
 {
 	mapfile -t machineGroupRpmFiles < <(configuration_readRpmFiles "$configMachinGroupeRpmsPath")
 }
-machine_group_functions+=(readMachineGroupRpmFiles)
+machine_group_functions+=(machine_group_readMachineGroupRpmFiles)
 
 knownMachines=()
 function machine_group_determineKnownMachines()
@@ -126,18 +126,18 @@ function machine_group_determineKnownMachines()
 			if [ ! -e "$knownMachine" ]; then
 				continue
 			fi
-			knownMachines+=("$knownMachine")
+			knownMachines+=(machine_group_"$knownMachine")
 		done
 	popd 1>/dev/null 2>/dev/null
 }
-machine_group_functions+=(determineKnownMachines)
+machine_group_functions+=(machine_group_determineKnownMachines)
 
 function machine_group_sourceMachineGroupGenerators()
 {
 	# Relies on $cacheMachineGroupOverlaysGeneratedPath
 	generators_source "machine-group" "$configMachineGroupGeneratorsPath"
 }
-machine_group_functions+=(sourceMachineGroupGenerators)
+machine_group_functions+=(machine_group_sourceMachineGroupGenerators)
 
 function machine_group_determineMachines()
 {
@@ -148,13 +148,13 @@ function machine_group_determineMachines()
 		for machineName in *
 		do
 			if [ -e "$machineName" ]; then
-				machines+=("$machineName")
+				machines+=(machine_group_"$machineName")
 			fi
 		done
 		
 	popd  1>/dev/null 2>/dev/null
 }
-machine_group_functions+=(determineMachines)
+machine_group_functions+=(machine_group_determineMachines)
 
 function machine_group_buildMachines()
 {
@@ -192,4 +192,4 @@ function machine_group_buildMachines()
 		done
 	done
 }
-machine_group_functions+=(buildMachines)
+machine_group_functions+=(machine_group_buildMachines)
