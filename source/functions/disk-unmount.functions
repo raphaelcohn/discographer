@@ -78,9 +78,9 @@ function disk_unmount_image()
 		;;
 		
 		dos)
-			# unmountDisk should tak the original disk image path, not the loopback device created, but doesn't...
-			#unmountDisk "${machineDisksConfigurationDiskImagePath["$disk"]}"
-			unmountDisk "${machineDisksConfigurationLoopbackDevice["$disk"]}"
+			# mounting_unmountDisk should tak the original disk image path, not the loopback device created, but doesn't...
+			#mounting_unmountDisk "${machineDisksConfigurationDiskImagePath["$disk"]}"
+			mounting_unmountDisk "${machineDisksConfigurationLoopbackDevice["$disk"]}"
 		;;
 		
 		bsd|solaris|unixware)
@@ -99,6 +99,6 @@ disk_unmount_functions+=(disk_unmount_image)
 
 function disk_unmount_convertImage()
 {
-	convertDiskImage_${machineHypervisorDiskExtension}
+	hypervisor_disk_convertDiskImage_${machineHypervisorDiskExtension}
 }
 disk_unmount_functions+=(disk_unmount_convertImage)

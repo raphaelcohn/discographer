@@ -8,6 +8,6 @@ disk_partitionMount_functions+=(disk_partitionMount_createPartitionMountpoint)
 
 function disk_partitionMount_mountPartition()
 {
-	mountLoopback "${machineDisksConfigurationFilesystemType["$disk"]}" "${machineDisksConfigurationPartitionImagePath["$disk"]}" "${machineDisksConfigurationImageMountPath["$disk"]}"
+	mounting_mountLoopback "${machineDisksConfigurationFilesystemType["$disk"]}" "${machineDisksConfigurationPartitionImagePath["$disk"]}" "${machineDisksConfigurationImageMountPath["$disk"]}"
 }
 disk_partitionMount_functions+=(disk_partitionMount_mountPartition)

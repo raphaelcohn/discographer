@@ -1,16 +1,16 @@
-function xml_VirtualBox()
+function virtualbox_xml_VirtualBox()
 {
 	local indentation=""
 	
 	xml_version
-	xml_start "xmlns='http://www.innotek.de/VirtualBox-settings' version='1.12-macosx'"
+	xml_start "VirtualBox xmlns='http://www.innotek.de/VirtualBox-settings' version='1.12-macosx'"
 		
-		xml_VirtualBox_Machine "no"
+		virtualbox_xml_VirtualBox_Machine "no"
 	
-	xml_end "Envelope"
+	xml_end "VirtualBox"
 }
 
-function xml_VirtualBox_Machine()
+function virtualbox_xml_VirtualBox_Machine()
 {
 	local -r isOvf="$1"
 	if [ "$isOvf" = "yes" ]; then
@@ -26,18 +26,18 @@ function xml_VirtualBox_Machine()
 		if [ "$isOvf" = "yes" ]; then
 			indented "<ovf:Info>Complete VirtualBox machine configuration in VirtualBox format</ovf:Info>"
 		else
-			xml_VirtualBox_Machine_MediaRegistry
+			virtualbox_xml_VirtualBox_Machine_MediaRegistry
 		fi
 		
-		xml_VirtualBox_Machine_ExtraData
-		xml_VirtualBox_Machine_Snapshot
-		xml_VirtualBox_Machine_Hardware
-		xml_VirtualBox_Machine_StorageControllers
+		virtualbox_xml_VirtualBox_Machine_ExtraData
+		virtualbox_xml_VirtualBox_Machine_Snapshot
+		virtualbox_xml_VirtualBox_Machine_Hardware
+		virtualbox_xml_VirtualBox_Machine_StorageControllers
 		
-	xml_end "vbox:Machine"
+	xml_end "${vboxNamespace}Machine"
 }
 
-function xml_VirtualBox_Machine_MediaRegistry()
+function virtualbox_xml_VirtualBox_Machine_MediaRegistry()
 {
 	xml_start "MediaRegistry"
 		
@@ -64,7 +64,7 @@ function xml_VirtualBox_Machine_MediaRegistry()
 	xml_end "MediaRegistry"
 }
 
-function xml_VirtualBox_Machine_ExtraData()
+function virtualbox_xml_VirtualBox_Machine_ExtraData()
 {
 	xml_start "ExtraData"
 		
@@ -75,45 +75,45 @@ function xml_VirtualBox_Machine_ExtraData()
 	xml_end "ExtraData"
 }
 
-function xml_VirtualBox_Machine_Snapshot()
+function virtualbox_xml_VirtualBox_Machine_Snapshot()
 {
-	# Looks liks xml_VirtualBox_Machine_Hardware, but with uuid="{9390c488-6e53-4cb1-a7c7-547b8dd5fd63}" name="With DKMS and SSHFS" timeStamp="2014-03-11T07:19:43Z" stateFile="Snapshots/2014-03-11T07-19-43-499835000Z.sav" instead of version=2
+	# Looks liks virtualbox_xml_VirtualBox_Machine_Hardware, but with uuid="{9390c488-6e53-4cb1-a7c7-547b8dd5fd63}" name="With DKMS and SSHFS" timeStamp="2014-03-11T07:19:43Z" stateFile="Snapshots/2014-03-11T07-19-43-499835000Z.sav" instead of version=2
 	:
 }
 
-function xml_VirtualBox_Machine_Hardware()
+function virtualbox_xml_VirtualBox_Machine_Hardware()
 {
 	xml_start "Hardware version='2'"
 		
-		xml_VirtualBox_Machine_Hardware_CPU
-		xml_VirtualBox_Machine_Hardware_Memory
-		xml_VirtualBox_Machine_Hardware_HID
-		xml_VirtualBox_Machine_Hardware_HPET
-		xml_VirtualBox_Machine_Hardware_Chipset
-		xml_VirtualBox_Machine_Hardware_Boot
-		xml_VirtualBox_Machine_Hardware_Display
-		xml_VirtualBox_Machine_Hardware_Videocapture
-		xml_VirtualBox_Machine_Hardware_RemoteDisplay
-		xml_VirtualBox_Machine_Hardware_BIOS
-		xml_VirtualBox_Machine_Hardware_USBController
-		xml_VirtualBox_Machine_Hardware_Network
-		xml_VirtualBox_Machine_Hardware_UART
-		xml_VirtualBox_Machine_Hardware_LPT
-		xml_VirtualBox_Machine_Hardware_AudioAdapter
-		xml_VirtualBox_Machine_Hardware_RTC
-		xml_VirtualBox_Machine_Hardware_SharedFolders
-		xml_VirtualBox_Machine_Hardware_Clipboard
-		xml_VirtualBox_Machine_Hardware_DragAndDrop
-		xml_VirtualBox_Machine_Hardware_IO
-		xml_VirtualBox_Machine_Hardware_HostPci
-		xml_VirtualBox_Machine_Hardware_EmulatedUSB
-		xml_VirtualBox_Machine_Hardware_Guest
-		xml_VirtualBox_Machine_Hardware_GuestProperties
+		virtualbox_xml_VirtualBox_Machine_Hardware_CPU
+		virtualbox_xml_VirtualBox_Machine_Hardware_Memory
+		virtualbox_xml_VirtualBox_Machine_Hardware_HID
+		virtualbox_xml_VirtualBox_Machine_Hardware_HPET
+		virtualbox_xml_VirtualBox_Machine_Hardware_Chipset
+		virtualbox_xml_VirtualBox_Machine_Hardware_Boot
+		virtualbox_xml_VirtualBox_Machine_Hardware_Display
+		virtualbox_xml_VirtualBox_Machine_Hardware_Videocapture
+		virtualbox_xml_VirtualBox_Machine_Hardware_RemoteDisplay
+		virtualbox_xml_VirtualBox_Machine_Hardware_BIOS
+		virtualbox_xml_VirtualBox_Machine_Hardware_USBController
+		virtualbox_xml_VirtualBox_Machine_Hardware_Network
+		virtualbox_xml_VirtualBox_Machine_Hardware_UART
+		virtualbox_xml_VirtualBox_Machine_Hardware_LPT
+		virtualbox_xml_VirtualBox_Machine_Hardware_AudioAdapter
+		virtualbox_xml_VirtualBox_Machine_Hardware_RTC
+		virtualbox_xml_VirtualBox_Machine_Hardware_SharedFolders
+		virtualbox_xml_VirtualBox_Machine_Hardware_Clipboard
+		virtualbox_xml_VirtualBox_Machine_Hardware_DragAndDrop
+		virtualbox_xml_VirtualBox_Machine_Hardware_IO
+		virtualbox_xml_VirtualBox_Machine_Hardware_HostPci
+		virtualbox_xml_VirtualBox_Machine_Hardware_EmulatedUSB
+		virtualbox_xml_VirtualBox_Machine_Hardware_Guest
+		virtualbox_xml_VirtualBox_Machine_Hardware_GuestProperties
 		
 	xml_end "Hardware"
 }
 
-function xml_VirtualBox_Machine_Hardware_CPU()
+function virtualbox_xml_VirtualBox_Machine_Hardware_CPU()
 {
 	xml_start "CPU count='2' hotpluug='false'"
 	
@@ -128,28 +128,28 @@ function xml_VirtualBox_Machine_Hardware_CPU()
 	xml_end "CPU"
 }
 
-function xml_VirtualBox_Machine_Hardware_Memory()
+function virtualbox_xml_VirtualBox_Machine_Hardware_Memory()
 {
 	xml_selfclose "Memory RAMSize='${machineRamSizeMegabytes} PageFusion='false'"
 }
 
-function xml_VirtualBox_Machine_Hardware_HID()
+function virtualbox_xml_VirtualBox_Machine_Hardware_HID()
 {
 	xml_selfclose "HID Pointing='PS2Mouse Keyboard='PS2Keyboard'"
 }
 
-function xml_VirtualBox_Machine_Hardware_HPET()
+function virtualbox_xml_VirtualBox_Machine_Hardware_HPET()
 {
 	xml_selfclose "HPET enabled='false'"
 }
 
-function xml_VirtualBox_Machine_Hardware_Chipset()
+function virtualbox_xml_VirtualBox_Machine_Hardware_Chipset()
 {
 	# Also PIIX3
 	xml_selfclose "Chipset type='ICH9'"
 }
 
-function xml_VirtualBox_Machine_Hardware_Boot()
+function virtualbox_xml_VirtualBox_Machine_Hardware_Boot()
 {
 	echo "************** FIX ME (VIRTUAL BOX Boot Order) **************"
 	
@@ -163,17 +163,17 @@ function xml_VirtualBox_Machine_Hardware_Boot()
 	xml_end "Boot"
 }
 
-function xml_VirtualBox_Machine_Hardware_Display()
+function virtualbox_xml_VirtualBox_Machine_Hardware_Display()
 {
 	xml_selfclose "Display VRAMSize='12' monitorCount='1' accelerate3D='false' accelerate2DVideo='false'"
 }
 
-function xml_VirtualBox_Machine_Hardware_Videocapture()
+function virtualbox_xml_VirtualBox_Machine_Hardware_Videocapture()
 {
 	xml_selfclose "VideoCapture"
 }
 
-function xml_VirtualBox_Machine_Hardware_BIOS()
+function virtualbox_xml_VirtualBox_Machine_Hardware_BIOS()
 {
 	xml_start "BIOS"
 	
@@ -187,12 +187,12 @@ function xml_VirtualBox_Machine_Hardware_BIOS()
 	xml_end "BIOS"
 }
 
-function xml_VirtualBox_Machine_Hardware_USBController()
+function virtualbox_xml_VirtualBox_Machine_Hardware_USBController()
 {
 	xml_selfclose "USBController enabled='false' enabledEhci='false'"
 }
 
-function xml_VirtualBox_Machine_Hardware_Network()
+function virtualbox_xml_VirtualBox_Machine_Hardware_Network()
 {
 	xml_start "Network"
 		
@@ -236,7 +236,7 @@ function xml_VirtualBox_Machine_Hardware_Network()
 	xml_end "Network"
 }
 
-function xml_VirtualBox_Machine_Hardware_UART()
+function virtualbox_xml_VirtualBox_Machine_Hardware_UART()
 {
 	# Serial Ports - incredibly rare to have more than 2 more, and unlikely we need them at all
 	xml_start "UART"
@@ -247,7 +247,7 @@ function xml_VirtualBox_Machine_Hardware_UART()
 	xml_end "UART"
 }
 
-function xml_VirtualBox_Machine_Hardware_LPT()
+function virtualbox_xml_VirtualBox_Machine_Hardware_LPT()
 {
 	# Parallel Ports - unlikely to be needed at all
 	xml_start "LPT"
@@ -258,17 +258,17 @@ function xml_VirtualBox_Machine_Hardware_LPT()
 	xml_end "LPT"
 }
 
-function xml_VirtualBox_Machine_Hardware_AudioAdapter()
+function virtualbox_xml_VirtualBox_Machine_Hardware_AudioAdapter()
 {
 	xml_selfclose "AudioAdapter controller='AC97' driver='CoreAudio' enabled='false'"
 }
 
-function xml_VirtualBox_Machine_Hardware_RTC()
+function virtualbox_xml_VirtualBox_Machine_Hardware_RTC()
 {
 	xml_selfclose "RTC localOrUTC='UTC'"
 }
 
-function xml_VirtualBox_Machine_Hardware_SharedFolders()
+function virtualbox_xml_VirtualBox_Machine_Hardware_SharedFolders()
 {
 	xml_start "SharedFolders"
 		
@@ -277,17 +277,17 @@ function xml_VirtualBox_Machine_Hardware_SharedFolders()
 	xml_end "SharedFolders"
 }
 
-function xml_VirtualBox_Machine_Hardware_Clipboard()
+function virtualbox_xml_VirtualBox_Machine_Hardware_Clipboard()
 {
 	xml_selfclose "Clipboard mode='Bidirectional'"
 }
 
-function xml_VirtualBox_Machine_Hardware_DragAndDrop()
+function virtualbox_xml_VirtualBox_Machine_Hardware_DragAndDrop()
 {
 	xml_selfclose "DragAndDrop mode='Disabled'"
 }
 
-function xml_VirtualBox_Machine_Hardware_IO()
+function virtualbox_xml_VirtualBox_Machine_Hardware_IO()
 {
 	xml_start IO
 		
@@ -297,7 +297,7 @@ function xml_VirtualBox_Machine_Hardware_IO()
 	xml_end IO
 }
 
-function xml_VirtualBox_Machine_Hardware_HostPci()
+function virtualbox_xml_VirtualBox_Machine_Hardware_HostPci()
 {
 	xml_start HostPCI
 		
@@ -306,7 +306,7 @@ function xml_VirtualBox_Machine_Hardware_HostPci()
 	xml_end HostPCI
 }
 
-function xml_VirtualBox_Machine_Hardware_EmulatedUSB()
+function virtualbox_xml_VirtualBox_Machine_Hardware_EmulatedUSB()
 {
 	xml_start EmulatedUSB
 	
@@ -315,12 +315,12 @@ function xml_VirtualBox_Machine_Hardware_EmulatedUSB()
 	xml_end EmulatedUSB
 }
 
-function xml_VirtualBox_Machine_Hardware_Guest()
+function virtualbox_xml_VirtualBox_Machine_Hardware_Guest()
 {
 	xml_selfclose "Guest memoryBalloonSize='0'"
 }
 
-function xml_VirtualBox_Machine_Hardware_GuestProperties()
+function virtualbox_xml_VirtualBox_Machine_Hardware_GuestProperties()
 {
 	xml_start GuestProperties
 		
@@ -356,7 +356,7 @@ function xml_VirtualBox_Machine_Hardware_GuestProperties()
 	xml_end GuestProperties
 }
 
-function xml_VirtualBox_Machine_StorageControllers()
+function virtualbox_xml_VirtualBox_Machine_StorageControllers()
 {
 	# Parallels supports 4 IDE, 6 SATA and 15 SCSI devices (but SCSI location 0:7 is the controller and so can't be used)
 	# IDE controller hardware choices are PIIX3, PIIX4 and ICH6 (Virtual Box)

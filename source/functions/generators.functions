@@ -36,21 +36,21 @@ function generators_source()
 
 function generators_runInMounts()
 {
-	mountBind /dev "$cacheMachineFilesystemImageMountPath"/dev
-	mountBind /dev/pts "$cacheMachineFilesystemImageMountPath"/dev/pts
-	mountBind /dev/shm "$cacheMachineFilesystemImageMountPath"/dev/shm
-	mountBind /proc "$cacheMachineFilesystemImageMountPath"/proc
-	mountBind /sys "$cacheMachineFilesystemImageMountPath"/sys
+	mounting_mountBind /dev "$cacheMachineFilesystemImageMountPath"/dev
+	mounting_mountBind /dev/pts "$cacheMachineFilesystemImageMountPath"/dev/pts
+	mounting_mountBind /dev/shm "$cacheMachineFilesystemImageMountPath"/dev/shm
+	mounting_mountBind /proc "$cacheMachineFilesystemImageMountPath"/proc
+	mounting_mountBind /sys "$cacheMachineFilesystemImageMountPath"/sys
 	pushd "$cacheMachineFilesystemImageMountPath" 1>/dev/null 2>/dev/null
 		
 		"$@"
 		
 	popd 1>/dev/null 2>/dev/null
-	unmountBind "$cacheMachineFilesystemImageMountPath"/sys
-	unmountBind "$cacheMachineFilesystemImageMountPath"/proc
-	unmountBind "$cacheMachineFilesystemImageMountPath"/dev/shm
-	unmountBind "$cacheMachineFilesystemImageMountPath"/dev/pts
-	unmountBind "$cacheMachineFilesystemImageMountPath"/dev
+	mounting_unmountBind "$cacheMachineFilesystemImageMountPath"/sys
+	mounting_unmountBind "$cacheMachineFilesystemImageMountPath"/proc
+	mounting_unmountBind "$cacheMachineFilesystemImageMountPath"/dev/shm
+	mounting_unmountBind "$cacheMachineFilesystemImageMountPath"/dev/pts
+	mounting_unmountBind "$cacheMachineFilesystemImageMountPath"/dev
 }
 
 function generators_runInChroot()

@@ -1,28 +1,15 @@
-function generateOva2()
+function ovf2_generateOvf()
 {
-	generateOvf2
-	
-	pushd "$cacheMachineArtefactsPath" 1>/dev/null 2>/dev/null
-	
-		tar --create --file "$cacheMachineArtefactsPath"/"$machine".ova "$machine".ovf *.vmdk "$machine".mf
-		
-	popd 1>/dev/null 2>/dev/null
-	
-	rm -rf "$cacheMachineArtefactsPath"/*.ovf "$cacheMachineArtefactsPath"/*.vmdk "$cacheMachineArtefactsPath"/*.mf
+	ovf2_generateOvfFile
+	ovf2_generateOvfManifestFile
 }
 
-function generateOvf2()
+function ovf2_generateOvfFile()
 {
-	generateOvf2File
-	generateOvf2ManifestFile
+	ovf2_xml_Envelope >"$cacheMachineArtefactsPath"/"$machine".ovf
 }
 
-function generateOvf2File()
-{
-	ovf2Xml >"$cacheMachineArtefactsPath"/"$machine".ovf
-}
-
-function generateOvf2ManifestEntry()
+function ovf2_generateOvfManifestEntry()
 {
 	local -r file="$1"
 	local -r mfFile="$cacheMachineArtefactsPath"/"$machine".mf
@@ -34,109 +21,14 @@ function generateOvf2ManifestEntry()
 	popd 1>/dev/null 2>/dev/null
 }
 
-function generateOvf2ManifestFile()
+function ovf2_generateOvfManifestFile()
 {
 	touch "$mfFile"
-	generateOvf2ManifestEntry "$machine".ovf
+	ovf2_generateOvfManifestEntry "$machine".ovf
 	
 	local vmdkFile
 	for vmdkFile in *.vmdk
 	do
-		generateOvf2ManifestEntry "$vmdkFile"
+		ovf2_generateOvfManifestEntry "$vmdkFile"
 	done
-}
-
-# VMC files: https://stackoverflow.com/questions/4065682/importing-a-vhd-into-parallels-desktop-6-on-the-mac
-# Look like an XML form of vmx files...
-
-function generateMetadata_vmware()
-{
-	cat >"$cacheMachineArtefactsPath"/"${machine}.vmxf" <<-EOF
-		<?xml version="1.0"?>
-		<Foundry>
-			<VM>
-				<VMId type="string">52 48 f1 f8 9d 8a 5d 3a-fc 87 bc 30 2a 2b f7 72</VMId>
-				<ClientMetaData>
-					<clientMetaDataAttributes/>
-					<HistoryEventList/>
-				</ClientMetaData>
-				<vmxPathName type="string">${machine}.vmx</vmxPathName>
-			</VM>
-		</Foundry>
-	EOF
-	
-	local -r machineGuestOs="rhel6-64"
-	
-	cat >"$cacheMachineArtefactsPath"/"${machine}.vmx" <<-EOF
-		.encoding = "UTF-8"
-		displayName = "${machine}"
-		extendedConfigFile = "${machine}.vmxf"
-		svga.vramSize = "8388608"
-		memSize = "2048"
-		nvram = "${machine}.nvram"
-		guestOS = "${machineGuestOs}"
-		cleanShutdown = "FALSE"
-		softPowerOff = "FALSE"
-		config.version = "8"
-		virtualHW.version = "10"
-		virtualHW.productCompatibility = "hosted"
-		uuid.bios = "42 05 e3 b8 29 4b 85 26-23 3c d5 da 8e fe cc bd"
-		vc.uuid = "50 05 b6 e6 87 c2 2f a2-42 30 47 5f 2c ce 4f a2"
-		sched.swap.derivedName = "/vmfs/volumes/531f2bfa-57b35c77-b683-005056b629c3/${machine}/${machine}-fd3c723e.vswp"
-		uuid.location = "56 4d 92 b8 77 d5 59 9a-c5 98 3e 8e cd 4d 91 53"
-		tools.syncTime = "FALSE"
-		tools.upgrade.policy = "manual"
-		toolScripts.afterPowerOn = "TRUE"
-		toolScripts.afterResume = "TRUE"
-		toolScripts.beforeSuspend = "TRUE"
-		toolScripts.beforePowerOff = "TRUE"
-		svga.present = "TRUE"
-		pciBridge0.present = "TRUE"
-		pciBridge0.pciSlotNumber = "17"
-		pciBridge4.pciSlotNumber = "21"
-		pciBridge4.present = "TRUE"
-		pciBridge4.virtualDev = "pcieRootPort"
-		pciBridge4.functions = "8"
-		pciBridge5.pciSlotNumber = "22"
-		pciBridge5.present = "TRUE"
-		pciBridge5.virtualDev = "pcieRootPort"
-		pciBridge5.functions = "8"
-		pciBridge6.pciSlotNumber = "23"
-		pciBridge6.present = "TRUE"
-		pciBridge6.virtualDev = "pcieRootPort"
-		pciBridge6.functions = "8"
-		pciBridge7.pciSlotNumber = "24"
-		pciBridge7.present = "TRUE"
-		pciBridge7.virtualDev = "pcieRootPort"
-		pciBridge7.functions = "8"
-		vmci.filter.enable = "TRUE"
-		vmci0.present = "TRUE"
-		vmci0.id = "-1895904067"
-		vmci0.pciSlotNumber = "32"
-		hpet0.present = "TRUE"
-		floppy0.startConnected = "FALSE"
-		floppy0.clientDevice = "TRUE"
-		floppy0.fileName = "Floppy drive 1"
-		scsi0.virtualDev = "pvscsi"
-		scsi0.pciSlotNumber = "160"
-		scsi0.present = "TRUE"
-		scsi0.sasWWID = "50 05 05 68 29 4b 85 20"
-		scsi0:0.deviceType = "scsi-hardDisk"
-		scsi0:0.fileName = "${machine}.vmdk"
-		scsi0:0.present = "TRUE"
-		scsi0:0.redo = ""
-		sata0.pciSlotNumber = "33"
-		sata0.present = "TRUE"
-		sata0:0.startConnected = "FALSE"
-		sata0:0.deviceType = "cdrom-raw"
-		sata0:0.clientDevice = "TRUE"
-		sata0:0.fileName = "CD/DVD drive 1"
-		sata0:0.present = "TRUE"
-		ethernet0.virtualDev = "vmxnet3"
-		ethernet0.networkName = "VM Network"
-		ethernet0.addressType = "vpx"
-		ethernet0.generatedAddress = "00:50:56:85:cd:e8"
-		ethernet0.pciSlotNumber = "192"
-		ethernet0.present = "TRUE"
-	EOF
 }

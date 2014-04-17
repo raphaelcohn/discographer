@@ -9,6 +9,6 @@ disk_partitionUnmount_functions+=(disk_partitionUnmount_unmountSyncDisk)
 
 function disk_partitionUnmount_Partition()
 {
-	unmountLoopback "${machineDisksConfigurationImageMountPath["$disk"]}"
+	mounting_unmountLoopback "${machineDisksConfigurationImageMountPath["$disk"]}"
 }
 disk_partitionUnmount_functions+=(disk_partitionUnmount_Partition)

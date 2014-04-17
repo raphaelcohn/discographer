@@ -1,6 +1,6 @@
 # Mounting is abstracted to support Mac OS X mounting in the future: http://nicksegers.com/mounting-to-loopback-in-osx/
 
-function sortDiskMountPointsInForwardOrder()
+function mounting_sortDiskMountPointsInForwardOrder()
 {
 	(
 		local disk
@@ -11,7 +11,7 @@ function sortDiskMountPointsInForwardOrder()
 	) | sort --ignore-nonprinting --stable --key 1,1
 }
 
-function mountPointIsSpecial()
+function mounting_mountPointIsSpecial()
 {
 	local -r mountPoint="${machineDisksConfigurationMountPoint["$disk"]}"
 	if [ "${mountPoint:0:1}" != '/' ]; then
@@ -20,9 +20,7 @@ function mountPointIsSpecial()
 	return 1
 }
 
-readonly kpartxLockFilePath=/var/lock/"$ourName".kpartx.lock
-
-function mountDisk()
+function mounting_mountDisk()
 {
 	local -r diskFilePath="$1"
 	
@@ -35,15 +33,15 @@ function mountDisk()
 	FUNCTION_RESULT+=("$loopbackDeviceUsed")
 	
 	# ** Supposed to be the disk image, but doesn't seem to work **
-	registerMountPointToRemoveOnExit "$loopbackDeviceUsed" unmountDisk
-	#registerMountPointToRemoveOnExit "$diskFilePath" unmountDisk
+	mounting_registerMountPointToRemoveOnExit "$loopbackDeviceUsed" mounting_unmountDisk
+	#mounting_registerMountPointToRemoveOnExit "$diskFilePath" mounting_unmountDisk
 	
 	# Could do it all with awk, but that's too complex for now
 	local -r devMapperUsed=/dev/mapper/"$(grep '^add map ' "$outputFile" | awk '{print $3}')"
 	FUNCTION_RESULT+=("$devMapperUsed")
 }
 
-function mountLoopback()
+function mounting_mountLoopback()
 {
 	local -r filesystemType="$1"
 	local -r imagePath="$2"
@@ -58,10 +56,10 @@ function mountLoopback()
 	fi
 	
 	mount -o loop -t "$filesystemType" "$imagePath" "$mountPath"
-	registerMountPointToRemoveOnExit "$mountPath" unmountLoopback
+	mounting_registerMountPointToRemoveOnExit "$mountPath" mounting_unmountLoopback
 }
 
-function mountBind()
+function mounting_mountBind()
 {
 	local -r mountPath="$1"
 	
@@ -72,10 +70,10 @@ function mountBind()
 	mkdir -m 0755 -p "$mountPath"
 	
 	mount -o bind /dev "$mountPath"
-	registerMountPointToRemoveOnExit "$mountPath" unmountBind
+	mounting_registerMountPointToRemoveOnExit "$mountPath" mounting_unmountBind
 }
 
-function unmountLoopback()
+function mounting_unmountLoopback()
 {
 	local -r mountPath="$1"
 
@@ -84,12 +82,12 @@ function unmountLoopback()
 	fi
 	
 	if [ -z "$exiting" ]; then
-		unregisterMountPointToRemoveOnExit
+		unmounting_registerMountPointToRemoveOnExit
 	fi
 	umount "$mountPath"
 }
 
-function unmountBind()
+function mounting_unmountBind()
 {
 	local -r mountPath="$1"
 	
@@ -98,12 +96,12 @@ function unmountBind()
 	fi
 	
 	if [ -z "$exiting" ]; then
-		unregisterMountPointToRemoveOnExit
+		unmounting_registerMountPointToRemoveOnExit
 	fi
 	umount "$mountPath"
 }
 
-function unmountDisk()
+function mounting_unmountDisk()
 {
 	local -r diskFilePath="$1"
 	
@@ -112,42 +110,42 @@ function unmountDisk()
 	fi
 	
 	if [ -z "$exiting" ]; then
-		unregisterMountPointToRemoveOnExit
+		unmounting_registerMountPointToRemoveOnExit
 	fi
 	
 	# Doesn't seem to work, but kpartx -d /dev/loopN does - so we need to find the loop
 	kpartx -d -v "$diskFilePath"
 }
 
-mountPointsToRemoveOnExitPaths=()
-mountPointsToRemoveOnExitFunctions=()
+mounting_mountPointsToRemoveOnExitPaths=()
+mounting_mountPointsToRemoveOnExitFunctions=()
 
-function registerMountPointToRemoveOnExit()
+function mounting_registerMountPointToRemoveOnExit()
 {
 	local mountPath="$1"
 	local unmountFunction="$2"
-	mountPointsToRemoveOnExitPaths+=("$mountPath")
-	mountPointsToRemoveOnExitFunctions+=("$unmountFunction")
+	mounting_mountPointsToRemoveOnExitPaths+=("$mountPath")
+	mounting_mountPointsToRemoveOnExitFunctions+=("$unmountFunction")
 }
 
-function unregisterMountPointToRemoveOnExit()
+function unmounting_registerMountPointToRemoveOnExit()
 {
-	unset mountPointsToRemoveOnExitPaths[$((${#mountPointsToRemoveOnExitPaths[*]}-1))]
-	unset mountPointsToRemoveOnExitFunctions[$((${#mountPointsToRemoveOnExitFunctions[*]}-1))]
+	unset mounting_mountPointsToRemoveOnExitPaths[$((${#mounting_mountPointsToRemoveOnExitPaths[*]}-1))]
+	unset mounting_mountPointsToRemoveOnExitFunctions[$((${#mounting_mountPointsToRemoveOnExitFunctions[*]}-1))]
 }
 
-function removeMountPointsOnExit()
+function mounting_removeMountPointsOnExit()
 {
 	local mountPath
 	local unmountFunction
 	local -i index
 	local -i adjustedIndex
 	
-	for (( index=${#mountPointsToRemoveOnExitPaths[*]}; index>0; index-- ))
+	for (( index=${#mounting_mountPointsToRemoveOnExitPaths[*]}; index>0; index-- ))
 	do
 		adjustedIndex=$((index-1))
-		mountPath="${mountPointsToRemoveOnExitPaths[$adjustedIndex]}"
-		unmountFunction="${mountPointsToRemoveOnExitFunctions[$adjustedIndex]}"
+		mountPath="${mounting_mountPointsToRemoveOnExitPaths[$adjustedIndex]}"
+		unmountFunction="${mounting_mountPointsToRemoveOnExitFunctions[$adjustedIndex]}"
 		
 		$unmountFunction "$mountPath"
 	done

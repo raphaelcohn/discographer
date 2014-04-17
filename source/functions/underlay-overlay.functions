@@ -1,4 +1,4 @@
-function checkDeviceConfigurationDirectoryOrFifo()
+function underlay_overlay_checkDeviceConfigurationDirectoryOrFifo()
 {
 	local kind="$1"
 	
@@ -10,7 +10,7 @@ function checkDeviceConfigurationDirectoryOrFifo()
 	fi
 }
 
-function checkDeviceConfigurationLink()
+function underlay_overlay_checkDeviceConfigurationLink()
 {
 	local kind="$1"
 	
@@ -19,7 +19,7 @@ function checkDeviceConfigurationLink()
 	fi
 }
 
-function installDeviceNodes()
+function underlay_overlay_installDeviceNodes()
 {
 	local -r devicesFilePath="$1"
 	
@@ -60,33 +60,33 @@ function installDeviceNodes()
 			;;
 			
 			p)
-				checkDeviceConfigurationDirectoryOrFifo FIFO
+				underlay_overlay_checkDeviceConfigurationDirectoryOrFifo FIFO
 				mknod --mode="$deviceMode" "$completePath" "$deviceType"
 			;;
 			
 			# Not a device, but reused as a directory
 			d)
-				checkDeviceConfigurationDirectoryOrFifo directory
+				underlay_overlay_checkDeviceConfigurationDirectoryOrFifo directory
 				mkdir -m "$deviceMode" -p "$completePath"
 			;;
 			
 			# Support for symlinks
 			s)
-				checkDeviceConfigurationLink symlink
+				underlay_overlay_checkDeviceConfigurationLink symlink
 				deviceLink="$deviceMajor"
 				ln -s "$deviceType" "$deviceLink"
 			;;
 			
 			# Support for hard links
 			h)
-				checkDeviceConfigurationLink hardlink
+				underlay_overlay_checkDeviceConfigurationLink hardlink
 				deviceLink="$deviceMajor"
 				ln "$deviceType" "$deviceLink"
 			;;
 			
 			# Support for files - useful for hidden (.xxxx) files in '/' and for doing perms on stuff already created
 			f)
-				checkDeviceConfigurationDirectoryOrFifo empty-file
+				underlay_overlay_checkDeviceConfigurationDirectoryOrFifo empty-file
 				touch "$completePath"
 				chmod "$deviceMode" "$completePath"
 			;;
@@ -102,13 +102,13 @@ function installDeviceNodes()
 	done < <(cat "$devicesFilePath")
 }
 
-function installFiles()
+function underlay_overlay_installFiles()
 {
 	local -r filesPath="$1"
 	rsync --quiet --archive --hard-links --acls --xattrs --devices --specials --sparse --numeric-ids --no-prune-empty-dirs --exclude=".gitignore" "$filesPath"/ "$cacheMachineDisksMountsPath"/
 }
 
-function installFilesystem()
+function underlay_overlay_installFilesystem()
 {
 	local -r underlayOrOverlayPath="$1"
 	pushd "$underlayOrOverlayPath" 1>/dev/null 2>/dev/null
@@ -117,12 +117,12 @@ function installFilesystem()
 		for underlay in *
 		do
 			if [ -f "$underlay" ]; then
-				informationMessage INFO "${tab}${tab}${tab}${underlay%%.devices} installDeviceNodes"
-				installDeviceNodes "$underlay"
+				informationMessage INFO "${tab}${tab}${tab}${underlay%%.devices} underlay_overlay_installDeviceNodes"
+				underlay_overlay_installDeviceNodes "$underlay"
 			fi
 			if [ -d "$underlay" ]; then
-				informationMessage INFO "${tab}${tab}${tab}${underlay} installFiles"
-				installFiles "$underlay"
+				informationMessage INFO "${tab}${tab}${tab}${underlay} underlay_overlay_installFiles"
+				underlay_overlay_installFiles "$underlay"
 			fi
 		done
 		

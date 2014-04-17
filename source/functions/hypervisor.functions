@@ -1,4 +1,4 @@
-function validateHypervisorNameAndOutputFormat()
+function hypervisor_validateHypervisorNameAndOutputFormat()
 {
 	local -r hypervisorName="$1"
 	

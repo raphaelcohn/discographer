@@ -6,21 +6,21 @@
 # 82545EM        Intel PRO/10000 MT Server  also known as E1000
 # virtio-net     Paravirtualized Network
 
-nicConfigureFunctions=()
+nic_configure_functions=()
 
-function defaultNicConfiguration()
+function nic_configure_defaultConfiguration()
 {
 	configuration_sourceDefaultConfiguration "nic"
 }
-nicConfigureFunctions+=(defaultNicConfiguration)
+nic_configure_functions+=(nic_configure_defaultConfiguration)
 
-function sourceNicConfiguration()
+function nic_configure_sourceConfiguration()
 {
 	source "$configMachineNicsPath"/"$nic".nic
 }
-nicConfigureFunctions+=(sourceNicConfiguration)
+nic_configure_functions+=(nic_configure_sourceConfiguration)
 
-function verifyNicConfiguration()
+function nic_configure_verifyConfiguration()
 {
 	if [ "$machineNicMac" = "generate" ]; then
 		informationMessage "Generating machine NICs automatically is not yet supported"
@@ -42,11 +42,11 @@ function verifyNicConfiguration()
 		
 	esac
 }
-nicConfigureFunctions+=(verifyNicConfiguration)
+nic_configure_functions+=(nic_configure_verifyConfiguration)
 
-function captureInABashDictionaryMachineNicConfigurationForMountingAndUnmounting()
+function nic_configure_captureInABashDictionaryConfiguration()
 {
 	machineNicsConfigurationMac["$nic"]="$machineNicMac"
 	machineNicsConfigurationVariant["$nic"]="$machineNicVariant"
 }
-nicConfigureFunctions+=(captureInABashDictionaryMachineNicConfigurationForMountingAndUnmounting)
+nic_configure_functions+=(nic_configure_captureInABashDictionaryConfiguration)

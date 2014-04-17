@@ -1,9 +1,10 @@
-function removeFilesOnExit()
+function temporary_removeFilesOnExit()
 {
 	rm -rf -- "${filesToRemoveOnExit[@]}"
 }
 
-function addFileToRemoveOnExit()
+# Not currently used
+function temporary_addFileToRemoveOnExit()
 {
 	local -r fileToRemove="$1"
 	filesToRemoveOnExit+=("$fileToRemove")

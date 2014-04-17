@@ -6,7 +6,7 @@ fstabFile="$ourOverlayPath"/fstab
 while IFS=' ' read -r mountPoint disk
 do
 	echo UUID=${machineDisksConfigurationUuid["$disk"]} ${mountPoint} ${machineDisksConfigurationFilesystemType["$disk"]} ${machineDisksConfigurationMountOptions["$disk"]} ${machineDisksConfigurationDumpOptions["$disk"]} ${machineDisksConfigurationDumpOptions["$disk"]} >>"$fstabFile"
-done < <(sortDiskMountPointsInForwardOrder)
+done < <(mounting_sortDiskMountPointsInForwardOrder)
 
 cat >>"$fstabFile" <<-EOF
 	tmpfs /dev/shm tmpfs defaults 0 0

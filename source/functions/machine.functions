@@ -170,7 +170,7 @@ machine_functions+=(machine_sourceMachineConfiguration)
 
 function machine_validateMachineConfiguration()
 {
-	validateHypervisorNameAndOutputFormat
+	hypervisor_validateHypervisorNameAndOutputFormat
 }
 machine_functions+=(machine_validateMachineConfiguration)
 
@@ -207,11 +207,11 @@ function machine_configureNics()
 	local nic
 	for nic in "${machineNics[@]}"
 	do
-		local nicConfigureFunction
-		for nicConfigureFunction in "${nicConfigureFunctions[@]}"
+		local nic_configure_function
+		for nic_configure_function in "${nic_configure_functions[@]}"
 		do
-			informationMessage INFO "${tab}${tab}${tab}${disk} ${nicConfigureFunction}"
-			$nicConfigureFunction
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${nic_configure_function}"
+			$nic_configure_function
 		done
 	done
 }
@@ -232,7 +232,7 @@ function machine_configureDisks()
 }
 machine_functions+=(machine_configureDisks)
 
-function machine_mountDisks()
+function machine_mounting_mountDisks()
 {
 	local disk
 	for disk in "${machineDisks[@]}"
@@ -245,7 +245,7 @@ function machine_mountDisks()
 		done
 	done
 }
-machine_functions+=(machine_mountDisks)
+machine_functions+=(machine_mounting_mountDisks)
 
 machineDiskMountPointsInForwardDiskOrder=()
 machineDiskMountPointsInReverseDiskOrder=()
@@ -258,7 +258,7 @@ function machine_recordSortedDiskMountPoints()
 	while IFS=' ' read -r mountPoint disk
 	do
 		machineDiskMountPointsInForwardDiskOrder+=("$disk")
-	done < <(sortDiskMountPointsInForwardOrder)
+	done < <(mounting_sortDiskMountPointsInForwardOrder)
 	
 	machineDiskMountPointsInReverseDiskOrder=()
 	local -i index
@@ -270,7 +270,7 @@ function machine_recordSortedDiskMountPoints()
 }
 machine_functions+=(machine_recordSortedDiskMountPoints)
 
-function machine_mountDiskPartitions()
+function machine_mounting_mountDiskPartitions()
 {
 	local disk
 	for disk in "${machineDiskMountPointsInForwardDiskOrder[@]}"
@@ -278,7 +278,7 @@ function machine_mountDiskPartitions()
 		local disk_partitionMount_function
 		for disk_partitionMount_function in "${disk_partitionMount_functions[@]}"
 		do
-			if mountPointIsSpecial; then
+			if mounting_mountPointIsSpecial; then
 				informationMessage INFO "${tab}${tab}${tab}${disk} (ignored)"
 				continue
 			fi
@@ -288,12 +288,12 @@ function machine_mountDiskPartitions()
 		done
 	done
 }
-machine_functions+=(machine_mountDiskPartitions)
+machine_functions+=(machine_mounting_mountDiskPartitions)
 
 function machine_installUnderlays()
 {
-	installFilesystem "$configMachineGroupUnderlaysPath"
-	installFilesystem "$configMachineUnderlaysPath"
+	underlay_overlay_installFilesystem "$configMachineGroupUnderlaysPath"
+	underlay_overlay_installFilesystem "$configMachineUnderlaysPath"
 }
 machine_functions+=(machine_installUnderlays)
 
@@ -316,10 +316,10 @@ machine_functions+=(machine_sourceMachineGenerators)
 
 function machine_installOverlays()
 {
-	installFilesystem "$configMachineGroupOverlaysPath"
-	installFilesystem "$cacheMachineGroupOverlaysGeneratedPath"
-	installFilesystem "$configMachineOverlaysPath"
-	installFilesystem "$cacheMachineOverlaysGeneratedPath"
+	underlay_overlay_installFilesystem "$configMachineGroupOverlaysPath"
+	underlay_overlay_installFilesystem "$cacheMachineGroupOverlaysGeneratedPath"
+	underlay_overlay_installFilesystem "$configMachineOverlaysPath"
+	underlay_overlay_installFilesystem "$cacheMachineOverlaysGeneratedPath"
 }
 machine_functions+=(machine_installOverlays)
 
@@ -452,12 +452,12 @@ function machine_recordHashesOfAllFiles()
 }
 machine_functions+=(machine_recordHashesOfAllFiles)
 
-function machine_unmountDiskPartitions()
+function machine_mounting_unmountDiskPartitions()
 {
 	local disk
 	for disk in "${machineDiskMountPointsInReverseDiskOrder[@]}"
 	do
-		if mountPointIsSpecial; then
+		if mounting_mountPointIsSpecial; then
 			informationMessage INFO "${tab}${tab}${tab}${disk} (ignored)"
 			continue
 		fi
@@ -470,9 +470,9 @@ function machine_unmountDiskPartitions()
 		done
 	done
 }
-machine_functions+=(machine_unmountDiskPartitions)
+machine_functions+=(machine_mounting_unmountDiskPartitions)
 
-function machine_unmountDisks()
+function machine_mounting_unmountDisks()
 {
 	local disk
 	for disk in "${machineDiskMountPointsInReverseDiskOrder[@]}"
@@ -485,7 +485,7 @@ function machine_unmountDisks()
 		done
 	done
 }
-machine_functions+=(machine_unmountDisks)
+machine_functions+=(machine_mounting_unmountDisks)
 
 function machine_createMetadata()
 {
@@ -493,6 +493,6 @@ function machine_createMetadata()
 		return 0
 	fi
 	
-	hypervisorMetadata_${machineHypervisorName}
+	hypervisor_metadata_${machineHypervisorName}
 }
 machine_functions+=(machine_createMetadata)

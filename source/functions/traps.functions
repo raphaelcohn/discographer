@@ -1,4 +1,4 @@
-function runOnTrap()
+function traps_runOnTrap()
 {
 	exiting=yes
 	local trapHandler
@@ -8,14 +8,15 @@ function runOnTrap()
 	done
 }
 
-function addNextTrapHandler()
+function traps_addNextTrapHandler()
 {
 	local trapHandler="$1"
-	trap runOnTrap 0 HUP INT QUIT ILL ABRT FPE SEGV PIPE TERM EXIT
+	trap traps_runOnTrap 0 HUP INT QUIT ILL ABRT FPE SEGV PIPE TERM EXIT
 	trapHandlers+=("$trapHandler")
 }
 
-function removeLastTrapHandler()
+# not used currently
+function traps_removeLastTrapHandler()
 {
 	unset trapHandlers[$((${#trapHandlers[*]}-1))]
 }

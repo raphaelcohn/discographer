@@ -19,7 +19,7 @@ function yum_fillInMachineYumConfTemplate()
 		export yumConfigRpmVerbository=info
 	fi
 	
-	templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
+	template_templateFile "$configYumConfigFileTemplatePath" >"$configMachineYumConfigFile"
 }
 yum_functions+=(yum_fillInMachineYumConfTemplate)
 

@@ -1,19 +1,19 @@
-function ovf2Xml()
+function ovf2_xml_Envelope()
 {
 	local indentation=""
 	
 	xml_version
 	xml_start "Envelope ovf:version='2.0' xml:lang='en-US' xmlns='http://schemas.dmtf.org/ovf/envelope/2' xmlns:ovf='http://schemas.dmtf.org/ovf/envelope/2' xmlns:rasd='http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData' xmlns:vssd='http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:vbox='http://www.virtualbox.org/ovf/machine' xmlns:epasd='http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_EthernetPortAllocationSettingData.xsd' xmlns:sasd='http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_StorageAllocationSettingData.xsd'"
 	
-		ovf2Xml_References
-		ovf2Xml_DiskSection
-		ovf2Xml_NetworkSection
-		ovf2Xml_VirtualSystem
+		ovf2_xml_Envelope_References
+		ovf2_xml_Envelope_DiskSection
+		ovf2_xml_Envelope_NetworkSection
+		ovf2_xml_Envelope_VirtualSystem
 	
 	xml_end "Envelope"
 }
 
-function ovf2Xml_References()
+function ovf2_xml_Envelope_References()
 {
 	xml_start "References"
 		
@@ -27,7 +27,7 @@ function ovf2Xml_References()
 	xml_end "References"
 }
 
-function ovf2Xml_DiskSection()
+function ovf2_xml_Envelope_DiskSection()
 {
 	xml_start "DiskSection"
 	
@@ -60,7 +60,7 @@ echo "************** FFIX ME (DISK CAPACITY) **************"
 	xml_end "DiskSection"
 }
 
-function ovf2Xml_NetworkSection()
+function ovf2_xml_Envelope_NetworkSection()
 {
 	xml_start "NetworkSection"
 		
@@ -74,25 +74,25 @@ function ovf2Xml_NetworkSection()
 	xml_end "NetworkSection"
 }
 
-function ovf2Xml_VirtualSystem()
+function ovf2_xml_Envelope_VirtualSystem()
 {
 	xml_start "VirtualSystem ovf:id='${machine}'"
 		
 		xml_value Info "A virtual machine"
-		ovf2Xml_VirtualSystem_ProductSection
-		ovf2Xml_VirtualSystem_AnnotationSection
-		ovf2Xml_VirtualSystem_EulaSection
-		ovf2Xml_VirtualSystem_OperatingSystemSection
-		ovf2Xml_VirtualSystem_VirtualHardwareSection
+		ovf2_xml_Envelope_VirtualSystem_ProductSection
+		ovf2_xml_Envelope_VirtualSystem_AnnotationSection
+		ovf2_xml_Envelope_VirtualSystem_EulaSection
+		ovf2_xml_Envelope_VirtualSystem_OperatingSystemSection
+		ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection
 		
 		if [ "$machineHypervisorName" = "virtualbox" ]; then
-			xml_VirtualBox_Machine "yes"
+			virtualbox_xml_VirtualBox_Machine "yes"
 		fi
 		
 	xml_end "VirtualSystem"
 }
 
-function ovf2Xml_VirtualSystem_ProductSection()
+function ovf2_xml_Envelope_VirtualSystem_ProductSection()
 {
 	xml_start "ProductSection"
 		
@@ -106,7 +106,7 @@ function ovf2Xml_VirtualSystem_ProductSection()
 	xml_end "ProductSection"
 }
 
-function ovf2Xml_VirtualSystem_AnnotationSection()
+function ovf2_xml_Envelope_VirtualSystem_AnnotationSection()
 {
 	xml_start "AnnotationSection"
 		
@@ -116,7 +116,7 @@ function ovf2Xml_VirtualSystem_AnnotationSection()
 	xml_end "AnnotationSection"
 }
 
-function ovf2Xml_VirtualSystem_EulaSection()
+function ovf2_xml_Envelope_VirtualSystem_EulaSection()
 {
 	xml_start "EulaSection"
 		
@@ -150,7 +150,7 @@ function ovf2Xml_VirtualSystem_EulaSection()
 	xml_end "EulaSection"
 }
 
-function ovf2Xml_VirtualSystem_OperatingSystemSection()
+function ovf2_xml_Envelope_VirtualSystem_OperatingSystemSection()
 {
 	xml_start "OperatingSystemSection ovf:id='${machineOperatingSystemId}'"
 		
@@ -161,24 +161,24 @@ function ovf2Xml_VirtualSystem_OperatingSystemSection()
 	xml_end "OperatingSystemSection"
 }
 
-function ovf2Xml_VirtualSystem_VirtualHardwareSection()
+function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection()
 {
 	local -i instanceId=-1
 	
 	xml_start "VirtualHardwareSection"
 		
 		xml_value Info "Virtual hardware requirements for a virtual machine"
-		ovf2Xml_VirtualSystem_VirtualHardwareSection_System
-		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemCpu
-		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemMemory
-		ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemDiskControllerAndStorageItems
-		ovf2Xml_VirtualSystem_VirtualHardwareSection_StorageItem
-		ovf2Xml_VirtualSystem_VirtualHardwareSection_EthernetPortItem
+		ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_System
+		ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemCpu
+		ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemMemory
+		ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemDiskControllerAndStorageItems
+		ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_StorageItem
+		ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_EthernetPortItem
 		
 	xml_end "VirtualHardwareSection"
 }
 
-function ovf2Xml_VirtualSystem_VirtualHardwareSection_System()
+function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_System()
 {
 	xml_start "System"
 		
@@ -192,7 +192,7 @@ function ovf2Xml_VirtualSystem_VirtualHardwareSection_System()
 	xml_end "System"
 }
 
-function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemCpu()
+function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemCpu()
 {
 	xml_start "Item"
 		
@@ -207,7 +207,7 @@ function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemCpu()
 	xml_end "Item"
 }
 
-function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemMemory()
+function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemMemory()
 {
 	xml_start "Item"
 		
@@ -223,7 +223,7 @@ function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemMemory()
 	xml_end "Item"
 }
 
-function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemDiskControllerAndStorageItems()
+function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemDiskControllerAndStorageItems()
 {
 	case "$machineDiskControllerHardwareKind" in
 		
@@ -316,7 +316,7 @@ function ovf2Xml_VirtualSystem_VirtualHardwareSection_ItemDiskControllerAndStora
 	done
 }
 
-function ovf2Xml_VirtualSystem_VirtualHardwareSection_EthernetPortItem()
+function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_EthernetPortItem()
 {
 	xml_start "EthernetPortItem"
 		

@@ -1,14 +1,14 @@
 # Original solution used heredocuments, which were then sourced; this does not work when /tmp is readonly,
 # even if TMPDIR is set elsewhere, as debian / ubuntu bash uses a hardcoded /tmp
 # http://stackoverflow.com/questions/1609423/using-sed-to-expand-environment-variables-inside-files
-function createSedScriptOfEnvironmentVariableSubstitutions()
+function template_createSedScriptOfEnvironmentVariableSubstitutions()
 {
 	env | sed 's/[\%]/\\&/g;s/\([^=]*\)=\(.*\)/s%${\1}%\2%g/'
 }
 
-function templateFile()
+function template_templateFile()
 {
 	set +e
-	cat "$1" | sed -f <(createSedScriptOfEnvironmentVariableSubstitutions)
+	cat "$1" | sed -f <(template_createSedScriptOfEnvironmentVariableSubstitutions)
 	set -e
 }
