@@ -48,7 +48,7 @@ function machine_verifyNameIsValidDnsLabel()
 }
 machine_functions+=(machine_verifyNameIsValidDnsLabel)
 
-machine_configPath""
+machine_configPath=""
 machine_configConfigurationFilePath=""
 machine_configPackagesFilePath=""
 machine_configRpmsPath=""
