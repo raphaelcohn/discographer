@@ -294,7 +294,7 @@ function main()
 	
 	sourceFunctions "$functionsPath" functions
 	
-	executeMainFunctions
+	main_executeMainFunctions
 }
 
 main "$@"
