@@ -73,8 +73,21 @@ function machine_group_prepareCachePaths()
 }
 machine_group_functions+=(machine_group_prepareCachePaths)
 
+function machine_group_makeCacheFolders()
+{
+	mkdir -m 0755 -p "$machine_group_cachePath"
+	
+	rm -rf "$machine_group_cacheMachinesPath"
+	mkdir -m 0755 -p "$machine_group_cacheMachinesPath"
+	
+	rm -rf "$machine_group_cacheOverlaysGeneratedPath"
+	mkdir -m 0755 -p "$machine_group_cacheOverlaysGeneratedPath"
+}
+machine_group_functions+=(machine_group_makeCacheFolders)
+
 function machine_group_cleanUpCache()
 {
+	set -x
 	pushd "$machine_group_cachePath"/.. 1>/dev/null 2>/dev/null
 		local cachedMachineGroup
 		for cachedMachineGroup in *
@@ -124,18 +137,6 @@ function machine_group_readRpmFiles()
 	mapfile -t machine_group_rpmFiles < <(configuration_readRpmFiles "$machine_group_configRpmsPath")
 }
 machine_group_functions+=(machine_group_readRpmFiles)
-
-function machine_group_makeCacheFolders()
-{
-	mkdir -m 0755 -p "$machine_group_cachePath"
-	
-	rm -rf "$machine_group_cacheMachinesPath"
-	mkdir -m 0755 -p "$machine_group_cacheMachinesPath"
-	
-	rm -rf "$machine_group_cacheOverlaysGeneratedPath"
-	mkdir -m 0755 -p "$machine_group_cacheOverlaysGeneratedPath"
-}
-machine_group_functions+=(machine_group_makeCacheFolders)
 
 machine_group_knownMachines=()
 function machine_group_determineKnownMachines()

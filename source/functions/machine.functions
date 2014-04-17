@@ -141,6 +141,24 @@ function machine_prepareCachePaths()
 }
 machine_functions+=(machine_prepareCachePaths)
 
+function machine_makeCacheFolders()
+{
+	mkdir -m 0755 -p "$machine_cachePath"
+	
+	rm -rf "$machine_cacheOverlaysGeneratedPath"
+	mkdir -m 0755 -p "$machine_cacheOverlaysGeneratedPath"
+	
+	rm -rf "$machine_cacheDisksPath"
+	mkdir -m 0755 -p "$machine_cacheDisksPath"
+	
+	rm -rf "$machine_cacheDisksMountPath"
+	mkdir -m 0755 -p "$machine_cacheDisksMountPath"
+	
+	rm -rf "$machine_cacheArtefactsPath"
+	mkdir -m 0755 -p "$machine_cacheArtefactsPath"
+}
+machine_functions+=(machine_makeCacheFolders)
+
 function machine_cleanUpCache()
 {
 	pushd "$machine_group_cacheMachinesPath" 1>/dev/null 2>/dev/null
@@ -242,24 +260,6 @@ function machine_configureDisks()
 	done
 }
 machine_functions+=(machine_configureDisks)
-
-function machine_makeCacheFolders()
-{
-	mkdir -m 0755 -p "$machine_cachePath"
-	
-	rm -rf "$machine_cacheOverlaysGeneratedPath"
-	mkdir -m 0755 -p "$machine_cacheOverlaysGeneratedPath"
-	
-	rm -rf "$machine_cacheDisksPath"
-	mkdir -m 0755 -p "$machine_cacheDisksPath"
-	
-	rm -rf "$machine_cacheDisksMountPath"
-	mkdir -m 0755 -p "$machine_cacheDisksMountPath"
-	
-	rm -rf "$machine_cacheArtefactsPath"
-	mkdir -m 0755 -p "$machine_cacheArtefactsPath"
-}
-machine_functions+=(machine_makeCacheFolders)
 
 function machine_mounting_mountDisks()
 {
