@@ -2,12 +2,12 @@ main_functions=()
 
 main_functions+=(language_setDefaults)
 
-function registerTrapHandlers()
+function main_registerTrapHandlers()
 {
 	traps_addNextTrapHandler temporary_removeFilesOnExit
 	traps_addNextTrapHandler mounting_removeMountPointsOnExit
 }
-main_functions+=(registerTrapHandlers)
+main_functions+=(main_registerTrapHandlers)
 
 main_functions+=(dependency_installDependencies)
 
