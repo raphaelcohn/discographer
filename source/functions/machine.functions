@@ -286,7 +286,7 @@ function machine_mounting_mountDiskPartitions()
 				continue
 			fi
 			
-			informationMessage INFO "${tab}${tab}${tab}${disk} ${diskMountFuncton}"
+			informationMessage INFO "${tab}${tab}${tab}${disk} ${disk_partitionMount_function}"
 			$disk_partitionMount_function
 		done
 	done
@@ -305,6 +305,7 @@ function machine_installRpmsFromYum()
 	local yum_function
 	for yum_function in "${yum_functions[@]}"
 	do
+		informationMessage INFO "${tab}${tab}${tab} ${yum_function}"
 		$yum_function
 	done
 }
@@ -441,7 +442,7 @@ function machine_installExtLinux()
 			local extlinux_function
 			for extlinux_function in "${extlinux_functions[@]}"
 			do
-				# installExtlinux_determineInstallPath uses $disk
+				informationMessage INFO "${tab}${tab}${tab}${disk} ${extlinux_function}"
 				$extlinux_function
 			done
 		fi
