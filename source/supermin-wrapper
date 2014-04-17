@@ -128,6 +128,7 @@ to automatically install any missing dependencies. The PATH variable is reset to
 	exit $1
 }
 
+machineGroupNames=()
 function loadAnyConfiguration()
 {
 	language="en_GB.UTF-8"
@@ -214,6 +215,7 @@ function parseCommandLine()
 	done
 	
 	shift $((OPTIND - 1))
+	
 	machineGroupNames=("$@")
 	
 	function makeCommandLinePathsAbsolute()
@@ -255,7 +257,7 @@ function validateCommandLineArguments()
 		exitError "Paths path $pathsPath does not exist or is not a directory"
 	fi
 	
-	if [ ${#machineGroups[@]} -eq 0 ]; then
+	if [ ${#machineGroupNames[@]} -eq 0 ]; then
 		exitError "Please specify at least one machine-group"
 	fi
 }

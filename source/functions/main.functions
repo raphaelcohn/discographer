@@ -63,7 +63,6 @@ function main_determineKnownMachineGroups()
 }
 main_functions+=(main_determineKnownMachineGroups)
 
-machineGroupNames=()
 function main_buildMachineGroups()
 {
 	local machineGroupName
