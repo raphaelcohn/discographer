@@ -213,7 +213,7 @@ function machine_configureNics()
 		local nic_configure_function
 		for nic_configure_function in "${nic_configure_functions[@]}"
 		do
-			informationMessage INFO "${tab}${tab}${tab}${disk} ${nic_configure_function}"
+			informationMessage INFO "${tab}${tab}${tab}${nic_configure_function}"
 			$nic_configure_function
 		done
 	done
@@ -305,7 +305,7 @@ function machine_installRpmsFromYum()
 	local yum_function
 	for yum_function in "${yum_functions[@]}"
 	do
-		informationMessage INFO "${tab}${tab}${tab} ${yum_function}"
+		informationMessage INFO "${tab}${tab}${tab}${yum_function}"
 		$yum_function
 	done
 }
