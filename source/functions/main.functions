@@ -58,7 +58,7 @@ function main_buildMachineGroups()
 	local machine_group_function
 	for machineGroup in "${machineGroups[@]}"
 	do
-		for machine_group_function main_in "${machine_group_functions[@]}"
+		for machine_group_function in "${machine_group_functions[@]}"
 		do
 			informationMessage INFO "${tab}${machineGroup} ${machine_group_function}"
 			$machine_group_function

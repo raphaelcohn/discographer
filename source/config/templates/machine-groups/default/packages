@@ -1,4 +1,6 @@
-basesystem
-bash
-coreutils
+#basesystem
+#bash
+#coreutils
+
+# Seems to install 90 dependencies!
 kernel
