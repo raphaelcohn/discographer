@@ -282,12 +282,6 @@ function sourceFunctions()
 	popd 1>/dev/null 2>/dev/null
 }
 
-function registerTrapHandlers()
-{
-	traps_addNextTrapHandler temporary_removeFilesOnExit
-	traps_addNextTrapHandler mounting_removeMountPointsOnExit
-}
-
 function main()
 {
 	setDebugging
@@ -300,9 +294,6 @@ function main()
 	
 	sourceFunctions "$functionsPath" functions
 	
-	language_setDefaults
-	registerTrapHandlers
-	installDependencies
 	executeMainFunctions
 }
 
