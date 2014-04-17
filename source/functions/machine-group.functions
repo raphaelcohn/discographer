@@ -153,8 +153,7 @@ function machine_group_buildMachines()
 			declare -A machine_configuration_disksMountPoint
 			declare -A machine_configuration_disksFilesystemType
 			declare -A machine_configuration_disksBlockSize
-			declare -A machine_configuration_disksDiskImagePath
-			declare -A machine_configuration_disksImageMountPath
+			declare -A machine_derived_disksDiskImagePath
 			declare -A machine_configuration_disksVolumeLabel16Bytes
 			declare -A machine_configuration_disksUuid
 			declare -A machine_configuration_disksOptions
@@ -164,6 +163,7 @@ function machine_group_buildMachines()
 			declare -A machine_configuration_disksShrinkDisk
 			declare -A machine_configuration_disksBootable
 			# not for configuration
+			declare -A machine_derived_disksImageMountPath
 			declare -A machine_derived_disksPartitionImagePath
 			declare -A machine_derived_disksLoopbackDevice
 			

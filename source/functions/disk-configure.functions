@@ -52,8 +52,6 @@ function disk_configure_captureInABashDictionaryConfiguration()
 	machine_configuration_disksMountPoint["$disk"]="$configuration_disk_mountPoint"
 	machine_configuration_disksFilesystemType["$disk"]="$configuration_disk_filesystemType"
 	machine_configuration_disksBlockSize["$disk"]="$configuration_disk_blockSize"
-	machine_configuration_disksDiskImagePath["$disk"]="$machine_cacheDisksPath"/"$disk".img
-	machine_configuration_disksImageMountPath["$disk"]="${machine_cacheDisksMountPath}${configuration_disk_mountPoint}"
 	machine_configuration_disksVolumeLabel16Bytes["$disk"]="$configuration_disk_volumeLabelMax16Bytes"
 	machine_configuration_disksUuid["$disk"]="$configuration_disk_uuid"
 	machine_configuration_disksOptions["$disk"]="$configuration_disk_filesystemOptions"
@@ -62,6 +60,9 @@ function disk_configure_captureInABashDictionaryConfiguration()
 	machine_configuration_disksFsckOptions["$disk"]="$configuration_disk_fstabMountFsckOptions"
 	machine_configuration_disksShrinkDisk["$disk"]="$configuration_disk_shrink"
 	machine_configuration_disksBootable["$disk"]="$configuration_disk_bootable"
+	
+	machine_derived_disksDiskImagePath["$disk"]="$machine_cacheDisksPath"/"$disk".img
+	machine_derived_disksImageMountPath["$disk"]="${machine_cacheDisksMountPath}${configuration_disk_mountPoint}"
 	machine_derived_disksPartitionImagePath["$disk"]=""
 }
 disk_configure_functions+=(disk_configure_captureInABashDictionaryConfiguration)

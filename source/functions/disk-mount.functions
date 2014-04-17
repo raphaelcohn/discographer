@@ -2,10 +2,10 @@ disk_mount_functions=()
 
 function disk_mount_createSpareFile()
 {
-	rm -rf "${machine_configuration_disksDiskImagePath["$disk"]}"
-	truncate -s "${machine_configuration_disksSize["$disk"]}" "${machine_configuration_disksDiskImagePath["$disk"]}"
+	rm -rf "${machine_derived_disksDiskImagePath["$disk"]}"
+	truncate -s "${machine_configuration_disksSize["$disk"]}" "${machine_derived_disksDiskImagePath["$disk"]}"
 	
-	local -ir configuration_disk_sizeInBytes="$(stat --format='%s' "${machine_configuration_disksDiskImagePath["$disk"]}")"
+	local -ir configuration_disk_sizeInBytes="$(stat --format='%s' "${machine_derived_disksDiskImagePath["$disk"]}")"
 	local -ir dividedMachineDiskSize=$((configuration_disk_sizeInBytes/512))
 	local -ir rehydratedMachineDiskSize=$((dividedMachineDiskSize*512))
 	if [ $configuration_disk_sizeInBytes -ne $rehydratedMachineDiskSize ]; then
@@ -97,13 +97,13 @@ function disk_mount_image()
 		
 		unpartitioned)
 			# Does nothing
-			machine_derived_disksPartitionImagePath["$disk"]="${machine_configuration_disksDiskImagePath["$disk"]}"
+			machine_derived_disksPartitionImagePath["$disk"]="${machine_derived_disksDiskImagePath["$disk"]}"
 			machine_derived_disksLoopbackDevice["$disk"]=""
 		;;
 		
 		dos)
 			declare -a FUNCTION_RESULT=()
-			mounting_mountDisk "${machine_configuration_disksDiskImagePath["$disk"]}"
+			mounting_mountDisk "${machine_derived_disksDiskImagePath["$disk"]}"
 			machine_derived_disksLoopbackDevice["$disk"]="${FUNCTION_RESULT[0]}"
 			machine_derived_disksPartitionImagePath["$disk"]="${FUNCTION_RESULT[1]}"
 		;;

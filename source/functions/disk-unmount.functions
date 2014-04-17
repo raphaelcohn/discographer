@@ -63,7 +63,7 @@ function disk_unmount_shrinkDiskImage()
 	resize2fs -M "${machine_derived_disksPartitionImagePath["$disk"]}" 2>/dev/null
 	
 	local -ir shrinkSizeInBytes=$((minimumSize*configuration_disk_blockSize))
-	truncate -s $shrinkSizeInBytes "${machine_configuration_disksDiskImagePath["$disk"]}"
+	truncate -s $shrinkSizeInBytes "${machine_derived_disksDiskImagePath["$disk"]}"
 }
 disk_unmount_functions+=(disk_unmount_shrinkDiskImage)
 
@@ -79,7 +79,7 @@ function disk_unmount_image()
 		
 		dos)
 			# mounting_unmountDisk should tak the original disk image path, not the loopback device created, but doesn't...
-			#mounting_unmountDisk "${machine_configuration_disksDiskImagePath["$disk"]}"
+			#mounting_unmountDisk "${machine_derived_disksDiskImagePath["$disk"]}"
 			mounting_unmountDisk "${machine_derived_disksLoopbackDevice["$disk"]}"
 		;;
 		
@@ -108,7 +108,7 @@ function disk_unmount_backupMasterBootRecord()
 		;;
 		
 		dos)
-			dd bs=512 count=1 conv=notrunc if="${machine_configuration_disksDiskImagePath["$disk"]}" of="$machine_cacheArtefactsPath"/"$disk".mbr.bak
+			dd bs=512 count=1 conv=notrunc if="${machine_derived_disksDiskImagePath["$disk"]}" of="$machine_cacheArtefactsPath"/"$disk".mbr.bak
 		;;
 		
 		bsd|solaris|unixware)

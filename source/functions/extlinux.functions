@@ -101,8 +101,8 @@ extlinux_functions+=(extlinux_install)
 function extlinux_installMasterBootRecord()
 {
 	# Or boot from partition one
-	#printf '\1' | cat "$syslinuxSharePath"/altmbr.bin - | dd bs=440 count=1 iflag=fullblock conv=notrunc of="${machine_configuration_disksDiskImagePath["$disk"]}"
-	dd bs=440 count=1 conv=notrunc if="$syslinuxSharePath"/mbr.bin of="${machine_configuration_disksDiskImagePath["$disk"]}"
-	#cat "$syslinuxSharePath"/mbr.bin >"${machine_configuration_disksDiskImagePath["$disk"]}"
+	#printf '\1' | cat "$syslinuxSharePath"/altmbr.bin - | dd bs=440 count=1 iflag=fullblock conv=notrunc of="${machine_derived_disksDiskImagePath["$disk"]}"
+	dd bs=440 count=1 conv=notrunc if="$syslinuxSharePath"/mbr.bin of="${machine_derived_disksDiskImagePath["$disk"]}"
+	#cat "$syslinuxSharePath"/mbr.bin >"${machine_derived_disksDiskImagePath["$disk"]}"
 }
 extlinux_functions+=(extlinux_installMasterBootRecord)

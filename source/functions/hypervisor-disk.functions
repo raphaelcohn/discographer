@@ -1,7 +1,7 @@
 function hypervisor_disk_pathToOutputFile()
 {
 	local -r extension="$1"
-	local -r inputFile="${machine_configuration_disksDiskImagePath["$disk"]}"
+	local -r inputFile="${machine_derived_disksDiskImagePath["$disk"]}"
 	local -r withoutExtension="${inputFile%%.img}"
 	local -r fileName="$(purebash_basename "$withoutExtension")"
 	echo -n "$machine_cacheArtefactsPath"/"$fileName"."$extension"
@@ -12,14 +12,14 @@ function hypervisor_disk_convertDiskImageHardLink()
 	local -r extension="$1"
 	local -r format="$2"
 	shift 2
-	local -r inputFile="${machine_configuration_disksDiskImagePath["$disk"]}"
+	local -r inputFile="${machine_derived_disksDiskImagePath["$disk"]}"
 	local -r outputFile="$(hypervisor_disk_pathToOutputFile "$extension")"
 	
 	# Hard link; copy if that fails (eg on different disks)
 	ln "$inputFile" "$outputFile" 2>/dev/null || cp "$inputFile" "$outputFile"
 	rm -rf "$inputFile"
 	
-	machine_configuration_disksDiskImagePath["$disk"]="$outputFile"
+	machine_derived_disksDiskImagePath["$disk"]="$outputFile"
 }
 
 function hypervisor_disk_convertDiskImageUsingQemuImg()
@@ -28,13 +28,13 @@ function hypervisor_disk_convertDiskImageUsingQemuImg()
 	local -r format="$2"
 	shift 2
 	
-	local -r inputFile="${machine_configuration_disksDiskImagePath["$disk"]}"
+	local -r inputFile="${machine_derived_disksDiskImagePath["$disk"]}"
 	local -r outputFile="$(hypervisor_disk_pathToOutputFile "$extension")"
 
 	qemu-img convert -q -f raw -O "$extension" "$@" "$inputFile" "$outputFile"
 	rm -rf "$inputFile"
 
-	machine_configuration_disksDiskImagePath["$disk"]="$outputFile"
+	machine_derived_disksDiskImagePath["$disk"]="$outputFile"
 }
 
 function hypervisor_disk_convertDiskImage_unpartitioned()
