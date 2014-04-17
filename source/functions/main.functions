@@ -46,23 +46,6 @@ function main_setMachineGroupsPath()
 }
 main_functions+=(main_setMachineGroupsPath)
 
-main_knownMachineGroups=()
-function main_determineKnownMachineGroups()
-{
-	main_knownMachineGroups=()
-	pushd "$machineGroupsPath" 1>/dev/null 2>/dev/null
-		local knownMachineGroup
-		for knownMachineGroup in *
-		do
-			if [ ! -e "$knownMachineGroup" ]; then
-				continue
-			fi
-			main_knownMachineGroups+=("$knownMachineGroup")
-		done
-	popd 1>/dev/null 2>/dev/null
-}
-main_functions+=(main_determineKnownMachineGroups)
-
 function main_buildMachineGroups()
 {
 	local machineGroupName

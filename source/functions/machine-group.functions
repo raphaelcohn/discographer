@@ -85,33 +85,6 @@ function machine_group_makeCacheFolders()
 }
 machine_group_functions+=(machine_group_makeCacheFolders)
 
-function machine_group_cleanUpCache()
-{
-	set -x
-	pushd "$machine_group_cachePath"/.. 1>/dev/null 2>/dev/null
-		local cachedMachineGroup
-		for cachedMachineGroup in *
-		do
-			if [ ! -d "$cachedMachineGroup" ]; then
-				continue
-			fi
-			local -i found=0
-			local knownMachineGroup
-			for knownMachineGroup in "${main_knownMachineGroups[@]}"
-			do
-				if [ "$knownMachineGroup" = "$cachedMachineGroup" ]; then
-					found=1
-					break
-				fi
-			done
-			if [ $found -eq 0 ]; then
-				rm -rf "$cachedMachineGroup"
-			fi
-		done
-	popd 1>/dev/null 2>/dev/null
-}
-machine_group_functions+=(machine_group_cleanUpCache)
-
 function machine_group_defaultConfiguration()
 {
 	configuration_sourceDefaultConfiguration "machine-group"
@@ -137,23 +110,6 @@ function machine_group_readRpmFiles()
 	mapfile -t machine_group_rpmFiles < <(configuration_readRpmFiles "$machine_group_configRpmsPath")
 }
 machine_group_functions+=(machine_group_readRpmFiles)
-
-machine_group_knownMachines=()
-function machine_group_determineKnownMachines()
-{
-	machine_group_knownMachines=()
-	pushd "$machine_group_machinesPath" 1>/dev/null 2>/dev/null
-		local knownMachine
-		for knownMachine in *
-		do
-			if [ ! -e "$knownMachine" ]; then
-				continue
-			fi
-			machine_group_knownMachines+=(machine_group_"$knownMachine")
-		done
-	popd 1>/dev/null 2>/dev/null
-}
-machine_group_functions+=(machine_group_determineKnownMachines)
 
 function machine_group_sourceGenerators()
 {
