@@ -11,16 +11,19 @@ function hash_recordHashes()
 	local -r topLevelFolder="${prefix}${path}"
 	local -ir prefixLength=${#prefix}
 	
-	# Done this way, instead of < <(coproc command), to overcome an open files bug?
 	temporaryFiles_newFileToRemoveOnExit
-	local -r coprocTemporaryFile="$TMP_FILE"
+	local -r outputTemporaryFile="$TMP_FILE"
 	
-	hash_recordHashesInFile 1>"$coprocTemporaryFile"
+	hash_recordHashesInFile 1>"$outputTemporaryFile"
 	LC_ALL=C sort -k 1 -z "$coprocTemporaryFile" >"$hashesInstalledFilePath"
 }
 
 function hash_recordHashesInFile()
 {
+	# Done this way, instead of < <(coproc command), to overcome an open files bug?
+	temporaryFiles_newFileToRemoveOnExit
+	local -r coprocTemporaryFile="$TMP_FILE"
+	
 	hash_recordHashLine Type Uid Gid Mode MTime CTime Meta Version Chattr Acl DefaultAcl Selinux Capabilities Size MD5 SHA1 SHA256 SHA512 Path
 	
 	local fileObject
