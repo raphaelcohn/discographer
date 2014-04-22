@@ -15,6 +15,7 @@ function yum_wrapper()
 		local -r yumVerbosity="--verbose"
 	fi
 	
+	informationMessage INFO "${tab}${tab}${tab}${tab}${tab}${1} yum_wrapper: to see progress  tail -f $yum_cacheYumLogPath/yum.$1.out.log"
 	yum ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@" 1>>"$yum_cacheYumLogPath"/yum."$1".out.log 2>>"$yum_cacheYumLogPath"/yum."$1".err.log
 }
 

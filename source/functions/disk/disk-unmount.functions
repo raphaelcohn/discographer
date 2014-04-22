@@ -2,11 +2,17 @@ disk_unmount_functions=()
 
 function disk_unmount_optimiseDisk()
 {
-	set -x
 	case "${machine_configuration_disksFilesystemType["$disk"]}" in
-	
+		
 		ext2|ext3|ext4)
-			e2fsck -D -f "${machine_derived_disksPartitionImagePath["$disk"]}"
+			set -x
+			set +e
+			e2fsck -y -D -E discard -f "${machine_derived_disksPartitionImagePath["$disk"]}"
+			local -ir exitCode=$?
+			set -e
+			if [ $exitCode -ne 0 ]; then
+				exitError 1
+			fi
 			tune2fs -f -c 0 -C 0 -i 36m -M "${machine_derived_disksPartitionImagePath["$disk"]}" -u 0 -g 0 "${machine_derived_disksPartitionImagePath["$disk"]}"
 		;;
 	
