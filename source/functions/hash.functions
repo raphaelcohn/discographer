@@ -151,9 +151,9 @@ function hash_recordHashFile()
 function hash_recordHashFolder()
 {
 	# Whilst folders do have a size, it's very much a function of the file system
-	local uid gid mode mtime ctime
-	stat -c "%u %g %a %Y %Z" "$fileObject" >"$coprocTemporaryFile"
-	IFS=' ' read -r -d $'\n' uid gid mode mtime ctime <"$coprocTemporaryFile"
+	local uid gid mode mtime ctime size
+	stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
+	IFS=' ' read -r -d $'\n' uid gid mode mtime ctime size <"$coprocTemporaryFile"
 	
 	# it might be useful to record entry count, less . and .. as 'meta', or perhaps an ignore-rule
 	
