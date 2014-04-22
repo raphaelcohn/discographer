@@ -112,12 +112,7 @@ function hash_recordHashSymlink()
 	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
 	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 	
-	local -r md5="$(echo -n "$meta" | md5sum | awk 'NR==1 {print $1}')"
-	local -r sha1="$(echo -n "$meta" | sha1sum | awk 'NR==1 {print $1}')"
-	local -r sha256="$(echo -n "$meta" | sha256sum | awk 'NR==1 {print $1}')"
-	local -r sha512="$(echo -n "$meta" | sha512sum | awk 'NR==1 {print $1}')"
-	
-	hash_recordHashLine l "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' '' '' "$selinux" '' "$size" "$md5" "$sha1" "$sha256" "$sha512"
+	hash_recordHashLine l "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' '' '' "$selinux" '' "$size" "" "" "" ""
 }
 
 function hash_recordHashFile()
