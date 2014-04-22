@@ -28,40 +28,13 @@ function hash_recordHashesInFile()
 	
 	local fileObject
 	
-	find "$topLevelFolder" -type l -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		hash_recordHashSymlink
-	done
-	
-	find "$topLevelFolder" -type f -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		hash_recordHashFile
-	done
-	
-	find "$topLevelFolder" -type d -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		hash_recordHashFolder
-	done
-	
-	find "$topLevelFolder" -type b -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		hash_recordHashDevice b
-	done
-	
-	find "$topLevelFolder" -type c -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		hash_recordHashDevice c
-	done
-	
-	find "$topLevelFolder" -type p -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		hash_recordHashNamedPipe
-	done
-	
-	find "$topLevelFolder" -type s -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		hash_recordHashSocket
-	done
+	hash_recordHashSymlink
+	hash_recordHashFile
+	hash_recordHashFolder
+	hash_recordHashDevice b
+	hash_recordHashDevice c
+	hash_recordHashNamedPipe
+	hash_recordHashSocket
 }
 
 function hash_recordHashLine()
@@ -84,7 +57,7 @@ function hash_recordHashLine()
 	esac
 	
 	if [ "$beDebug" = "yes" ]; then
-		informationMessage INFO "${tab}${tab}${tab}${fileType}"
+		informationMessage INFO "${tab}${tab}${tab}${filePath}"
 	fi
 	
 	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10" "$11" "$12" "$13" "$14" "$15" "$16" "$17" "$18" "${filePath}"
@@ -103,145 +76,166 @@ function hash_recordHashLine()
 #  file --no-pad --separator $'\t' --keep-going --no-dereference --uncompress * (derefences link, but needs clean-up)
 function hash_recordHashSymlink()
 {
-	local uid gid mode mtime ctime size
-	stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
-	IFS=' ' read -r -d $'\n' uid gid mode size <"$coprocTemporaryFile"
+	local uid gid mode mtime ctime size meta selinux
+	find "$topLevelFolder" -type l -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
+		IFS=' ' read -r -d $'\n' uid gid mode size <"$coprocTemporaryFile"
 	
-	local -r meta="$(readlink -n "$fileObject")"
+		meta="$(readlink -n "$fileObject")"
 		
-	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
-	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
+		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
+		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 	
-	hash_recordHashLine l "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' '' '' "$selinux" '' "$size" "" "" "" ""
+		hash_recordHashLine l "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' '' '' "$selinux" '' "$size" "" "" "" ""
+	done
+	
 }
 
 function hash_recordHashFile()
 {
-	local uid gid mode mtime ctime size
-	stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
-	IFS=' ' read -r -d $'\n' uid gid mode size <"$coprocTemporaryFile"
+	local uid gid mode mtime ctime size meta version chattr file initialAcl acl selinux capabilities md5 sha1 sha256 sha512
 	
-	local -r meta="$(file --brief --keep-going --no-dereference --uncompress "$fileObject")"
-	
-	local version chattr file
-	lsattr -v "$fileObject" >"$coprocTemporaryFile"
-	IFS=' ' read -r -d $'\n' version chattr file <"$coprocTemporaryFile"
-	
-	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-	if [ -n "$initialAcl" ]; then
-		# strips a trailing ' '
-		local -r acl="${initialAcl:0:-1}"
-	else
-		local -r acl=""
-	fi
-	
-	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
-	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
-	
-	local -r capabilities="$(getcap "$fileObject" | awk '{print $3}')"
-	
-	local -r md5="$(md5sum "$fileObject" | awk 'NR==1 {print $1}')"
-	local -r sha1="$(sha1sum "$fileObject" | awk 'NR==1 {print $1}')"
-	local -r sha256="$(sha256sum "$fileObject" | awk 'NR==1 {print $1}')"
-	local -r sha512="$(sha512sum "$fileObject" | awk 'NR==1 {print $1}')"
-	
-	hash_recordHashLine f "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" '' "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512"
+	find "$topLevelFolder" -type f -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
+		IFS=' ' read -r -d $'\n' uid gid mode size <"$coprocTemporaryFile"
+
+		meta="$(file --brief --keep-going --no-dereference --uncompress "$fileObject")"
+
+		lsattr -v "$fileObject" >"$coprocTemporaryFile"
+		IFS=' ' read -r -d $'\n' version chattr file <"$coprocTemporaryFile"
+
+		initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+		if [ -n "$initialAcl" ]; then
+			# strips a trailing ' '
+			acl="${initialAcl:0:-1}"
+		else
+			acl=""
+		fi
+
+		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
+		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
+
+		capabilities="$(getcap "$fileObject" | awk '{print $3}')"
+
+		md5="$(md5sum "$fileObject" | awk 'NR==1 {print $1}')"
+		sha1="$(sha1sum "$fileObject" | awk 'NR==1 {print $1}')"
+		sha256="$(sha256sum "$fileObject" | awk 'NR==1 {print $1}')"
+		sha512="$(sha512sum "$fileObject" | awk 'NR==1 {print $1}')"
+
+		hash_recordHashLine f "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" '' "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512"
+	done
 }
 
 function hash_recordHashFolder()
 {
-	# Whilst folders do have a size, it's very much a function of the file system
-	local uid gid mode mtime ctime size
-	stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
-	IFS=' ' read -r -d $'\n' uid gid mode mtime ctime size <"$coprocTemporaryFile"
+	local uid gid mode mtime ctime size version chattr file initialAcl acl initialDefaultAcl defaultAcl selinux
+	find "$topLevelFolder" -type d -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		
+		# Whilst folders do have a size, it's very much a function of the file system
+		stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
+		IFS=' ' read -r -d $'\n' uid gid mode mtime ctime size <"$coprocTemporaryFile"
+
+		# it might be useful to record entry count, less . and .. as 'meta', or perhaps an ignore-rule
+
+		# Note -d to make lsattr behave
+		lsattr -d -v "$fileObject" >"$coprocTemporaryFile"
+		IFS=' ' read -r -d $'\n' version chattr file <"$coprocTemporaryFile"
+
+		initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+		if [ -n "$initialAcl" ]; then
+			# strips a trailing ' '
+			acl="${initialAcl:0:-1}"
+		else
+			acl=""
+		fi
+
+		# Only folders have default acl
+		initialDefaultAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --default -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+		if [ -n "$initialDefaultAcl" ]; then
+			# strips a trailing ' '
+			defaultAcl="${initialDefaultAcl:0:-1}"
+		else
+			defaultAcl=""
+		fi
+
+		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
+		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
+
+		hash_recordHashLine d "$uid" "$gid" "$mode" "$mtime" "$ctime" '' "$version" "$chattr" "$acl" "$defaultAcl" "$selinux" '' "$size" '' '' '' ''
+	done
 	
-	# it might be useful to record entry count, less . and .. as 'meta', or perhaps an ignore-rule
-	
-	# Note -d to make lsattr behave
-	local version chattr file
-	lsattr -d -v "$fileObject" >"$coprocTemporaryFile"
-	IFS=' ' read -r -d $'\n' version chattr file <"$coprocTemporaryFile"
-	
-	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-	if [ -n "$initialAcl" ]; then
-		# strips a trailing ' '
-		local -r acl="${initialAcl:0:-1}"
-	else
-		local -r acl=""
-	fi
-	
-	# Only folders have default acl
-	local -r initialDefaultAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --default -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-	if [ -n "$initialDefaultAcl" ]; then
-		# strips a trailing ' '
-		local -r defaultAcl="${initialDefaultAcl:0:-1}"
-	else
-		local -r defaultAcl=""
-	fi
-	
-	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
-	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
-	
-	hash_recordHashLine d "$uid" "$gid" "$mode" "$mtime" "$ctime" '' "$version" "$chattr" "$acl" "$defaultAcl" "$selinux" '' "$size" '' '' '' ''
 }
 
 function hash_recordHashDevice()
 {
 	local -r fileType="$1"
 	
-	# Whilst devices do have a size, it's very much a function of the file system
-	local uid gid mode mtime ctime meta
-	stat -c "%u %g %a %Y %Z %t:%T" "$fileObject" >"$coprocTemporaryFile"
-	IFS=' ' read -r -d $'\n' uid gid mode mtime ctime meta <"$coprocTemporaryFile"
+	local uid gid mode mtime ctime meta initialAcl acl selinux
+	find "$topLevelFolder" -type "$fileType" -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		# Whilst devices do have a size, it's very much a function of the file system
+		stat -c "%u %g %a %Y %Z %t:%T" "$fileObject" >"$coprocTemporaryFile"
+		IFS=' ' read -r -d $'\n' uid gid mode mtime ctime meta <"$coprocTemporaryFile"
 	
-	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-	if [ -n "$initialAcl" ]; then
-		# strips a trailing ' '
-		local -r acl="${initialAcl:0:-1}"
-	else
-		local -r acl=""
-	fi
+		initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+		if [ -n "$initialAcl" ]; then
+			# strips a trailing ' '
+			acl="${initialAcl:0:-1}"
+		else
+			acl=""
+		fi
 	
-	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
-	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
+		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
+		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 	
-	hash_recordHashLine "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
+		hash_recordHashLine "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
+	done
 }
 
 function hash_recordHashNamedPipe()
 {
 	# Whilst devices do have a size, it's very much a function of the file system
-	local uid gid mode mtime ctime
-	stat -c "%u %g %a %Y %Z" "$fileObject" >"$coprocTemporaryFile"
-	IFS=' ' read -r -d $'\n' uid gid mode mtime ctime <"$coprocTemporaryFile"
+	local uid gid mode mtime ctime initialAcl acl selinux
+	find "$topLevelFolder" -type p -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		stat -c "%u %g %a %Y %Z" "$fileObject" >"$coprocTemporaryFile"
+		IFS=' ' read -r -d $'\n' uid gid mode mtime ctime <"$coprocTemporaryFile"
 	
-	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-	if [ -n "$initialAcl" ]; then
-		# strips a trailing ' '
-		local -r acl="${initialAcl:0:-1}"
-	else
-		local -r acl=""
-	fi
+		initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+		if [ -n "$initialAcl" ]; then
+			# strips a trailing ' '
+			acl="${initialAcl:0:-1}"
+		else
+			acl=""
+		fi
 	
-	# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
-	local -r selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
+		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
+		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 		
-	hash_recordHashLine p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
+		hash_recordHashLine p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
+	done
+	
 }
 
 function hash_recordHashSocket()
 {
-	local uid gid mode mtime ctime
-	stat -c "%u %g %a %Y %Z" "$fileObject" >"$coprocTemporaryFile"
-	IFS=' ' read -r -d $'\n' uid gid mode mtime ctime <"$coprocTemporaryFile"
+	local uid gid mode mtime ctime initialAcl acl
+	find "$topLevelFolder" -type s -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		stat -c "%u %g %a %Y %Z" "$fileObject" >"$coprocTemporaryFile"
+		IFS=' ' read -r -d $'\n' uid gid mode mtime ctime <"$coprocTemporaryFile"
 	
-	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-	if [ -n "$initialAcl" ]; then
-		# strips a trailing ' '
-		local -r acl="${initialAcl:0:-1}"
-	else
-		local -r acl=""
-	fi
+		initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
+		if [ -n "$initialAcl" ]; then
+			# strips a trailing ' '
+			acl="${initialAcl:0:-1}"
+		else
+			acl=""
+		fi
 	
-	hash_recordHashLine s "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' '' '' '' '' '' '' ''
+		hash_recordHashLine s "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' '' '' '' '' '' '' ''
+	done
 }
