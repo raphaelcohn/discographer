@@ -16,7 +16,7 @@ function hash_recordHashes()
 	local -r coprocTemporaryFile="$TMP_FILE"
 	
 	hash_recordHashesInFile 1>"$coprocTemporaryFile"
-	LC_ALL=C sort -k 1 -z >"$hashesInstalledFilePath"
+	LC_ALL=C sort -k 1 -z "$coprocTemporaryFile" >"$hashesInstalledFilePath"
 }
 
 function hash_recordHashesInFile()
