@@ -28,13 +28,22 @@ function yum_prepareCachePaths()
 {
 	yum_cachePath="$main_cachePath"/yum
 	
-	yum_cacheYumConfFilePath="$machine_cachePath"/yum.conf
+	yum_cacheMachinePath="$machine_cachePath"/yum
+	
+	yum_cacheYumConfFilePath="$yum_cacheMachinePath"/yum.conf
+	
+	yum_cacheYumLogPath="$yum_cacheMachinePath"/log
 }
 yum_functions+=(yum_prepareCachePaths)
 
 function yum_makeCacheFolders()
 {
 	mkdir -m 0755 -p "$yum_cachePath"
+	
+	mkdir -m 0755 -p "$yum_cacheMachinePath"
+	
+	rm -rf "$yum_cacheYumLogPath"
+	mkdir -m 0755 -p "$yum_cacheYumLogPath"
 }
 yum_functions+=(yum_makeCacheFolders)
 

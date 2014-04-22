@@ -15,7 +15,8 @@ function yum_wrapper()
 		local -r yumVerbosity="--verbose"
 	fi
 	
-	yum ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@"
+	backgroundJobs_parallelJob yum ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@" 1>>"$yum_cacheYumLogPath"/yum."$1".out.log 2>>"$yum_cacheYumLogPath"/yum."$1".err.log
+	backgroundJobs_waitForJobs 5 "${tab}${tab}${tab}${tab}yum_wrapper waiting 5 seconds..."
 }
 
 function yum_wrapper_install()

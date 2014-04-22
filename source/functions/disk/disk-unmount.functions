@@ -108,7 +108,7 @@ function disk_unmount_backupMasterBootRecord()
 		;;
 		
 		dos)
-			dd bs=512 count=1 conv=notrunc if="${machine_derived_disksDiskImagePath["$disk"]}" of="$machine_cacheArtefactsPath"/"$disk".mbr.bak
+			dd bs=512 count=1 conv=notrunc if="${machine_derived_disksDiskImagePath["$disk"]}" of="$machine_cacheArtefactsPath"/"$disk".mbr.bak status=none 1>/dev/null 2>/dev/null
 		;;
 		
 		bsd|solaris|unixware)
@@ -127,6 +127,7 @@ disk_unmount_functions+=(disk_unmount_backupMasterBootRecord)
 
 function disk_unmount_convertImage()
 {
+	set -x
 	hypervisor_disk_convertDiskImage_${machineHypervisorDiskExtension}
 }
 disk_unmount_functions+=(disk_unmount_convertImage)

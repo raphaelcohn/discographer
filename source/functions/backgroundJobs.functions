@@ -1,0 +1,45 @@
+jobProcessIds=()
+
+function backgroundJobs_prepareWaitForJobs()
+{
+	-jobProcessIds=()
+}
+
+function backgroundJobs_parallelJob()
+{
+	(
+		"$@"
+	) &
+	jobProcessIds+=($!)
+}
+
+function backgroundJobs_waitForJobs()
+{
+	local -ir pulseInterval=$1
+	local -r pulseMessage="$2"
+	SECONDS=0
+	
+	local jobProcessId
+	local -i failCount=0
+	for jobProcessId in ${jobProcessIds[@]}
+	do
+		if ! wait $jobProcessId; then
+			failCount=$((failCount+1))
+		fi
+		if [ $SECONDS -gt $pulseInterval ]; then
+			informationMessage INFO "$pulseMessage"
+		fi
+	done
+	
+	if [ $failCount -ne 0 ]; then
+		if [ $failCount -eq 1 ]; then
+			local plural=""
+		else
+			local plural="s"
+		fi
+		# Allow logging to catch up
+		sleep 2
+		informationMessage FAIL "$failCount background task${plural} failed (grep FAIL $lfsLogPath/$ourName.log)"
+		exitError 1
+	fi
+}
