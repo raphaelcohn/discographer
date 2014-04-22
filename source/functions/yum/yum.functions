@@ -104,6 +104,7 @@ yum_functions+=(yum_installYumRepositories)
 
 function yum_prepareYumCache()
 {
+	set -x
 	yum_wrapper makecache
 }
 yum_functions+=(yum_prepareYumCache)

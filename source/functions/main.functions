@@ -4,8 +4,8 @@ main_functions+=(language_setDefaults)
 
 function main_registerTrapHandlers()
 {
-	trapHandlers_addNext temporaryFiles_removeAll
 	trapHandlers_addNext mounting_removeMountPointsOnExit
+	trapHandlers_addNext temporaryFiles_removeAll
 }
 main_functions+=(main_registerTrapHandlers)
 
