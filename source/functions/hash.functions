@@ -2,17 +2,31 @@ function hash_recordHashes()
 {
 	local -r prefix="$1"
 	local -r path="$2"
-	local -r hashesFile="$3"
+	local -r hashesFileParentPath="$3"
+	local -r hashesFileName="$4"
+	local -r hashesInstalledFileName="$5"
 	
+	local -r sortedAsciiNullSeparatedFiles="$hashesFileParentPath"/"$hashesFileName"
+	local -r hashesInstalledFilePath="$hashesFileParentPath"/"$hashesInstalledFileName"
 	local -r topLevelFolder="${prefix}${path}"
 	local -ir prefixLength=${#prefix}
 	
-	hash_recordHashLine Type Uid Gid Mode MTime CTime Meta Version Chattr Acl DefaultAcl Selinux Capabilities Size MD5 SHA1 SHA256 SHA512
-	
-	# Done this way to try to overcome an open files bug
+	# Done this way, instead of < <(coproc command), to overcome an open files bug?
 	temporaryFiles_newFileToRemoveOnExit
-	local -r sortedAsciiNullSeparatedFiles="$TMP_FILE"
+	local -r coprocTemporaryFile="$TMP_FILE"
+	
+	hash_recordFiles
+	hash_recordHashesInFile
+}
+
+function hash_recordFiles()
+{
 	find "$topLevelFolder" -print0 | LC_ALL=C sort -k 1 -z >"$sortedAsciiNullSeparatedFiles"
+}
+
+function hash_recordHashesInFile()
+{
+	hash_recordHashLine Type Uid Gid Mode MTime CTime Meta Version Chattr Acl DefaultAcl Selinux Capabilities Size MD5 SHA1 SHA256 SHA512 Path
 	
 	local fileObject
 	while IFS= read -r -d $'\0' fileObject
@@ -33,20 +47,33 @@ function hash_recordHashes()
 		elif [ -S "$fileObject" ]; then
 			hash_recordHashSocket
 		else
-			hash_recordHashUnknown
+			informationMessage FAIL "Unknown file type $fileObject"
+			exitError 1
 		fi
 	done <"$sortedAsciiNullSeparatedFiles"
 }
 
 function hash_recordHashLine()
 {
-	if [ $# -ne 18 ]; then
-		echo "Not 18 arguments" 1>&2
-		exit 1
-	fi
+	case $# in
+		
+		18)
+			local -r filePath="${fileObject:$prefixLength}"
+		;;
+		
+		19)
+			local -r filePath="$19"
+		;;
+		
+		*)
+			informationMessage FAIL "Not 18 or 19 arguments"
+			exitError 1
+		;;
+	
+	esac
 	
 	local -r fileType="$1"
-	local uid="$2"
+	local -r uid="$2"
 	local -r gid="$3"
 	local -r mode="$4"
 	local -r mtime="$5"
@@ -54,19 +81,17 @@ function hash_recordHashLine()
 	local -r meta="$7"
 	local -r version="$8"
 	local -r chattr="$9"
-	shift 9
-	local -r acl="$1"
-	local -r defaultacl="$2"
-	local -r selinux="$3"
-	local -r capabilities="$4"
-	local -r size="$5"
-	local -r md5="$6"
-	local -r sha1="$7"
-	local -r sha256="$8"
-	local -r sha512="$9"
-	shift 9
+	local -r acl="$10"
+	local -r defaultacl="$11"
+	local -r selinux="$12"
+	local -r capabilities="$13"
+	local -r size="$14"
+	local -r md5="$15"
+	local -r sha1="$16"
+	local -r sha256="$17"
+	local -r sha512="$18"
 	
-	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" "$defaultacl" "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512" "${fileObject:$prefixLength}" >>"$hashesFile"
+	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" "$defaultacl" "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512" "${filePath}" >>"$hashesInstalledFilePath"
 }
 
 # birthTime %W seems to not be known for most files (outputs 0)
@@ -75,7 +100,8 @@ function hash_recordHashLine()
 function hash_recordHashSymlink()
 {
 	local uid gid mode mtime ctime size
-	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z %s" "$fileObject")
+	stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
+	IFS=' ' read -r -d $'\n' uid gid mode size <"$coprocTemporaryFile"
 	
 	local -r meta="$(readlink -n "$fileObject")"
 		
@@ -93,12 +119,14 @@ function hash_recordHashSymlink()
 function hash_recordHashFile()
 {
 	local uid gid mode mtime ctime size
-	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z %s" "$fileObject")
+	stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
+	IFS=' ' read -r -d $'\n' uid gid mode size <"$coprocTemporaryFile"
 	
 	local -r meta="$(file --brief --keep-going --no-dereference --uncompress "$fileObject")"
 	
 	local version chattr file
-	IFS=' ' read -r -d $'\n' version chattr file < <(lsattr -v "$fileObject")
+	lsattr -v "$fileObject" >"$coprocTemporaryFile"
+	IFS=' ' read -r -d $'\n' version chattr file <"$coprocTemporaryFile"
 	
 	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
 	if [ -n "$initialAcl" ]; then
@@ -117,21 +145,23 @@ function hash_recordHashFile()
 	local -r sha1="$(sha1sum "$fileObject" | awk 'NR==1 {print $1}')"
 	local -r sha256="$(sha256sum "$fileObject" | awk 'NR==1 {print $1}')"
 	local -r sha512="$(sha512sum "$fileObject" | awk 'NR==1 {print $1}')"
-		
+	
 	hash_recordHashLine f "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" '' "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512"
 }
 
 function hash_recordHashFolder()
 {
-	# Whilst directories do have a size, it's very much a function of the file system
+	# Whilst folders do have a size, it's very much a function of the file system
 	local uid gid mode mtime ctime
-	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z" "$fileObject")
+	stat -c "%u %g %a %Y %Z" "$fileObject" >"$coprocTemporaryFile"
+	IFS=' ' read -r -d $'\n' uid gid mode mtime ctime <"$coprocTemporaryFile"
 	
 	# it might be useful to record entry count, less . and .. as 'meta', or perhaps an ignore-rule
 	
 	# Note -d to make lsattr behave
 	local version chattr file
-	IFS=' ' read -r -d $'\n' version chattr file < <(lsattr -d -v "$fileObject")
+	lsattr -d -v "$fileObject" >"$coprocTemporaryFile"
+	IFS=' ' read -r -d $'\n' version chattr file <"$coprocTemporaryFile"
 	
 	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
 	if [ -n "$initialAcl" ]; then
@@ -141,7 +171,7 @@ function hash_recordHashFolder()
 		local -r acl=""
 	fi
 	
-	# Only directories have default acl
+	# Only folders have default acl
 	local -r initialDefaultAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --default -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
 	if [ -n "$initialDefaultAcl" ]; then
 		# strips a trailing ' '
@@ -160,9 +190,10 @@ function hash_recordHashDevice()
 {
 	local -r fileType="$1"
 	
-	# Whilst directories do have a size, it's very much a function of the file system
+	# Whilst devices do have a size, it's very much a function of the file system
 	local uid gid mode mtime ctime meta
-	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z %t:%T" "$fileObject")
+	stat -c "%u %g %a %Y %Z %t:%T" "$fileObject" >"$coprocTemporaryFile"
+	IFS=' ' read -r -d $'\n' uid gid mode mtime ctime meta <"$coprocTemporaryFile"
 	
 	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
 	if [ -n "$initialAcl" ]; then
@@ -180,9 +211,10 @@ function hash_recordHashDevice()
 
 function hash_recordHashNamedPipe()
 {
-	# Whilst directories do have a size, it's very much a function of the file system
+	# Whilst devices do have a size, it's very much a function of the file system
 	local uid gid mode mtime ctime
-	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z" "$fileObject")
+	stat -c "%u %g %a %Y %Z" "$fileObject" >"$coprocTemporaryFile"
+	IFS=' ' read -r -d $'\n' uid gid mode mtime ctime <"$coprocTemporaryFile"
 	
 	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
 	if [ -n "$initialAcl" ]; then
@@ -201,7 +233,8 @@ function hash_recordHashNamedPipe()
 function hash_recordHashSocket()
 {
 	local uid gid mode mtime ctime
-	IFS=' ' read -r -d $'\n' uid gid mode size < <(stat -c "%u %g %a %Y %Z" "$fileObject")
+	stat -c "%u %g %a %Y %Z" "$fileObject" >"$coprocTemporaryFile"
+	IFS=' ' read -r -d $'\n' uid gid mode mtime ctime <"$coprocTemporaryFile"
 	
 	local -r initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
 	if [ -n "$initialAcl" ]; then
@@ -211,11 +244,5 @@ function hash_recordHashSocket()
 		local -r acl=""
 	fi
 	
-	hash_recordHashLine p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' '' '' '' '' '' '' ''
-}
-
-function hash_recordHashUnknown()
-{
-	informationMessage FAIL "Unknown file type $fileObject"
-	exitError 1 
+	hash_recordHashLine s "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' '' '' '' '' '' '' ''
 }

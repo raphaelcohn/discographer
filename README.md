@@ -200,8 +200,7 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 	* Implies that generators are also install programs, that need to run in a certain order
 
 # TODO
-* Log yum output...
-
+* 
 * Mixed Resources
 	* Have a file detailing installer-kind, package / resource name, source URL (if remote), version (if any), arch (if any), size, crypto hashes, any keys / sigs
 		* RPM (rpm-url)
