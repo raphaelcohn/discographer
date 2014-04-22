@@ -28,15 +28,16 @@ function configuration_readPackageNames()
 	done <"$packagesFilePath"
 }
 
-function configuration_readRpmFiles()
+function configuration_readPackageFiles()
 {
 	local -r folder="$1"
-	
+	local -r packageFileExtension="$2"
+
 	pushd "$folder" 1>/dev/null 2>/dev/null
-		local rpmFile
-		for rpmFile in *.rpm
+		local packageFile
+		for packageFile in *."$packageFileExtension"
 		do
-			echo "$rpmFile"
+			echo "$packageFile"
 		done
 	popd  1>/dev/null 2>/dev/null
 }

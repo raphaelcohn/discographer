@@ -178,16 +178,16 @@ function machine_validateConfiguration()
 machine_functions+=(machine_validateConfiguration)
 
 machine_packageNames=()
-function machine_readPackages()
+function machine_readRpmPackageNames()
 {
 	mapfile -t machine_packageNames < <(configuration_readPackageNames "$machine_configPackagesFilePath")
 }
-machine_functions+=(machine_readPackages)
+machine_functions+=(machine_readRpmPackageNames)
 
 machine_rpmFiles=()
 function machine_readRpmFiles()
 {
-	mapfile -t machine_rpmFiles < <(configuration_readRpmFiles "$machine_configRpmsPath")
+	mapfile -t machine_rpmFiles < <(configuration_readPackageFiles "$machine_configRpmsPath" "rpm")
 }
 machine_functions+=(machine_readRpmFiles)
 

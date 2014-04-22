@@ -98,16 +98,16 @@ function machine_group_sourceConfiguration()
 machine_group_functions+=(machine_group_sourceConfiguration)
 
 machine_group_packageNames=()
-function machine_group_readPackages()
+function machine_group_readRpmPackageNames()
 {
 	mapfile -t machine_group_packageNames < <(configuration_readPackageNames "$machine_group_configPackagesFilePath")
 }
-machine_group_functions+=(machine_group_readPackages)
+machine_group_functions+=(machine_group_readRpmPackageNames)
 
 machine_group_rpmFiles=()
 function machine_group_readRpmFiles()
 {
-	mapfile -t machine_group_rpmFiles < <(configuration_readRpmFiles "$machine_group_configRpmsPath")
+	mapfile -t machine_group_rpmFiles < <(configuration_readPackageFiles "$machine_group_configRpmsPath" "rpm")
 }
 machine_group_functions+=(machine_group_readRpmFiles)
 
