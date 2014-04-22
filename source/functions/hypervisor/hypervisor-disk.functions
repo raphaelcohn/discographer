@@ -31,7 +31,7 @@ function hypervisor_disk_convertDiskImageUsingQemuImg()
 	local -r inputFile="${machine_derived_disksDiskImagePath["$disk"]}"
 	local -r outputFile="$(hypervisor_disk_pathToOutputFile "$extension")"
 
-	qemu-img convert -q -f raw -O "$extension" "$@" "$inputFile" "$outputFile"
+	qemu-img convert -f raw -O "$extension" "$@" "$inputFile" "$outputFile"
 	rm -rf "$inputFile"
 
 	machine_derived_disksDiskImagePath["$disk"]="$outputFile"

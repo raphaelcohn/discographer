@@ -15,19 +15,12 @@ function backgroundJobs_parallelJob()
 
 function backgroundJobs_waitForJobs()
 {
-	local -ir pulseInterval=$1
-	local -r pulseMessage="$2"
-	SECONDS=0
-	
 	local jobProcessId
 	local -i failCount=0
 	for jobProcessId in ${jobProcessIds[@]}
 	do
 		if ! wait $jobProcessId; then
 			failCount=$((failCount+1))
-		fi
-		if [ $SECONDS -gt $pulseInterval ]; then
-			informationMessage INFO "$pulseMessage"
 		fi
 	done
 	

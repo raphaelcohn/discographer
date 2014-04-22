@@ -149,12 +149,10 @@ function mounting_removeMountPointsOnExit()
 	for (( index=${#mounting_mountPointsToRemoveOnExitPaths[*]}; index>0; index-- ))
 	do
 		adjustedIndex=$((index-1))
-		set -x
 		mountPath="${mounting_mountPointsToRemoveOnExitPaths[$adjustedIndex]}"
 		unmountFunction="${mounting_mountPointsToRemoveOnExitFunctions[$adjustedIndex]}"
 		
-		informationMessage INFO "${tab}${tab}${mounthPath} ${unmountFunction}"
+		informationMessage INFO "${tab}${tab}${mountPath} ${unmountFunction}"
 		$unmountFunction "$mountPath" || true
-		set +x
 	done
 }

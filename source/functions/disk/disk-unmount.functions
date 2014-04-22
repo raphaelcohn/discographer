@@ -2,10 +2,11 @@ disk_unmount_functions=()
 
 function disk_unmount_optimiseDisk()
 {
+	set -x
 	case "${machine_configuration_disksFilesystemType["$disk"]}" in
 	
 		ext2|ext3|ext4)
-			e2fsck -D -f "${machine_derived_disksPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
+			e2fsck -D -f "${machine_derived_disksPartitionImagePath["$disk"]}"
 			tune2fs -f -c 0 -C 0 -i 36m -M "${machine_derived_disksPartitionImagePath["$disk"]}" -u 0 -g 0 "${machine_derived_disksPartitionImagePath["$disk"]}"
 		;;
 	
@@ -127,7 +128,6 @@ disk_unmount_functions+=(disk_unmount_backupMasterBootRecord)
 
 function disk_unmount_convertImage()
 {
-	set -x
 	hypervisor_disk_convertDiskImage_${machineHypervisorDiskExtension}
 }
 disk_unmount_functions+=(disk_unmount_convertImage)
