@@ -438,7 +438,7 @@ machine_functions+=(machine_installExtLinux)
 
 function machine_recordHashesOfAllFiles()
 {
-	hash_recordHashes "${machine_cacheDisksMountPath}" "/" "$machine_cacheArtefactsPath" files.report.txt files-installed.report.txt
+	hash_recordHashes "${machine_cacheDisksMountPath}" "/" "$machine_cacheArtefactsPath" .report.txt
 }
 machine_functions+=(machine_recordHashesOfAllFiles)
 

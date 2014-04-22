@@ -3,64 +3,30 @@ function hash_recordHashes()
 	local -r prefix="$1"
 	local -r path="$2"
 	local -r hashesFileParentPath="$3"
-	local -r hashesFileName="$4"
-	local -r hashesInstalledFileName="$5"
+	local -r hashesFileNameExtension="$4"
 	
-	local -r sortedAsciiNullSeparatedFiles="$hashesFileParentPath"/"$hashesFileName"
-	local -r hashesInstalledFilePath="$hashesFileParentPath"/"$hashesInstalledFileName"
 	local -r topLevelFolder="${prefix}${path}"
 	local -ir prefixLength=${#prefix}
 	
-	temporaryFiles_newFileToRemoveOnExit
-	local -r outputTemporaryFile="$TMP_FILE"
-	
-	hash_recordHashesInFile 1>"$outputTemporaryFile"
-	LC_ALL=C sort -k 1 -z "$outputTemporaryFile" >"$hashesInstalledFilePath"
-}
-
-function hash_recordHashesInFile()
-{
-	# Done this way, instead of < <(coproc command), to overcome an open files bug?
-	temporaryFiles_newFileToRemoveOnExit
-	local -r coprocTemporaryFile="$TMP_FILE"
-	
-	hash_recordHashLine Type Uid Gid Mode MTime CTime Meta Version Chattr Acl DefaultAcl Selinux Capabilities Size MD5 SHA1 SHA256 SHA512 Path
-	
+	local printfTemplate='%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n'
 	local fileObject
 	
-	hash_recordHashSymlink
-	hash_recordHashFile
-	hash_recordHashFolder
-	hash_recordHashDevice b
-	hash_recordHashDevice c
-	hash_recordHashNamedPipe
-	hash_recordHashSocket
-}
-
-function hash_recordHashLine()
-{
-	case $# in
-		
-		18)
-			local -r filePath="${fileObject:$prefixLength}"
-		;;
-		
-		19)
-			local -r filePath="$19"
-		;;
-		
-		*)
-			informationMessage FAIL "Not 18 or 19 arguments"
-			exitError 1
-		;;
+	backgroundJobs_prepareWaitForJobs
+	backgroundJobs_parallelJob hash_recordHashSymlink
+	backgroundJobs_parallelJob hash_recordHashFile
+	backgroundJobs_parallelJob hash_recordHashFolder
+	backgroundJobs_parallelJob hash_recordHashDevice b block-devices
+	backgroundJobs_parallelJob hash_recordHashDevice c character-devices
+	backgroundJobs_parallelJob hash_recordHashNamedPipe
+	backgroundJobs_parallelJob hash_recordHashSocket
+	backgroundJobs_waitForJobs
 	
-	esac
+	pushd "$hashesFileParentPath" 1>/dev/null 2>/dev/null
 	
-	if [ "$beDebug" = "yes" ]; then
-		informationMessage INFO "${tab}${tab}${tab}${filePath}"
-	fi
+		printf "$printfTemplate" Path Type UID GID Mode MTime CTime Meta Version Chattr Acl DefaultAcl SELinux Capabilities Size MD5 SHA1 SHA256 SHA512 >hashes."$hashesFileNameExtension"
+		LC_ALL=C sort -k 1 *."$hashesFileNameExtension" >>hashes."$hashesFileNameExtension"
 	
-	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10" "$11" "$12" "$13" "$14" "$15" "$16" "$17" "$18" "${filePath}"
+	popd 1>/dev/null 2>/dev/null
 }
 
 # A performance improvement would be to do each column on all files and then merge
@@ -76,6 +42,8 @@ function hash_recordHashLine()
 #  file --no-pad --separator $'\t' --keep-going --no-dereference --uncompress * (derefences link, but needs clean-up)
 function hash_recordHashSymlink()
 {
+	temporaryFiles_newFileToRemoveOnExit
+	local -r coprocTemporaryFile="$TMP_FILE"
 	local uid gid mode mtime ctime size meta selinux
 	find "$topLevelFolder" -type l -print0 | while IFS= read -r -d $'\0' fileObject
 	do
@@ -87,15 +55,15 @@ function hash_recordHashSymlink()
 		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
 		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 	
-		hash_recordHashLine l "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' '' '' "$selinux" '' "$size" "" "" "" ""
-	done
-	
+		printf "$printfTemplate" "${fileObject:$prefixLength}" l "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' '' '' "$selinux" '' "$size" "" "" "" ""
+	done >"$hashesFileParentPath"/symlinks."$hashesFileNameExtension"
 }
 
 function hash_recordHashFile()
 {
+	temporaryFiles_newFileToRemoveOnExit
+	local -r coprocTemporaryFile="$TMP_FILE"
 	local uid gid mode mtime ctime size meta version chattr file initialAcl acl selinux capabilities md5 sha1 sha256 sha512
-	
 	find "$topLevelFolder" -type f -print0 | while IFS= read -r -d $'\0' fileObject
 	do
 		stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
@@ -124,12 +92,14 @@ function hash_recordHashFile()
 		sha256="$(sha256sum "$fileObject" | awk 'NR==1 {print $1}')"
 		sha512="$(sha512sum "$fileObject" | awk 'NR==1 {print $1}')"
 
-		hash_recordHashLine f "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" '' "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512"
-	done
+		printf "$printfTemplate" "${fileObject:$prefixLength}" f "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" '' "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512"
+	done >"$hashesFileParentPath"/files."$hashesFileNameExtension"
 }
 
 function hash_recordHashFolder()
 {
+	temporaryFiles_newFileToRemoveOnExit
+	local -r coprocTemporaryFile="$TMP_FILE"
 	local uid gid mode mtime ctime size version chattr file initialAcl acl initialDefaultAcl defaultAcl selinux
 	find "$topLevelFolder" -type d -print0 | while IFS= read -r -d $'\0' fileObject
 	do
@@ -164,15 +134,17 @@ function hash_recordHashFolder()
 		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
 		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 
-		hash_recordHashLine d "$uid" "$gid" "$mode" "$mtime" "$ctime" '' "$version" "$chattr" "$acl" "$defaultAcl" "$selinux" '' "$size" '' '' '' ''
-	done
-	
+		printf "$printfTemplate" "${fileObject:$prefixLength}" d "$uid" "$gid" "$mode" "$mtime" "$ctime" '' "$version" "$chattr" "$acl" "$defaultAcl" "$selinux" '' "$size" '' '' '' ''
+	done >"$hashesFileParentPath"/folders."$hashesFileNameExtension"
 }
 
 function hash_recordHashDevice()
 {
 	local -r fileType="$1"
+	local -r fileTypeName="$2"
 	
+	temporaryFiles_newFileToRemoveOnExit
+	local -r coprocTemporaryFile="$TMP_FILE"
 	local uid gid mode mtime ctime meta initialAcl acl selinux
 	find "$topLevelFolder" -type "$fileType" -print0 | while IFS= read -r -d $'\0' fileObject
 	do
@@ -191,12 +163,14 @@ function hash_recordHashDevice()
 		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
 		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 	
-		hash_recordHashLine "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
-	done
+		printf "$printfTemplate" "${fileObject:$prefixLength}" "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
+	done >"$hashesFileParentPath"/"$fileTypeName"."$hashesFileNameExtension"
 }
 
 function hash_recordHashNamedPipe()
 {
+	temporaryFiles_newFileToRemoveOnExit
+	local -r coprocTemporaryFile="$TMP_FILE"
 	# Whilst devices do have a size, it's very much a function of the file system
 	local uid gid mode mtime ctime initialAcl acl selinux
 	find "$topLevelFolder" -type p -print0 | while IFS= read -r -d $'\0' fileObject
@@ -215,13 +189,14 @@ function hash_recordHashNamedPipe()
 		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
 		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
 		
-		hash_recordHashLine p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
-	done
-	
+		printf "$printfTemplate" "${fileObject:$prefixLength}" p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
+	done >"$hashesFileParentPath"/named-pipes."$hashesFileNameExtension"
 }
 
 function hash_recordHashSocket()
 {
+	temporaryFiles_newFileToRemoveOnExit
+	local -r coprocTemporaryFile="$TMP_FILE"
 	local uid gid mode mtime ctime initialAcl acl
 	find "$topLevelFolder" -type s -print0 | while IFS= read -r -d $'\0' fileObject
 	do
@@ -236,6 +211,6 @@ function hash_recordHashSocket()
 			acl=""
 		fi
 	
-		hash_recordHashLine s "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' '' '' '' '' '' '' ''
-	done
+		printf "$printfTemplate" "${fileObject:$prefixLength}" s "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' '' '' '' '' '' '' ''
+	done >"$hashesFileParentPath"/sockets."$hashesFileNameExtension"
 }
