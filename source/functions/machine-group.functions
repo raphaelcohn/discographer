@@ -10,6 +10,9 @@ function machine_group_prepareConfigPaths()
 {
 	machine_group_configPath="$machineGroupsPath"/"${machineGroupName}"
 	if [ ! -d "$machine_group_configPath" ]; then
+		informationMessage FAIL "Machine group ${machineGroupName} missing machine-group config path $machine_group_configPath"
+		exit 1
+	fi
 	
 	machine_group_configConfigurationFilePath="$machine_group_configPath"/configuration
 	if [ ! -f "$machine_group_configConfigurationFilePath" ]; then
