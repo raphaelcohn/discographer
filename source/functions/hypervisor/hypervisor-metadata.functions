@@ -47,6 +47,7 @@ function hypervisor_metadata_qemu()
 			EOF
 			cat >"$qemuScript" <<-EOF
 				    exec -a "qemu-kvm-${machineName}" qemu-kvm \
+				        -smp ${configuration_machine_cpusCount} \
 				        -m ${configuration_machine_memoryMegabytes} \
 				        -kernel "${machineKernelFileName}" \
 				        -initrd "${machineInitramfsFileName}" \

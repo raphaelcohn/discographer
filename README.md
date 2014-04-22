@@ -191,7 +191,6 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 # BUGS
 
 * We aren't cleaning up the cache
-* We aren't specify vCPUs in QEMU
 * We aren't specifying capacity in OVF
 * We aren't setting VMDK UUIDs
 * native not supported for vmware, parallels
