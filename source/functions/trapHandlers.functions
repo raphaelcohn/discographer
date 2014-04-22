@@ -1,22 +1,23 @@
-function traps_runOnTrap()
+function trapHandlers_runAll()
 {
 	exiting=yes
 	local trapHandler
 	for trapHandler in "${trapHandlers[@]}"
 	do
+		informationMessage INFO "Running trapHandler $trapHandler"
 		$trapHandler
 	done
 }
 
-function traps_addNextTrapHandler()
+function trapHandlers_addNext()
 {
 	local trapHandler="$1"
-	trap traps_runOnTrap 0 HUP INT QUIT ILL ABRT FPE SEGV PIPE TERM EXIT
+	trap trapHandlers_runAll 0 HUP INT QUIT ILL ABRT FPE SEGV PIPE TERM EXIT
 	trapHandlers+=("$trapHandler")
 }
 
 # not used currently
-function traps_removeLastTrapHandler()
+function trapHandlers_removeLast()
 {
 	unset trapHandlers[$((${#trapHandlers[*]}-1))]
 }

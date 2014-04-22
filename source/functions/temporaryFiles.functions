@@ -1,22 +1,22 @@
-function temporary_removeFilesOnExit()
+function temporaryFiles_removeAll()
 {
 	rm -rf -- "${filesToRemoveOnExit[@]}"
 }
 
 # Not currently used
-function temporary_addFileToRemoveOnExit()
+function temporaryFiles_addFileToRemoveOnExit()
 {
 	local -r fileToRemove="$1"
 	filesToRemoveOnExit+=("$fileToRemove")
 }
 
-function temporaryFileToRemoveOnExit()
+function temporaryFiles_newFileToRemoveOnExit()
 {
 	TMP_FILE="$(mktemp -t "$ourName".XXXXXXXXXXXX)"
 	filesToRemoveOnExit+=("$TMP_FILE")
 }
 
-function temporaryFolderToRemoveOnExit()
+function temporaryFiles_newFolderToRemoveOnExit()
 {
 	TMP_FILE="$(mktemp -t -d "$ourName".XXXXXXXXXXXX)"
 	filesToRemoveOnExit+=("$TMP_FILE")

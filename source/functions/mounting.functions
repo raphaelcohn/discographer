@@ -29,7 +29,7 @@ function mounting_mountDisk()
 	fi
 	
 	# Done this way rather than as "$(kpartx ...)" so as to capture any exit codes due to lack of mount points
-	temporaryFileToRemoveOnExit
+	temporaryFiles_newFileToRemoveOnExit
 	local -r outputFile="$TMP_FILE"
 	kpartx -a -s -v "$diskFilePath" 1>"$outputFile"
 	

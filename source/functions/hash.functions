@@ -10,7 +10,7 @@ function hash_recordHashes()
 	hash_recordHashLine Type Uid Gid Mode MTime CTime Meta Version Chattr Acl DefaultAcl Selinux Capabilities Size MD5 SHA1 SHA256 SHA512
 	
 	# Done this way to try to overcome an open files bug
-	temporaryFileToRemoveOnExit
+	temporaryFiles_newFileToRemoveOnExit
 	local -r sortedAsciiNullSeparatedFiles="$TMP_FILE"
 	find "$topLevelFolder" -print0 | LC_ALL=C sort -k 1 -z >"$sortedAsciiNullSeparatedFiles"
 	
