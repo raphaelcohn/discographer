@@ -2,7 +2,7 @@ jobProcessIds=()
 
 function backgroundJobs_prepareWaitForJobs()
 {
-	-jobProcessIds=()
+	jobProcessIds=()
 }
 
 function backgroundJobs_parallelJob()
