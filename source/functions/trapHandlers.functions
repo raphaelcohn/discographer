@@ -1,10 +1,11 @@
 function trapHandlers_runAll()
 {
+	informationMessage INFO "trapHandlers_runAll"
 	exiting=yes
 	local trapHandler
 	for trapHandler in "${trapHandlers[@]}"
 	do
-		informationMessage INFO "Running trapHandler $trapHandler"
+		informationMessage INFO "${tab}$trapHandler"
 		$trapHandler
 	done
 }

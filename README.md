@@ -194,8 +194,13 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 * We aren't specifying capacity in OVF
 * We aren't setting VMDK UUIDs
 * native not supported for vmware, parallels
+*+ /sbin/new-kernel-pkg --package kernel --install 2.6.32-431.11.2.el6.x86_64
+	* awk: cmd. line:1: fatal: cannot open file `/etc/fstab' for reading (No such file or directory)
+	* Caused by /etc/fstab not existing when installing the kernel - so we'd need to run a generator before installation
+	* Implies that generators are also install programs, that need to run in a certain order
 
 # TODO
+* Log yum output...
 
 * Mixed Resources
 	* Have a file detailing installer-kind, package / resource name, source URL (if remote), version (if any), arch (if any), size, crypto hashes, any keys / sigs

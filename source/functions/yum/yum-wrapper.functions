@@ -6,12 +6,16 @@ function yum_wrapper()
 	fi
 	
 	if [ "$beVerbose" = no ]; then
-		local -r yumVerbosity="--quiet"
+		if [ "$beDebug" = no ]; then
+			local -r yumVerbosity="--quiet"
+		else
+			local -r yumVerbosity="--verbose"
+		fi
 	else
 		local -r yumVerbosity="--verbose"
 	fi
 	
-	yum ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@" 1>/dev/null 2>/dev/null
+	yum ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@"
 }
 
 function yum_wrapper_install()

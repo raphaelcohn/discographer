@@ -152,6 +152,7 @@ function mounting_removeMountPointsOnExit()
 		mountPath="${mounting_mountPointsToRemoveOnExitPaths[$adjustedIndex]}"
 		unmountFunction="${mounting_mountPointsToRemoveOnExitFunctions[$adjustedIndex]}"
 		
-		$unmountFunction "$mountPath"
+		informationMessage INFO "${tab}${tab}${mounthPath} ${unmountFunction}"
+		$unmountFunction "$mountPath" || true
 	done
 }
