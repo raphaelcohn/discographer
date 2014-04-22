@@ -140,7 +140,6 @@ When executing a machine-group generator-scriptlet, the following environment va
 When executing a machine, in addition to the above, the following environment variables are available:-
 
 * `${machine_configPath}`
-* `${machine_configPackagesFilePath}` - file containing packages to install
 * `${configMachineInitPath}` - file or symlink to init script to install
 * `${configMachineDevicesPath}` - file or symlink to devices to install
 * `${machine_configGeneratorsPath}` - generator scriptlets for machine

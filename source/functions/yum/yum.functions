@@ -116,7 +116,7 @@ yum_functions+=(yum_installMachineGroupRpms)
 
 function yum_installMachineGroupLocalRpms()
 {
-	yum_wrapper_localInstall "$machine_group_configRpmsPath" "${machine_group_rpmFiles[@]}"
+	yum_wrapper_localInstall "$machine_group_configPath"/rpms "${machine_group_rpmFiles[@]}"
 }
 yum_functions+=(yum_installMachineGroupLocalRpms)
 
@@ -128,7 +128,7 @@ yum_functions+=(yum_installMachineRpms)
 
 function yum_installMachineLocalRpms()
 {
-	yum_wrapper_localInstall "$machine_configRpmsPath" "${machine_rpmFiles[@]}"
+	yum_wrapper_localInstall "${machine_configPath}"/rpms "${machine_rpmFiles[@]}"
 }
 yum_functions+=(yum_installMachineLocalRpms)
 

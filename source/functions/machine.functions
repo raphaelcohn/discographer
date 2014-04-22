@@ -50,8 +50,6 @@ machine_functions+=(machine_verifyNameIsValidDnsLabel)
 
 machine_configPath=""
 machine_configConfigurationFilePath=""
-machine_configPackagesFilePath=""
-machine_configRpmsPath=""
 machine_configDisksPath=""
 machine_configNicsPath=""
 machine_configGeneratorsPath=""
@@ -69,18 +67,6 @@ function machine_prepareConfigPaths()
 	machine_configConfigurationFilePath="$machine_configPath"/configuration
 	if [ ! -f "$machine_configConfigurationFilePath" ]; then
 		informationMessage FAIL "Machine ${machineName} missing machine configuration file $machine_configConfigurationFilePath"
-		exit 1
-	fi
-	
-	machine_configPackagesFilePath="$machine_configPath"/packages
-	if [ ! -f "$machine_configPackagesFilePath" ]; then
-		informationMessage FAIL "Machine ${machineName} missing machine packages file $machine_configPackagesFilePath"
-		exit 1
-	fi
-	
-	machine_configRpmsPath="$machine_configPath"/rpms
-	if [ ! -d "$machine_configRpmsPath" ]; then
-		informationMessage FAIL "Machine ${machineName} missing machine rpms folder $machine_configRpmsPath"
 		exit 1
 	fi
 	
@@ -180,14 +166,14 @@ machine_functions+=(machine_validateConfiguration)
 machine_packageNames=()
 function machine_readRpmPackageNames()
 {
-	mapfile -t machine_packageNames < <(configuration_readPackageNames "$machine_configPackagesFilePath")
+	mapfile -t machine_packageNames < <(configuration_readPackageNames "$machine_configPath" "rpm")
 }
 machine_functions+=(machine_readRpmPackageNames)
 
 machine_rpmFiles=()
 function machine_readRpmFiles()
 {
-	mapfile -t machine_rpmFiles < <(configuration_readPackageFiles "$machine_configRpmsPath" "rpm")
+	mapfile -t machine_rpmFiles < <(configuration_readPackageFiles "$machine_configPath" "rpm")
 }
 machine_functions+=(machine_readRpmFiles)
 

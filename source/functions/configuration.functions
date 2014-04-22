@@ -5,7 +5,13 @@ function configuration_sourceDefaultConfiguration()
 
 function configuration_readPackageNames()
 {
-	local -r packagesFilePath="$1"
+	local -r packagesFolderPath="$1"
+	local -r packagesFilePrefix="$2"
+	
+	local -r packagesFilePath="${packagesFolderPath}/${packagesFilePrefix}.packages"
+	if [ ! -f "$packagesFilePath" ]; then
+		return 0
+	fi
 	
 	local line
 	local rawPackageName
@@ -30,9 +36,14 @@ function configuration_readPackageNames()
 
 function configuration_readPackageFiles()
 {
-	local -r folder="$1"
+	local -r parentFolder="$1"
 	local -r packageFileExtension="$2"
-
+	
+	local -r folder="${parentFolder}/${packageFileExtension}s"
+	if [ ! -d "$folder" ]; then
+		return 0
+	fi
+	
 	pushd "$folder" 1>/dev/null 2>/dev/null
 		local packageFile
 		for packageFile in *."$packageFileExtension"
