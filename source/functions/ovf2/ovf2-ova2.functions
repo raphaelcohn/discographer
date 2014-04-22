@@ -1,4 +1,4 @@
-function ova2_generateOva()
+function ovf2_ova2_generate()
 {
 	ovf2_generateOvf
 	

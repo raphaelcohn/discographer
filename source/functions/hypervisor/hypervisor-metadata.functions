@@ -93,7 +93,7 @@ function hypervisor_metadata_vmware()
 		;;
 		
 		ova2)
-			ova2_generateOva
+			ovf2_ova2_generate
 		;;
 		
 		*)
@@ -118,7 +118,7 @@ function hypervisor_metadata_virtualbox()
 		;;
 		
 		ova2)
-			ova2_generateOva
+			ovf2_ova2_generate
 		;;
 	
 		*)
