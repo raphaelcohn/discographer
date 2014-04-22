@@ -199,6 +199,18 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 
 # TODO
 
+* Mixed Resources
+	* Have a file detailing installer-kind, package / resource name, source URL (if remote), version (if any), arch (if any), size, crypto hashes, any keys / sigs
+		* RPM (rpm-url)
+		* RPM (yum-install)
+		* RPM (yum-localinstall)
+		* Deb (deb-url)
+		* Deb (deb-local)
+		* Deb (cdebootstrap)
+		* Deb (apt)
+		* Tarball (compression kind, configure/make/make install, not really all that straightforward, need a spec file or a script, need to specify installation kind)
+		* Each install kind is named to match (by convention) a folder in functions/installers
+	* Some how combine this with repos
 * Documentation
 	* Fix the read me, it's really out-of-date
 	* Clean up generators (eg grub)

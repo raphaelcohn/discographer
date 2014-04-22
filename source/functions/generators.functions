@@ -7,10 +7,12 @@ function generators_source()
 		
 		machine-group)
 			local -r localIndentation="${tab}${tab}"
+			local -r functionNamespace=generator_machine_group
 		;;
 		
 		machine)
 			local -r localIndentation="${tab}${tab}${tab}"
+			local -r functionNamespace=generator_machine
 		;;
 		
 		*)
@@ -23,11 +25,19 @@ function generators_source()
 	pushd "$generatorsPath" 1>/dev/null 2>/dev/null
 		
 		local generator
+		local generatorName
+		local generatorFunction
 		for generator in *.generator
 		do
-			if [ -e "$generator" ]; then
-				informationMessage INFO "${localIndentation}${generator%%.generator} sourcingGenerator"
+			if [ -f "$generator" ]; then
+				generatorName="${generator%%.generator}"
+				
+				informationMessage INFO "${localIndentation}${generatorName} generators_source_$generatorName"
 				source "$generator"
+				
+				generatorFunction=${functionNamespace}_${generatorName}
+				informationMessage INFO "${localIndentation}${generatorName} ${generatorFunction}"
+				$generatorFunction
 			fi
 		done
 		

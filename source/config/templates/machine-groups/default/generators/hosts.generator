@@ -1,1 +1,4 @@
-informationMessage INFO "${tab}${tab}${tab}DO SOMETHING HERE to generate /etc/hosts!"
+function generator_machine_group_hosts()
+{
+	informationMessage INFO "${tab}${tab}${tab}DO SOMETHING HERE to generate /etc/hosts!"
+}

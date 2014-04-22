@@ -1,17 +1,20 @@
-sysconfigPath="$cacheMachineFilesystemImageMountPath"/etc/sysconfig
-mkdir -m 0755 -p "$sysconfigPath"
+function generator_machine_network()
+{
+	local -r sysconfigPath="$cacheMachineFilesystemImageMountPath"/etc/sysconfig
+	mkdir -m 0755 -p "$sysconfigPath"
 
-cat >"$sysconfigPath"/network <<-EOF
-	NETWORKING=yes
-	HOSTNAME=${machineName}.localdomain
-EOF
+	cat >"$sysconfigPath"/network <<-EOF
+		NETWORKING=yes
+		HOSTNAME=${machineName}.localdomain
+	EOF
 
-sysconfigNetworkScriptsPath="$sysconfigPath"/network-scripts
-mkdir -m 0755 -p "$sysconfigNetworkScriptsPath"
+	local -r sysconfigNetworkScriptsPath="$sysconfigPath"/network-scripts
+	mkdir -m 0755 -p "$sysconfigNetworkScriptsPath"
 
-cat >"$sysconfigNetworkScriptsPath"/ifcfg-eth0 <<-EOF
-	ONBOOT=yes
-	DEVICE=eth0
-	BOOTPROTO=dhcp
-	NM_CONTROLLED=yes
-EOF
+	cat >"$sysconfigNetworkScriptsPath"/ifcfg-eth0 <<-EOF
+		ONBOOT=yes
+		DEVICE=eth0
+		BOOTPROTO=dhcp
+		NM_CONTROLLED=yes
+	EOF
+}
