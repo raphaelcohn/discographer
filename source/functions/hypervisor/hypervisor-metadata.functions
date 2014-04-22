@@ -13,7 +13,7 @@ function hypervisor_metadata_qemu()
 	case "$configuration_machine_hypervisorMetadataFormat" in
 
 		native)
-			local -r qemuScript=""
+			local -r qemuScript="$machine_cacheArtefactsPath"/qemu-execute
 			cat >"$qemuScript" <<-'EOF'
 				#!/usr/bin/env bash
 				set -e

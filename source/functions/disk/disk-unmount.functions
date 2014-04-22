@@ -13,7 +13,7 @@ function disk_unmount_optimiseDisk()
 				informationMessage FAIL "e2fsck exited check of disk $disk with an exit code of $exitCode"
 				exitError 1
 			fi
-			tune2fs -f -c 0 -C 0 -i 36m -M "${machine_derived_disksPartitionImagePath["$disk"]}" -u 0 -g 0 "${machine_derived_disksPartitionImagePath["$disk"]}"
+			tune2fs -f -c 0 -C 0 -i 36m -M "${machine_derived_disksPartitionImagePath["$disk"]}" -u 0 -g 0 "${machine_derived_disksPartitionImagePath["$disk"]}" 1>/dev/null 2>/dev/null
 		;;
 	
 		*)
@@ -37,17 +37,17 @@ function disk_unmount_shrinkDiskImage()
 		;;
 		
 		bsd|solaris|unixware)
-			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported for extlinux"
+			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported for disk shrinking"
 			exitError 1
 		;;
 		
 		gpt)
-			informationMessage FAIL "GPT partitioning is unsupported at this time for extlinux"
+			informationMessage FAIL "GPT partitioning is unsupported at this time for disk shrinking"
 			exitError 1
 		;;
 		
 		dos)
-			informationMessage WARN "Dish shrinking is not currently possible when using DOS partition tables"
+			informationMessage WARN "${tab}${tab}${tab}Disk shrinking is not currently possible when using DOS partition tables"
 			return 0
 		;;
 	
