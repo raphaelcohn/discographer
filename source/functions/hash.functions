@@ -15,13 +15,8 @@ function hash_recordHashes()
 	temporaryFiles_newFileToRemoveOnExit
 	local -r coprocTemporaryFile="$TMP_FILE"
 	
-	hash_recordFiles
-	hash_recordHashesInFile
-}
-
-function hash_recordFiles()
-{
-	find "$topLevelFolder" -print0 | LC_ALL=C sort -k 1 -z >"$sortedAsciiNullSeparatedFiles"
+	hash_recordHashesInFile 1>"$coprocTemporaryFile"
+	LC_ALL=C sort -k 1 -z >"$hashesInstalledFilePath"
 }
 
 function hash_recordHashesInFile()
@@ -29,28 +24,41 @@ function hash_recordHashesInFile()
 	hash_recordHashLine Type Uid Gid Mode MTime CTime Meta Version Chattr Acl DefaultAcl Selinux Capabilities Size MD5 SHA1 SHA256 SHA512 Path
 	
 	local fileObject
-	while IFS= read -r -d $'\0' fileObject
+	
+	find "$topLevelFolder" -type l -print0 | while IFS= read -r -d $'\0' fileObject
 	do
-		# symlinks first as all other tests cause de-referencing of symlinks
-		if [ -h "$fileObject" ]; then
-			hash_recordHashSymlink
-		elif [ -f "$fileObject" ]; then
-			hash_recordHashFile
-		elif [ -d "$fileObject" ]; then
-			hash_recordHashFolder
-		elif [ -b "$fileObject" ]; then
-			hash_recordHashDevice b
-		elif [ -c "$fileObject" ]; then
-			hash_recordHashDevice c
-		elif [ -p "$fileObject" ]; then
-			hash_recordHashNamedPipe
-		elif [ -S "$fileObject" ]; then
-			hash_recordHashSocket
-		else
-			informationMessage FAIL "Unknown file type $fileObject"
-			exitError 1
-		fi
-	done <"$sortedAsciiNullSeparatedFiles"
+		hash_recordHashSymlink
+	done
+	
+	find "$topLevelFolder" -type f -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		hash_recordHashFile
+	done
+	
+	find "$topLevelFolder" -type d -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		hash_recordHashFolder
+	done
+	
+	find "$topLevelFolder" -type b -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		hash_recordHashDevice b
+	done
+	
+	find "$topLevelFolder" -type c -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		hash_recordHashDevice c
+	done
+	
+	find "$topLevelFolder" -type p -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		hash_recordHashNamedPipe
+	done
+	
+	find "$topLevelFolder" -type s -print0 | while IFS= read -r -d $'\0' fileObject
+	do
+		hash_recordHashSocket
+	done
 }
 
 function hash_recordHashLine()
@@ -72,31 +80,24 @@ function hash_recordHashLine()
 	
 	esac
 	
-	local -r fileType="$1"
-	local -r uid="$2"
-	local -r gid="$3"
-	local -r mode="$4"
-	local -r mtime="$5"
-	local -r ctime="$6"
-	local -r meta="$7"
-	local -r version="$8"
-	local -r chattr="$9"
-	local -r acl="$10"
-	local -r defaultacl="$11"
-	local -r selinux="$12"
-	local -r capabilities="$13"
-	local -r size="$14"
-	local -r md5="$15"
-	local -r sha1="$16"
-	local -r sha256="$17"
-	local -r sha512="$18"
+	if [ "$beDebug" = "yes" ]; then
+		informationMessage INFO "${tab}${tab}${tab}${fileType}"
+	fi
 	
-	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" "$defaultacl" "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512" "${filePath}" >>"$hashesInstalledFilePath"
+	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10" "$11" "$12" "$13" "$14" "$15" "$16" "$17" "$18" "${filePath}"
 }
 
-# birthTime %W seems to not be known for most files (outputs 0)
-# atime %X is not very useful
-
+# A performance improvement would be to do each column on all files and then merge
+# this works for the stat command (uid gid mode mtime ctime size) and file command
+# md5sum, sha*sum don't
+# getcap doesn't
+# getfacl is very specific
+# stat (selinux) will on CentOS
+# stat ( %t:%T) - major/minor - will
+# stat -c "%u %g %a %Y %Z %s %n %C %t:%T" *
+#  %F file type (long)
+#  %N derefenced symlink (nasty)
+#  file --no-pad --separator $'\t' --keep-going --no-dereference --uncompress * (derefences link, but needs clean-up)
 function hash_recordHashSymlink()
 {
 	local uid gid mode mtime ctime size

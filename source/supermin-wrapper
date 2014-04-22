@@ -9,18 +9,18 @@ function informationMessage()
 	case "$messageKind" in
 		
 		WARN|FAIL)
-			echo "$ourName: $messageKind: $message"
+			echo "$ourName: $messageKind: $message" 1>&2
 		;;
 		
 		DEBUG)
 			if [ "$beDebug" = "yes" ]; then
-				echo "$ourName: $messageKind: $message"
+				echo "$ourName: $messageKind: $message" 1>&2
 			fi
 		;;
 		
 		*)
 			if [ "$beVerbose" = "yes" ]; then
-				echo "$ourName: $messageKind: $message"
+				echo "$ourName: $messageKind: $message" 1>&2
 			fi
 		;;
 	

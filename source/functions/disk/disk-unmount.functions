@@ -47,7 +47,7 @@ function disk_unmount_shrinkDiskImage()
 		;;
 		
 		dos)
-			informationMessage WARN "${tab}${tab}${tab}Disk shrinking is not currently possible when using DOS partition tables"
+			informationMessage WARN "${tab}${tab}${tab}${tab}Disk shrinking is not currently possible when using DOS partition tables"
 			return 0
 		;;
 	

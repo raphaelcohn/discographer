@@ -256,6 +256,9 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 	* support parallel machine building (using bash background jobs) (note that there's a max of 10 loopback devices; we use several per machine)
 		* Look at 2nd comment on https://www.linuxquestions.org/questions/red-hat-31/how-to-increase-the-loop-devices-number-541717/
 	* make yum installation faster
+		* baseline disk image with changes
+			* based on cryptographic hashes of packages, underlays?
+			* done per machine-group?
 		* shared cache
 			* challenge is that the repos can be different per machine
 		* shared downloaded rpms
