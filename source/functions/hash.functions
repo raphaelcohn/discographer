@@ -6,211 +6,112 @@ function hash_recordHashes()
 	local -r hashesFileNameExtension="$4"
 	
 	local -r topLevelFolder="${prefix}${path}"
+	
+	# BUG: Tab and Newline in file names cause problems. Can be fixed (find uses -print0, xargs -0, put the file path at file end) but painful to utilise
+	# BUG: Prefix that contains ';'
+	
+	temporaryFiles_newFileToRemoveOnExit
+	local -r fileObjectFile="$TMP_FILE"
+	
+	# TextualFileType UID GID OctalMode MTime CTime DeviceMajor DeviceMinor Size Hardlinks
+	temporaryFiles_newFileToRemoveOnExit
+	local -r statFile="$TMP_FILE"
+	find "$topLevelFolder" | tee "$fileObjectFile" | xargs stat --printf "%F\%u\t%g\t%a\t%Y\t%Z\t%T\t%t\t%s\t%h\n" >"$statFile"
+	
+	# SELinuxContext
+	# BUG: SELinux is done separately as it doesn't work on Debian and some OS
+	temporaryFiles_newFileToRemoveOnExit
+	local -r selinuxFile="$TMP_FILE"
+	xargs --arg-file "$fileObjectFile" stat -c '%C' >"$selinuxFile"
+	
+	# Capabilities
+	temporaryFiles_newFileToRemoveOnExit
+	local -r getcapFile="$TMP_FILE"
+	xargs --arg-file "$fileObjectFile" getcap -v | awk ' $2 ~ /=/  {print $3}; $2 !~ /=/ {print ""}' >"$getcapFile"
+	
+	# FileContentsSummary
+	temporaryFiles_newFileToRemoveOnExit
+	local -r fileFile="$TMP_FILE"
+	xargs --arg-file "$fileObjectFile" file --brief --keep-going --no-dereference --uncompress >"$fileFile"
+	
+	# ACL
+	temporaryFiles_newFileToRemoveOnExit
+	local -r aclFile="$TMP_FILE"
+	xargs --arg-file "$fileObjectFile" getfacl --absolute-names --physical --numeric --all-effective --omit-header --access -- | tr '\n' '|' | sed -e 's/||/\n/g' >"$aclFile"
+	
+	# DefaultACL
+	temporaryFiles_newFileToRemoveOnExit
+	local -r defaultAclFile="$TMP_FILE"
+	xargs --arg-file "$fileObjectFile" getfacl --absolute-names --physical --numeric --all-effective --omit-header --default -- | tr '\n' '|' | sed -e 's/||/\n/g' >"$defaultAclFile"
+	
+	# Paste together
+	temporaryFiles_newFileToRemoveOnExit
+	local -r sortedFile1="$TMP_FILE"
+	paste "$fileObjectFile" "$statFile" "$selinuxFile" "$getcapFile" "$fileFile" "$aclFile" "$defaultAclFile" | LC_ALL=C sort --key 1 >"$sortedFile1"
+	
+	
+	# FilePath Version Chattr (file and folders only)
+	temporaryFiles_newFileToRemoveOnExit
+	local -r failedChattrFile="$TMP_FILE"
+	temporaryFiles_newFileToRemoveOnExit
+	local -r missortedChattrFile="$TMP_FILE"
+	xargs --arg-file "$fileObjectFile" lsattr -d -v 2>"$failedChattrFile" | awk '{print $3 "\t" $1 "\t" $2}' >"$missortedChattrFile"
+	awk '{print $9 "\tX\tX"}' "$failedChattrFile" >>"$missortedChattrFile"
+	
+	# Sort
+	temporaryFiles_newFileToRemoveOnExit
+	local -r sortedFile2="$TMP_FILE"
+	LC_ALL=C sort --key 1 "$missortedChattrFile" | cut --fields=1 --complement >"$sortedFile2"
+	
+	
+	# Prepare for file hashes - empty lines to append
+	temporaryFiles_newFileToRemoveOnExit
+	local -r everythingButFilesFile="$TMP_FILE"
+	find "$topLevelFolder" ! -type f | awk '{print $1 "\tX" }' >"$everythingButFilesFile"
+	local -ir emptyLineCount=$(wc --line "$everythingButFilesFile" | awk '{print $1}')
+	
+	# FilePath MD5 (file only) - note that this line uses a different awk syntax to include the file name
+	temporaryFiles_newFileToRemoveOnExit
+	local -r missortedMd5File="$TMP_FILE"
+	xargs --arg-file "$fileObjectFile" md5sum | awk '{print $2 "\t" $1}' >"$missortedMd5File"
+	cat "$everythingButFilesFile" >>"$missortedMd5File"
+	
+	# FilePath SHA1 (file only)
+	temporaryFiles_newFileToRemoveOnExit
+	local -r missortedSha1File="$TMP_FILE"
+	xargs --arg-file "$fileObjectFile" sha1sum | awk '{print $1}' >"$missortedSha1File"
+	hash_blankLines $emptyLineCount >>"$missortedSha1File"
+	
+	# FilePath SHA256 (file only)
+	temporaryFiles_newFileToRemoveOnExit
+	local -r missortedSha256File="$TMP_FILE"
+	xargs --arg-file "$fileObjectFile" sha256sum | awk '{print $1}' >"$missortedSha256File"
+	hash_blankLines $emptyLineCount >>"$missortedSha256File"
+	
+	# FilePath SHA512 (file only)
+	temporaryFiles_newFileToRemoveOnExit
+	local -r missortedSha512File="$TMP_FILE"
+	xargs --arg-file "$fileObjectFile" sha512sum | awk '{print $1}' >"$missortedSha512File"
+	hash_blankLines $emptyLineCount >>"$missortedSha512File"
+	
+	# Paste together file hash files
+	temporaryFiles_newFileToRemoveOnExit
+	local -r sortedFile3="$TMP_FILE"
+	paste "$missortedMd5File" "$missortedSha1File" "$missortedSha256File" "$missortedSha512File" | LC_ALL=C sort --key 1 | cut --fields=1 --complement >"$sortedFile3"
+	
+	
+	# Paste all files together and strip any leading prefix; first line is field names
 	local -ir prefixLength=${#prefix}
-	
-	local printfTemplate='%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n'
-	local fileObject
-	
-	backgroundJobs_prepareWaitForJobs
-	backgroundJobs_parallelJob hash_recordHashSymlink
-	backgroundJobs_parallelJob hash_recordHashFile
-	backgroundJobs_parallelJob hash_recordHashFolder
-	backgroundJobs_parallelJob hash_recordHashDevice b block-devices
-	backgroundJobs_parallelJob hash_recordHashDevice c character-devices
-	backgroundJobs_parallelJob hash_recordHashNamedPipe
-	backgroundJobs_parallelJob hash_recordHashSocket
-	backgroundJobs_waitForJobs
-	
-	pushd "$hashesFileParentPath" 1>/dev/null 2>/dev/null
-	
-		printf "$printfTemplate" Path Type UID GID Mode MTime CTime Meta Version Chattr Acl DefaultAcl SELinux Capabilities Size MD5 SHA1 SHA256 SHA512 >hashes."$hashesFileNameExtension"
-		LC_ALL=C sort -k 1 *."$hashesFileNameExtension" >>hashes."$hashesFileNameExtension"
-	
-	popd 1>/dev/null 2>/dev/null
+	local -r finalFile="$hashesFileParentPath"/hashes."$hashesFileNameExtension"
+	printf "Path TextualFileType UID GID OctalMode MTime CTime DeviceMajor DeviceMinor Size Hardlinks SELinuxContext Capabilities FileContentsSummary ACL DefaultACL Version Chattr MD5 SHA1 SHA256 SHA512\n" >"$finalFile"
+	paste "$sortedFile1" "$sortedFile2" "$sortedFile3" | cut --bytes ${prefixLength}- >>"$finalFile"
 }
 
-# A performance improvement would be to do each column on all files and then merge
-# this works for the stat command (uid gid mode mtime ctime size) and file command
-# md5sum, sha*sum don't
-# getcap doesn't
-# getfacl is very specific
-# stat (selinux) will on CentOS
-# stat ( %t:%T) - major/minor - will
-# stat -c "%u %g %a %Y %Z %s %n %C %t:%T" *
-#  %F file type (long)
-#  %N derefenced symlink (nasty)
-#  file --no-pad --separator $'\t' --keep-going --no-dereference --uncompress * (derefences link, but needs clean-up)
-function hash_recordHashSymlink()
+readonly hash_newline=$'\n'
+function hash_blankLines()
 {
-	temporaryFiles_newFileToRemoveOnExit
-	local -r coprocTemporaryFile="$TMP_FILE"
-	local uid gid mode mtime ctime size meta selinux
-	find "$topLevelFolder" -type l -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
-		IFS=' ' read -r -d $'\n' uid gid mode size <"$coprocTemporaryFile"
-	
-		meta="$(readlink -n "$fileObject")"
-		
-		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
-		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
-	
-		printf "$printfTemplate" "${fileObject:$prefixLength}" l "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' '' '' "$selinux" '' "$size" "" "" "" ""
-	done >"$hashesFileParentPath"/symlinks."$hashesFileNameExtension"
-}
-
-function hash_recordHashFile()
-{
-	temporaryFiles_newFileToRemoveOnExit
-	local -r coprocTemporaryFile="$TMP_FILE"
-	local uid gid mode mtime ctime size meta version chattr file initialAcl acl selinux capabilities md5 sha1 sha256 sha512
-	find "$topLevelFolder" -type f -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
-		IFS=' ' read -r -d $'\n' uid gid mode size <"$coprocTemporaryFile"
-
-		meta="$(file --brief --keep-going --no-dereference --uncompress "$fileObject")"
-
-		lsattr -v "$fileObject" >"$coprocTemporaryFile"
-		IFS=' ' read -r -d $'\n' version chattr file <"$coprocTemporaryFile"
-
-		initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-		if [ -n "$initialAcl" ]; then
-			# strips a trailing ' '
-			acl="${initialAcl:0:-1}"
-		else
-			acl=""
-		fi
-
-		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
-		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
-
-		capabilities="$(getcap "$fileObject" | awk '{print $3}')"
-
-		md5="$(md5sum "$fileObject" | awk 'NR==1 {print $1}')"
-		sha1="$(sha1sum "$fileObject" | awk 'NR==1 {print $1}')"
-		sha256="$(sha256sum "$fileObject" | awk 'NR==1 {print $1}')"
-		sha512="$(sha512sum "$fileObject" | awk 'NR==1 {print $1}')"
-
-		printf "$printfTemplate" "${fileObject:$prefixLength}" f "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" "$version" "$chattr" "$acl" '' "$selinux" "$capabilities" "$size" "$md5" "$sha1" "$sha256" "$sha512"
-	done >"$hashesFileParentPath"/files."$hashesFileNameExtension"
-}
-
-function hash_recordHashFolder()
-{
-	temporaryFiles_newFileToRemoveOnExit
-	local -r coprocTemporaryFile="$TMP_FILE"
-	local uid gid mode mtime ctime size version chattr file initialAcl acl initialDefaultAcl defaultAcl selinux
-	find "$topLevelFolder" -type d -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		
-		# Whilst folders do have a size, it's very much a function of the file system
-		stat -c "%u %g %a %Y %Z %s" "$fileObject" >"$coprocTemporaryFile"
-		IFS=' ' read -r -d $'\n' uid gid mode mtime ctime size <"$coprocTemporaryFile"
-
-		# it might be useful to record entry count, less . and .. as 'meta', or perhaps an ignore-rule
-
-		# Note -d to make lsattr behave
-		lsattr -d -v "$fileObject" >"$coprocTemporaryFile"
-		IFS=' ' read -r -d $'\n' version chattr file <"$coprocTemporaryFile"
-
-		initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-		if [ -n "$initialAcl" ]; then
-			# strips a trailing ' '
-			acl="${initialAcl:0:-1}"
-		else
-			acl=""
-		fi
-
-		# Only folders have default acl
-		initialDefaultAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --default -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-		if [ -n "$initialDefaultAcl" ]; then
-			# strips a trailing ' '
-			defaultAcl="${initialDefaultAcl:0:-1}"
-		else
-			defaultAcl=""
-		fi
-
-		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
-		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
-
-		printf "$printfTemplate" "${fileObject:$prefixLength}" d "$uid" "$gid" "$mode" "$mtime" "$ctime" '' "$version" "$chattr" "$acl" "$defaultAcl" "$selinux" '' "$size" '' '' '' ''
-	done >"$hashesFileParentPath"/folders."$hashesFileNameExtension"
-}
-
-function hash_recordHashDevice()
-{
-	local -r fileType="$1"
-	local -r fileTypeName="$2"
-	
-	temporaryFiles_newFileToRemoveOnExit
-	local -r coprocTemporaryFile="$TMP_FILE"
-	local uid gid mode mtime ctime meta initialAcl acl selinux
-	find "$topLevelFolder" -type "$fileType" -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		# Whilst devices do have a size, it's very much a function of the file system
-		stat -c "%u %g %a %Y %Z %t:%T" "$fileObject" >"$coprocTemporaryFile"
-		IFS=' ' read -r -d $'\n' uid gid mode mtime ctime meta <"$coprocTemporaryFile"
-	
-		initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-		if [ -n "$initialAcl" ]; then
-			# strips a trailing ' '
-			acl="${initialAcl:0:-1}"
-		else
-			acl=""
-		fi
-	
-		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
-		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
-	
-		printf "$printfTemplate" "${fileObject:$prefixLength}" "$fileType" "$uid" "$gid" "$mode" "$mtime" "$ctime" "$meta" '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
-	done >"$hashesFileParentPath"/"$fileTypeName"."$hashesFileNameExtension"
-}
-
-function hash_recordHashNamedPipe()
-{
-	temporaryFiles_newFileToRemoveOnExit
-	local -r coprocTemporaryFile="$TMP_FILE"
-	# Whilst devices do have a size, it's very much a function of the file system
-	local uid gid mode mtime ctime initialAcl acl selinux
-	find "$topLevelFolder" -type p -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		stat -c "%u %g %a %Y %Z" "$fileObject" >"$coprocTemporaryFile"
-		IFS=' ' read -r -d $'\n' uid gid mode mtime ctime <"$coprocTemporaryFile"
-	
-		initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-		if [ -n "$initialAcl" ]; then
-			# strips a trailing ' '
-			acl="${initialAcl:0:-1}"
-		else
-			acl=""
-		fi
-	
-		# selinux uses %C, seems to be hard to get; if unknown or unsupported, '?' is returned
-		selinux="$(stat -c '%C' "$fileObject" 2>/dev/null || true)"
-		
-		printf "$printfTemplate" "${fileObject:$prefixLength}" p "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' "$selinux" '' '' '' '' '' ''
-	done >"$hashesFileParentPath"/named-pipes."$hashesFileNameExtension"
-}
-
-function hash_recordHashSocket()
-{
-	temporaryFiles_newFileToRemoveOnExit
-	local -r coprocTemporaryFile="$TMP_FILE"
-	local uid gid mode mtime ctime initialAcl acl
-	find "$topLevelFolder" -type s -print0 | while IFS= read -r -d $'\0' fileObject
-	do
-		stat -c "%u %g %a %Y %Z" "$fileObject" >"$coprocTemporaryFile"
-		IFS=' ' read -r -d $'\n' uid gid mode mtime ctime <"$coprocTemporaryFile"
-	
-		initialAcl="$(getfacl --absolute-names --omit-header --physical --numeric --no-effective --skip-base --access -- "$fileObject" | grep -v -E '^(user|group|other)::' | grep -v '^$' | tr '\n' ' ')"
-		if [ -n "$initialAcl" ]; then
-			# strips a trailing ' '
-			acl="${initialAcl:0:-1}"
-		else
-			acl=""
-		fi
-	
-		printf "$printfTemplate" "${fileObject:$prefixLength}" s "$uid" "$gid" "$mode" "$mtime" "$ctime" '' '' '' "$acl" '' '' '' '' '' '' '' ''
-	done >"$hashesFileParentPath"/sockets."$hashesFileNameExtension"
+	local -ir count=$1
+	local spaces
+	printf -v spaces '%*s' $count
+	echo -n "${z// /${hash_newline}}"
 }
