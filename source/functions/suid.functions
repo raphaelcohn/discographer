@@ -1,0 +1,37 @@
+function suid_whitelistSuid()
+{
+	suid_whitelistGeneric 4000 'u-s' suid "$@"
+}
+
+function suid_whitelistGuid()
+{
+	suid_whitelistGeneric 2000 'g-s' guid "$@"
+}
+
+function suid_whitelistGeneric()
+{
+	local -r permMatch="$1"
+	local -r permissionRemoval="$2"
+	local -r fileNameWithoutExtension="$3"
+	shift 3
+	
+	declare -a whitelistFiles=()
+	local whitelistParentPath
+	for whitelistParentPath in "$@"
+	do
+		local suidWhitelistConfigPath="$whitelistParentPath"/"$fileNameWithoutExtension".whitelist
+		if [ ! -f "$suidWhitelistConfigPath" ]; then
+			continue
+		fi
+		whitelistFiles+=("$suidWhitelistConfigPath")
+	done
+	
+	if [ ${#whitelistFiles} -eq 0 ]; then
+		continue
+	fi
+	
+	# Find all files in file 1 but not file 2 (-2) or both (-3)
+	temporaryFiles_newFileToRemoveOnExit
+	local -r filesToRemovePermFrom="$TMP_FILE"
+	comm --nocheck-order -23 <(find "${machine_cacheDisksMountPath}" -perm -${permMatch} | sort --unique) <(sort --unique "${whitelistFiles[@]}") | xargs chmod ${permissionRemoval}
+}

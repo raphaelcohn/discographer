@@ -1,0 +1,7 @@
+/sbin/netreport
+/usr/sbin/postdrop
+/usr/sbin/postqueue
+/usr/bin/wall
+/usr/bin/write
+/usr/bin/ssh-agent
+/usr/libexec/utempter/utempter

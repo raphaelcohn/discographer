@@ -436,6 +436,13 @@ function machine_installExtLinux()
 }
 machine_functions+=(machine_installExtLinux)
 
+function machine_suidGuidWhitelist()
+{
+	suid_whitelistSuid "$machine_group_configPath" "$machine_configPath"
+	suid_whitelistGuid "$machine_group_configPath" "$machine_configPath"
+}
+machine_functions+=(machine_suidGuidWhitelist)
+
 function machine_recordHashesOfAllFiles()
 {
 	hash_recordHashes "${machine_cacheDisksMountPath}" "/" "$machine_cacheArtefactsPath" .report.txt
