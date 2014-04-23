@@ -16,7 +16,7 @@ function hash_recordHashes()
 	# TextualFileType UID GID OctalMode MTime CTime DeviceMajor DeviceMinor Size Hardlinks
 	temporaryFiles_newFileToRemoveOnExit
 	local -r statFile="$TMP_FILE"
-	find "$topLevelFolder" | tee "$fileObjectFile" | xargs stat --printf "%F\%u\t%g\t%a\t%Y\t%Z\t%T\t%t\t%s\t%h\n" >"$statFile"
+	find "$topLevelFolder" | tee "$fileObjectFile" | xargs stat --printf "%F\t%u\t%g\t%a\t%Y\t%Z\t%T\t%t\t%s\t%h\n" >"$statFile"
 	
 	# SELinuxContext
 	# BUG: SELinux is done separately as it doesn't work on Debian and some OS
@@ -66,6 +66,9 @@ function hash_recordHashes()
 	
 	# Prepare for file hashes - empty lines to append
 	temporaryFiles_newFileToRemoveOnExit
+	local -r fileOnlyFile="$TMP_FILE"
+	find "$topLevelFolder" -type f | awk '{print $1 "\tX" }' >"$fileOnlyFile"
+	temporaryFiles_newFileToRemoveOnExit
 	local -r everythingButFilesFile="$TMP_FILE"
 	find "$topLevelFolder" ! -type f | awk '{print $1 "\tX" }' >"$everythingButFilesFile"
 	local -ir emptyLineCount=$(wc --line "$everythingButFilesFile" | awk '{print $1}')
@@ -73,25 +76,25 @@ function hash_recordHashes()
 	# FilePath MD5 (file only) - note that this line uses a different awk syntax to include the file name
 	temporaryFiles_newFileToRemoveOnExit
 	local -r missortedMd5File="$TMP_FILE"
-	xargs --arg-file "$fileObjectFile" md5sum | awk '{print $2 "\t" $1}' >"$missortedMd5File"
+	xargs --arg-file "$fileOnlyFile" md5sum | awk '{print $2 "\t" $1}' >"$missortedMd5File"
 	cat "$everythingButFilesFile" >>"$missortedMd5File"
 	
 	# FilePath SHA1 (file only)
 	temporaryFiles_newFileToRemoveOnExit
 	local -r missortedSha1File="$TMP_FILE"
-	xargs --arg-file "$fileObjectFile" sha1sum | awk '{print $1}' >"$missortedSha1File"
+	xargs --arg-file "$fileOnlyFile" sha1sum | awk '{print $1}' >"$missortedSha1File"
 	hash_blankLines $emptyLineCount >>"$missortedSha1File"
 	
 	# FilePath SHA256 (file only)
 	temporaryFiles_newFileToRemoveOnExit
 	local -r missortedSha256File="$TMP_FILE"
-	xargs --arg-file "$fileObjectFile" sha256sum | awk '{print $1}' >"$missortedSha256File"
+	xargs --arg-file "$fileOnlyFile" sha256sum | awk '{print $1}' >"$missortedSha256File"
 	hash_blankLines $emptyLineCount >>"$missortedSha256File"
 	
 	# FilePath SHA512 (file only)
 	temporaryFiles_newFileToRemoveOnExit
 	local -r missortedSha512File="$TMP_FILE"
-	xargs --arg-file "$fileObjectFile" sha512sum | awk '{print $1}' >"$missortedSha512File"
+	xargs --arg-file "$fileOnlyFile" sha512sum | awk '{print $1}' >"$missortedSha512File"
 	hash_blankLines $emptyLineCount >>"$missortedSha512File"
 	
 	# Paste together file hash files
@@ -103,7 +106,7 @@ function hash_recordHashes()
 	# Paste all files together and strip any leading prefix; first line is field names
 	local -ir prefixLength=${#prefix}
 	local -r finalFile="$hashesFileParentPath"/hashes."$hashesFileNameExtension"
-	printf "Path TextualFileType UID GID OctalMode MTime CTime DeviceMajor DeviceMinor Size Hardlinks SELinuxContext Capabilities FileContentsSummary ACL DefaultACL Version Chattr MD5 SHA1 SHA256 SHA512\n" >"$finalFile"
+	printf "Path\tTextualFileType\tUID\tGID\tOctalMode\tMTime\tCTime\tDeviceMajor\tDeviceMinor\tSize\tHardlinks\tSELinuxContext\tCapabilities\tFileContentsSummary\tACL\tDefaultACL\tVersion\tChattr\tMD5\tSHA1\tSHA256\tSHA512\n" >"$finalFile"
 	paste "$sortedFile1" "$sortedFile2" "$sortedFile3" | cut --bytes ${prefixLength}- >>"$finalFile"
 }
 
