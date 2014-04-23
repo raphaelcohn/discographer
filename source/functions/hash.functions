@@ -67,7 +67,7 @@ function hash_recordHashes()
 	# Prepare for file hashes - empty lines to append
 	temporaryFiles_newFileToRemoveOnExit
 	local -r fileOnlyFile="$TMP_FILE"
-	find "$topLevelFolder" -type f | awk '{print $1 "\tX" }' >"$fileOnlyFile"
+	find "$topLevelFolder" -type f >"$fileOnlyFile"
 	temporaryFiles_newFileToRemoveOnExit
 	local -r everythingButFilesFile="$TMP_FILE"
 	find "$topLevelFolder" ! -type f | awk '{print $1 "\tX" }' >"$everythingButFilesFile"
@@ -105,7 +105,7 @@ function hash_recordHashes()
 	
 	# Paste all files together and strip any leading prefix; first line is field names
 	local -ir prefixLength=${#prefix}
-	local -r finalFile="$hashesFileParentPath"/hashes."$hashesFileNameExtension"
+	local -r finalFile="$hashesFileParentPath"/hashes"{$hashesFileNameExtension}"
 	printf "Path\tTextualFileType\tUID\tGID\tOctalMode\tMTime\tCTime\tDeviceMajor\tDeviceMinor\tSize\tHardlinks\tSELinuxContext\tCapabilities\tFileContentsSummary\tACL\tDefaultACL\tVersion\tChattr\tMD5\tSHA1\tSHA256\tSHA512\n" >"$finalFile"
 	paste "$sortedFile1" "$sortedFile2" "$sortedFile3" | cut --bytes ${prefixLength}- >>"$finalFile"
 }

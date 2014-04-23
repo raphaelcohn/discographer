@@ -18,8 +18,8 @@ configuration_machine_operatingSystemId=94
 configuration_machine_operatingSystemName=Ubuntu_64
 
 
-configuration_machine_hypervisorName=qemu
-configuration_machine_hypervisorDiskFormat=qcow2
+configuration_machine_hypervisorName=virtualbox
+configuration_machine_hypervisorDiskFormat=vdi
 configuration_machine_hypervisorMetadataFormat=native
 
 configuration_machine_hypervisorOvfSystemType=virtualbox-2.2

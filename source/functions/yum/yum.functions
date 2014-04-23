@@ -150,8 +150,8 @@ yum_functions+=(yum_cleanUp)
 
 function yum_recordInstalledRpms()
 {
-	local -r reportFile="$machine_cacheArtefactsPath"/rpms-installed.report.txt
-	printf "Package.Architecture\tVersion\tOrigin\n" >"$reportFile"
-	yum_wrapper list installed 2>/dev/null | tail -n +11 | awk -v OFS='\t' '{print $1,$2,$3}' >>"$reportFile"
+	local -r reportFile="$machine_cacheArtefactsPath"/yum-installed.report.txt
+	printf "Package\tArchitecture\tVersion\tOrigin\n" >"$reportFile"
+	yum_wrapper list installed2>/dev/null | tail -n +3 | tr '\n' '|' | sed -e 's/| / /g' | tr '|' '\n' | awk -v OFS=$'\t' '{split($1,a,/\./); print a[1],a[2],$2,$3}' >>"$reportFile"
 }
 yum_functions+=(yum_recordInstalledRpms)

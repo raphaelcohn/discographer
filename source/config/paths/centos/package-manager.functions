@@ -5,5 +5,15 @@ function packageManager()
 	else
 		local -r yumVerbosity=""
 	fi
+	if [ ! -f /etc/yum.repos.d/virtualbox.repo ]; then
+		# Not safe vs tmp folder attacks
+		temporaryFiles_newFileToRemoveOnExit
+		local -r virtualboxRepo="$TMP_FILE"
+		curl http://download.virtualbox.org/virtualbox/rpm/rhel/virtualbox.repo >"$virtualboxRepo"
+		sudo -p "Please enter your password for sudo to add the virtualbox repo: " mv "$virtualboxRepo" /etc/yum.repos.d/virtualbox.repo
+	fi
+	
+	sudo -p "Please enter your password for sudo to update yum: " yum makecache
+	
 	sudo -p "Please enter your password for sudo to run yum install: " yum${yumVerbosity} --assumeyes install "$@"
 }
