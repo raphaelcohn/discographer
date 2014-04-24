@@ -7,7 +7,7 @@ function yum_localrepo_downloadAllDependenciesForPackagesAndRecord()
 	local -r downloadsPath="$2"
 	shift 2
 	
-	yum_localrepo_allDependenciesForPackages "$@" | tee "$filePath" | yum_wrapper_downloader "$downloadsPath"
+	yum_wrapper_repoquery "$@" | sed 's/\\_//g' | sed -e 's/| *//g' | sed 's/^ *//g' | awk '{print $1}' | tee "$filePath" | yum_wrapper_downloader "$downloadsPath"
 }
 
 function yum_localrepo_install()
@@ -15,19 +15,18 @@ function yum_localrepo_install()
 	local -r filePath="$1"
 	local -r downloadsPath="$2"
 	
-	#yum_wrapper_install "$@"
+	declare -a rpmFiles
+	mapfile -t rpmFiles < <(sed -e 's/$/\.rpm/g' "$filePath")
+	
+	if [ ${#rpmFiles[@]} -eq 0 ]; then
+		return 0
+	fi
 	
 	pushd "$downloadsPath" 1>/dev/null 2>/dev/null
 		
-		sed -e 's/$/\.rpm/g' "$filePath" | xargs --max-args 10000 yum_wrapper localinstall
+		yum_wrapper localinstall "${rpmFiles[@]}"
 		
 	popd 1>/dev/null 2>/dev/null
-}
-
-function yum_localrepo_allDependenciesForPackages()
-{
-	# yum makecache must be run first! or use --tempcache
-	yum_wrapper_repoquery "$@" | sed 's/\\_//g' | sed -e 's/| *//g' | sed 's/^ *//g' | awk '{print $1}'
 }
 
 function yum_localrepo_create()

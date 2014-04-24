@@ -18,12 +18,13 @@ function yum_wrapper_generic()
 		local -r yumVerbosity="--verbose"
 	fi
 	
-	"$programName" ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@" 1>>"$yum_cacheYumLogPath"/"$programName".out.log 2>>"$yum_cacheYumLogPath"/"$programName".err.log
+	"$programName" ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@" 2>>"$yum_cacheYumLogPath"/"$programName".err.log
 }
 
 function yum_wrapper_repoquery()
 {
-	yum_wrapper_generic repoquery --tree-requires --all
+	# yum makecache must be run first! or use --tempcache
+	yum_wrapper_generic repoquery --tree-requires --all "$@"
 }
 
 function yum_wrapper_downloader()

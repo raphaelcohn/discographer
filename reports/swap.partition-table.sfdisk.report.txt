@@ -1,9 +1,0 @@
-
-Disk swap: 32 cylinders, 255 heads, 63 sectors/track
-Units = cylinders of 8225280 bytes, blocks of 1024 bytes, counting from 0
-
-   Device Boot Start     End   #cyls    #blocks   Id  System
-swap1          0+     31      32-    257039+  82  Linux swap / Solaris
-swap2          0       -       0          0    0  Empty
-swap3          0       -       0          0    0  Empty
-swap4          0       -       0          0    0  Empty

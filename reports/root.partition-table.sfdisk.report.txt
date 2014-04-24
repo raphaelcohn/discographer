@@ -1,9 +1,0 @@
-
-Disk root: 130 cylinders, 255 heads, 63 sectors/track
-Units = cylinders of 8225280 bytes, blocks of 1024 bytes, counting from 0
-
-   Device Boot Start     End   #cyls    #blocks   Id  System
-root1          0+    129     130-   1044224+  83  Linux
-root2          0       -       0          0    0  Empty
-root3          0       -       0          0    0  Empty
-root4          0       -       0          0    0  Empty
