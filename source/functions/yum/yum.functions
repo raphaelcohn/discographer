@@ -136,9 +136,7 @@ yum_functions+=(yum_prepareYumCache)
 
 function yum_alDependenciesForPackagesMachineGroup()
 {
-set -x
 	yum_localrepo_downloadAllDependenciesForPackagesAndRecord "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_group_packageNames[@]}"
-	exit 50
 }
 yum_functions+=(yum_alDependenciesForPackagesMachineGroup)
 
