@@ -173,6 +173,11 @@ function virtualbox_xml_VirtualBox_Machine_Hardware_Videocapture()
 	xml_selfclose "VideoCapture"
 }
 
+function virtualbox_xml_VirtualBox_Machine_Hardware_RemoteDisplay()
+{
+	xml_selfclose "RemoteDisplay enabled='false' authType='Null' authTimeout='5000'"
+}
+
 function virtualbox_xml_VirtualBox_Machine_Hardware_BIOS()
 {
 	xml_start "BIOS"

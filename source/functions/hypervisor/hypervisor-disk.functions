@@ -64,7 +64,7 @@ function hypervisor_disk_convertDiskImage_vdi()
 {
 	hypervisor_disk_convertDiskImageUsingQemuImg vdi vdi
 	# We also force the UUID of the VDI disk to match the file system UUID.
-	VBoxManage internalcommands sethduuid "$machine_cacheArtefactsPath"/"$disk".vdi "${machine_configuration_disksUuid["$disk"]}"
+	VBoxManage internalcommands sethduuid "$machine_cacheArtefactsPath"/"$disk".vdi "${machine_configuration_disksUuid["$disk"]}" 1>/dev/null 2>/dev/null
 }
 
 function hypervisor_disk_convertDiskImage_hdd()

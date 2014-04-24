@@ -1,10 +1,13 @@
-function yum_wrapper()
+function yum_wrapper_generic()
 {
+	local -r programName="$1"
+	shift 1
+	
 	if dependency_isMacOSX; then
 		# yum does not exist in brew; installing via source has problems (msgfmt, broken Makefile, broken install utility; Python versioning)
 		return 0
 	fi
-	
+
 	if [ "$beVerbose" = no ]; then
 		if [ "$beDebug" = no ]; then
 			local -r yumVerbosity="--quiet"
@@ -15,8 +18,25 @@ function yum_wrapper()
 		local -r yumVerbosity="--verbose"
 	fi
 	
-	informationMessage INFO "${tab}${tab}${tab}${tab}${1} yum_wrapper: to see progress  tail -f $yum_cacheYumLogPath/yum.$1.out.log"
-	yum ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@" 1>>"$yum_cacheYumLogPath"/yum."$1".out.log 2>>"$yum_cacheYumLogPath"/yum."$1".err.log
+	"$programName" ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@" 1>>"$yum_cacheYumLogPath"/"$programName".out.log 2>>"$yum_cacheYumLogPath"/"$programName".err.log
+}
+
+function yum_wrapper_repoquery()
+{
+	yum_wrapper_generic repoquery --tree-requires --all
+}
+
+function yum_wrapper_downloader()
+{
+	local -r destinationPath="$1"
+	shift 1
+	
+	yum_wrapper_generic yumdownloader --resolve --destdir "$destinationPath" "$@"
+}
+
+function yum_wrapper()
+{
+	yum_wrapper_generic yum "$@"
 }
 
 function yum_wrapper_install()

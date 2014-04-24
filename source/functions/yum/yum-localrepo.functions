@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -e
+
+function yum_localrepo_downloadAllDependenciesForPackagesAndRecord()
+{
+	local -r filePath="$1"
+	local -r downloadsPath="$2"
+	shift 2
+	
+	yum_localrepo_allDependenciesForPackages "$@" | tee "$filePath" | yum_wrapper_downloader "$downloadsPath"
+}
+
+function yum_localrepo_install()
+{
+	local -r filePath="$1"
+	local -r downloadsPath="$2"
+	
+	#yum_wrapper_install "$@"
+	
+	pushd "$downloadsPath" 1>/dev/null 2>/dev/null
+		
+		sed -e 's/$/\.rpm/g' "$filePath" | xargs --max-args 10000 yum_wrapper localinstall
+		
+	popd 1>/dev/null 2>/dev/null
+}
+
+function yum_localrepo_allDependenciesForPackages()
+{
+	# yum makecache must be run first! or use --tempcache
+	yum_wrapper_repoquery "$@" | sed 's/\\_//g' | sed -e 's/| *//g' | sed 's/^ *//g' | awk '{print $1}'
+}
+
+function yum_localrepo_create()
+{
+	local -r binaryRpmsPath="$1"
+	local -r reposPath="$2"
+	local -r parentPath="$3"
+	
+	# eg CentOS
+	local -r distributionName="$4"
+	local -r releaseVersion="$5"
+	local -r baseArchitecture="$6"
+	local -r repositoryName="$7"
+	
+	local -r repositoryPath="$parentPath"/"$distributionName"/"$releaseVersion"/"$repositoryName"/"$baseArchitecture"
+	mkdir -m 0755 -p "$repositoryPath"
+	
+	# install RPMs into the repository
+	local binaryRpm
+	for binaryRpm in "$binaryRpmsPath"/*.$baseArchitecture.rpm "$binaryRpmsPath"/*.noarch.rpm
+	do
+		if [ ! -f "$binaryRpm" ]; then
+			continue
+		fi
+		ln "$binaryRpm" "$repositoryPath"/"$(purebash_basename "$binaryRpm")" || cp "$binaryRpm" "$repositoryPath"/"$(purebash_basename "$binaryRpm")"
+	done
+	
+	#--revision - repository revision. Might be useful
+	cretaerepo --baseurl file:///${parentPath}/${distributionName}/$releasever/${repositoryName}/$basearch --cacehedir "$repositoryPath"/.cache --update --compress-type xz "$repositoryPath"
+	chmod -R o-w+r "$parentPath"/"$distributionName"/"$releaseVersion"/"$repositoryName"
+	
+	# Handle variable replacement as variables
+	local -r releasever=releasever
+	local -r basearch=basearch
+	cat >"$reposPath"/"$repositoryName".repo <<-EOF
+		[local]
+		name=CentOS-$releasever - local packages for $basearch
+		baseurl=file:///${parentPath}/${distributionName}/$releasever/${repositoryName}/$basearch
+		enabled=1
+		gpgcheck=0
+		protect=1
+	EOF
+	
+	# remember to to a yum makecache to force reparsing of repository metadata
+}

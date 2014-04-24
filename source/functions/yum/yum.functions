@@ -1,6 +1,8 @@
 yum_functions=()
 
 yum_configYumConfTemplateFilePath=""
+yum_configYumConfTemplateFilePath=""
+yum_configRepositoriesPath=""
 function yum_prepareConfigPaths()
 {
 	yum_configYumPath="$configPath"/yum
@@ -24,21 +26,35 @@ function yum_prepareConfigPaths()
 yum_functions+=(yum_prepareConfigPaths)
 
 yum_cacheYumConfFilePath=""
+yum_cacheDownloadedRpmsPath=""
+yum_cacheMachinePath=""
+yum_cacheYumConfFilePath=""
+yum_cacheYumLogPath=""
+yum_cacheMachineGroupPackagesListPath=""
+yum_cacheMachinePackagesListPath=""
 function yum_prepareCachePaths()
 {
 	yum_cachePath="$main_cachePath"/yum
+	
+	yum_cacheDownloadedRpmsPath="$yum_cachePath"/downloaded-rpms
 	
 	yum_cacheMachinePath="$machine_cachePath"/yum
 	
 	yum_cacheYumConfFilePath="$yum_cacheMachinePath"/yum.conf
 	
 	yum_cacheYumLogPath="$yum_cacheMachinePath"/log
+	
+	yum_cacheMachineGroupPackagesListPath="$yum_cacheMachinePath"/yum.machine-group.packages
+	
+	yum_cacheMachinePackagesListPath="$yum_cacheMachinePath"/yum.machine.packages
 }
 yum_functions+=(yum_prepareCachePaths)
 
 function yum_makeCacheFolders()
 {
 	mkdir -m 0755 -p "$yum_cachePath"
+	
+	mkdir -m 0755 -p "$yum_cacheDownloadedRpmsPath"
 	
 	mkdir -m 0755 -p "$yum_cacheMachinePath"
 	
@@ -118,9 +134,15 @@ function yum_prepareYumCache()
 }
 yum_functions+=(yum_prepareYumCache)
 
+function yum_alDependenciesForPackagesMachineGroup()
+{
+	yum_localrepo_downloadAllDependenciesForPackagesAndRecord "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_group_packageNames[@]}"
+}
+yum_functions+=(yum_alDependenciesForPackagesMachineGroup)
+
 function yum_installMachineGroupRpms()
 {
-	yum_wrapper_install "${machine_group_packageNames[@]}"
+	yum_localrepo_install "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath"
 }
 yum_functions+=(yum_installMachineGroupRpms)
 
@@ -130,9 +152,15 @@ function yum_installMachineGroupLocalRpms()
 }
 yum_functions+=(yum_installMachineGroupLocalRpms)
 
+function yum_alDependenciesForPackagesMachine()
+{
+	yum_localrepo_downloadAllDependenciesForPackagesAndRecord "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_packageNames[@]}"
+}
+yum_functions+=(yum_alDependenciesForPackagesMachine)
+
 function yum_installMachineRpms()
 {
-	yum_wrapper_install "${machine_packageNames[@]}"
+	yum_localrepo_install "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath"
 }
 yum_functions+=(yum_installMachineRpms)
 

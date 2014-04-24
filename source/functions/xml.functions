@@ -1,32 +1,27 @@
-function xml_indent()
-{
-	indentation="${indentation}${tab}"
-}
-
-function xml_undent()
-{
-	indentation="${indentation:0:${#indentation}-1}"
-}
+xml_indentation=""
 
 function xml_indented()
 {
-	echo "${indentation}$1"
+	echo "${xml_indentation}$1"
 }
 
 function xml_version()
 {
+	xml_indentation=""
 	echo '<?xml version="1.0"?>'
 }
 
 function xml_start()
 {
+	echo "xml_start $1" 1>&2
 	xml_indented "<${1}>"
-	xml_indent
+	xml_indentation="${xml_indentation}${tab}"
 }
 
 function xml_end()
 {
-	xml_undent
+	echo "xml_end $1" 1>&2
+	xml_indentation="${xml_indentation:0:${#xml_indentation}-1}"
 	xml_indented "</${1}>"
 }
 
