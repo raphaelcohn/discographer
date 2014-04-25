@@ -231,7 +231,7 @@ function hypervisor_findOperatingSystemIdAndName()
 {
 	case "$configuration_machine_architecture" in
 		
-		x864_64)
+		x86_64)
 			# 102 if other
 			configuration_machine_operatingSystemId=101
 			case "$configuration_machine_hypervisorName" in
