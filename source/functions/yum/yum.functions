@@ -94,7 +94,7 @@ yum_functions+=(yum_prepareRpmDb)
 yum_cacheDistributionVersionRpmFilePath=""
 function yum_downloadDistributionVersionRpm()
 {
-	yum_cacheDistributionVersionRpmFilePath="$yum_cachePath"/"$configuration_machine_distributionReleaseRpm"
+	yum_cacheDistributionVersionRpmFilePath="$yum_cacheDownloadedRpmsPath"/"$configuration_machine_distributionReleaseRpm"
 	
 	if [ ! -f "$yum_cacheDistributionVersionRpmFilePath" ]; then
 		curl "$configuration_machine_distributionReleaseRpmUrl" 1>"$yum_cacheDistributionVersionRpmFilePath" 2>/dev/null

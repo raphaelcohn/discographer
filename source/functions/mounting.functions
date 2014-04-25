@@ -88,7 +88,8 @@ function mounting_unmountLoopback()
 	if [ -z "$exiting" ]; then
 		unmounting_registerMountPointToRemoveOnExit
 	fi
-	umount "$mountPath"
+	sleep 2
+	umount "$mountPath" || true
 }
 
 function mounting_unmountBind()
@@ -102,7 +103,8 @@ function mounting_unmountBind()
 	if [ -z "$exiting" ]; then
 		unmounting_registerMountPointToRemoveOnExit
 	fi
-	umount "$mountPath"
+	sleep 2
+	umount "$mountPath" || true
 }
 
 function mounting_unmountDisk()

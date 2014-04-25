@@ -32,7 +32,7 @@ function yum_wrapper_programRepoquery()
 	shift 1
 	
 	# yum makecache must be run first! or use --tempcache
-	yum_wrapper_program repoquery --tree-requires --all --archlist="$architecture" "$@"
+	yum_wrapper_program repoquery --all --archlist="${architecture},noarch" --tree-requires "$@"
 }
 
 function yum_wrapper_programYumdownloader()
@@ -41,8 +41,8 @@ function yum_wrapper_programYumdownloader()
 	local -r architecture="$2"
 	shift 2
 	
-	# 1>>"$yum_cacheYumLogPath"/yumdownloader.out.log
-	yum_wrapper_program yumdownloader --archlist="$architecture" --destdir "$destinationPath" "$@"
+	# --archlist="${architecture},noarch"
+	yum_wrapper_program yumdownloader --destdir "$destinationPath" "$@" 1>>"$yum_cacheYumLogPath"/yumdownloader.out.log
 }
 
 function yum_wrapper_programYumLocalinstall()
