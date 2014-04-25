@@ -62,7 +62,7 @@ extlinux_functions+=(extlinux_installMenuModules)
 
 function extlinux_createConfiguration()
 {
-	if [ "$configuration_machine_forceDefaultBoot" = "yes" ]; then
+	if [ "$configuration_machine_bootWithoutInteraction" = "yes" ]; then
 		local -r prompt=0
 		local -r noescape=1
 		local -r allowOptions=0

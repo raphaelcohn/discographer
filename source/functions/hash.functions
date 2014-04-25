@@ -16,33 +16,33 @@ function hash_recordHashes()
 	# TextualFileType UID GID OctalMode MTime CTime DeviceMajor DeviceMinor Size Hardlinks
 	temporaryFiles_newFileToRemoveOnExit
 	local -r statFile="$TMP_FILE"
-	find "$topLevelFolder" | tee "$fileObjectFile" | xargs --max-args 10000 --arg-file stat --printf "%F\t%u\t%g\t%a\t%Y\t%Z\t%T\t%t\t%s\t%h\n" >"$statFile"
+	find "$topLevelFolder" | tee "$fileObjectFile" | xargs --max-args 10000 stat --printf "%F\t%u\t%g\t%a\t%Y\t%Z\t%T\t%t\t%s\t%h\n" >"$statFile"
 	
 	# SELinuxContext
 	# BUG: SELinux is done separately as it doesn't work on Debian and some OS
 	temporaryFiles_newFileToRemoveOnExit
 	local -r selinuxFile="$TMP_FILE"
-	xargs --max-args 10000 --arg-file --arg-file "$fileObjectFile" stat -c '%C' >"$selinuxFile"
+	xargs --max-args 10000 --arg-file  "$fileObjectFile" stat -c '%C' >"$selinuxFile"
 	
 	# Capabilities
 	temporaryFiles_newFileToRemoveOnExit
 	local -r getcapFile="$TMP_FILE"
-	xargs --max-args 10000 --arg-file --arg-file "$fileObjectFile" getcap -v | awk ' $2 ~ /=/  {print $3}; $2 !~ /=/ {print ""}' >"$getcapFile"
+	xargs --max-args 10000 --arg-file  "$fileObjectFile" getcap -v | awk ' $2 ~ /=/  {print $3}; $2 !~ /=/ {print ""}' >"$getcapFile"
 	
 	# FileContentsSummary
 	temporaryFiles_newFileToRemoveOnExit
 	local -r fileFile="$TMP_FILE"
-	xargs --max-args 10000 --arg-file --arg-file "$fileObjectFile" file --brief --keep-going --no-dereference --uncompress >"$fileFile"
+	xargs --max-args 10000 --arg-file  "$fileObjectFile" file --brief --keep-going --no-dereference --uncompress >"$fileFile"
 	
 	# ACL
 	temporaryFiles_newFileToRemoveOnExit
 	local -r aclFile="$TMP_FILE"
-	xargs --max-args 10000 --arg-file --arg-file "$fileObjectFile" getfacl --absolute-names --physical --numeric --all-effective --omit-header --access -- | tr '\n' '|' | sed -e 's/||/\n/g' >"$aclFile"
+	xargs --max-args 10000 --arg-file  "$fileObjectFile" getfacl --absolute-names --physical --numeric --all-effective --omit-header --access -- | tr '\n' '|' | sed -e 's/||/\n/g' >"$aclFile"
 	
 	# DefaultACL
 	temporaryFiles_newFileToRemoveOnExit
 	local -r defaultAclFile="$TMP_FILE"
-	xargs --max-args 10000 --arg-file --arg-file "$fileObjectFile" getfacl --absolute-names --physical --numeric --all-effective --omit-header --default -- | tr '\n' '|' | sed -e 's/||/\n/g' >"$defaultAclFile"
+	xargs --max-args 10000 --arg-file  "$fileObjectFile" getfacl --absolute-names --physical --numeric --all-effective --omit-header --default -- | tr '\n' '|' | sed -e 's/||/\n/g' >"$defaultAclFile"
 	
 	# Paste together
 	temporaryFiles_newFileToRemoveOnExit
@@ -55,7 +55,7 @@ function hash_recordHashes()
 	local -r failedChattrFile="$TMP_FILE"
 	temporaryFiles_newFileToRemoveOnExit
 	local -r missortedChattrFile="$TMP_FILE"
-	xargs --max-args 10000 --arg-file --arg-file "$fileObjectFile" lsattr -d -v 2>"$failedChattrFile" | awk '{print $3 "\t" $1 "\t" $2}' >"$missortedChattrFile"
+	xargs --max-args 10000 --arg-file  "$fileObjectFile" lsattr -d -v 2>"$failedChattrFile" | awk '{print $3 "\t" $1 "\t" $2}' >"$missortedChattrFile"
 	awk '{print $9 "\tX\tX"}' "$failedChattrFile" >>"$missortedChattrFile"
 	
 	# Sort
@@ -76,25 +76,25 @@ function hash_recordHashes()
 	# FilePath MD5 (file only) - note that this line uses a different awk syntax to include the file name
 	temporaryFiles_newFileToRemoveOnExit
 	local -r missortedMd5File="$TMP_FILE"
-	xargs --max-args 10000 --arg-file --arg-file "$fileOnlyFile" md5sum | awk '{print $2 "\t" $1}' >"$missortedMd5File"
+	xargs --max-args 10000 --arg-file  "$fileOnlyFile" md5sum | awk '{print $2 "\t" $1}' >"$missortedMd5File"
 	cat "$everythingButFilesFile" >>"$missortedMd5File"
 	
 	# FilePath SHA1 (file only)
 	temporaryFiles_newFileToRemoveOnExit
 	local -r missortedSha1File="$TMP_FILE"
-	xargs --max-args 10000 --arg-file --arg-file "$fileOnlyFile" sha1sum | awk '{print $1}' >"$missortedSha1File"
+	xargs --max-args 10000 --arg-file  "$fileOnlyFile" sha1sum | awk '{print $1}' >"$missortedSha1File"
 	hash_blankLines $emptyLineCount >>"$missortedSha1File"
 	
 	# FilePath SHA256 (file only)
 	temporaryFiles_newFileToRemoveOnExit
 	local -r missortedSha256File="$TMP_FILE"
-	xargs --max-args 10000 --arg-file --arg-file "$fileOnlyFile" sha256sum | awk '{print $1}' >"$missortedSha256File"
+	xargs --max-args 10000 --arg-file  "$fileOnlyFile" sha256sum | awk '{print $1}' >"$missortedSha256File"
 	hash_blankLines $emptyLineCount >>"$missortedSha256File"
 	
 	# FilePath SHA512 (file only)
 	temporaryFiles_newFileToRemoveOnExit
 	local -r missortedSha512File="$TMP_FILE"
-	xargs --max-args 10000 --arg-file --arg-file "$fileOnlyFile" sha512sum | awk '{print $1}' >"$missortedSha512File"
+	xargs --max-args 10000 --arg-file  "$fileOnlyFile" sha512sum | awk '{print $1}' >"$missortedSha512File"
 	hash_blankLines $emptyLineCount >>"$missortedSha512File"
 	
 	# Paste together file hash files

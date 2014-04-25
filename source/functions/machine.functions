@@ -160,6 +160,7 @@ machine_functions+=(machine_sourceConfiguration)
 function machine_validateConfiguration()
 {
 	hypervisor_validateHypervisorNameAndOutputFormat
+	hypervisor_findOperatingSystemIdAndName
 }
 machine_functions+=(machine_validateConfiguration)
 
@@ -335,8 +336,8 @@ machine_functions+=(machine_determineRootDiskUuid)
 function machine_determinKernelAdditionalOptions()
 {
 	local machineKernelOptions="root=UUID=${machineRootDiskFilesystemUuid}"
-	if [ -n "$configuration_machine_kernelAdditionalOptions" ]; then
-		machineKernelOptions="${machineKernelOptions} ${configuration_machine_kernelAdditionalOptions}"
+	if [ -n "$configuration_machine_bootKernelAdditionalOptions" ]; then
+		machineKernelOptions="${machineKernelOptions} ${configuration_machine_bootKernelAdditionalOptions}"
 	fi
 }
 machine_functions+=(machine_determinKernelAdditionalOptions)

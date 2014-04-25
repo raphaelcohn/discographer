@@ -194,7 +194,9 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 * We aren't specifying capacity in OVF
 * We aren't setting VMDK UUIDs
 * native not supported for vmware, parallels
-*+ /sbin/new-kernel-pkg --package kernel --install 2.6.32-431.11.2.el6.x86_64
+	* http://tad-do.net/2012/01/30/converting-virtualbox-to-vmware-esxi/  VirtualBox to VMWare
+* We are installing 32-bit (i686) packages
+* + /sbin/new-kernel-pkg --package kernel --install 2.6.32-431.11.2.el6.x86_64
 	* awk: cmd. line:1: fatal: cannot open file `/etc/fstab' for reading (No such file or directory)
 	* Caused by /etc/fstab not existing when installing the kernel - so we'd need to run a generator before installation
 	* Implies that generators are also install programs, that need to run in a certain order
@@ -215,11 +217,9 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 	* Some how combine this with repos
 * Documentation
 	* Fix the read me, it's really out-of-date
-	* Clean up generators (eg grub)
 * Installation
 	* support deleting files
 	* extended attribute control
-		* suid / guid whitelisting
 		* chattr (append-only, immutable, compression)
 		* file capabilities (CAP commands)
 		* control timestamps of files (eg set a file's atime / mtime etc)
@@ -236,10 +236,10 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 		* pip / easyinstall (python)?
 		* source ball installs - integrate with my lfs code
 	* support installation direct to mounted disk, NOT to generated overlay
-* Packages
-	* comments, whitespace, empty lines in packages files like https://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-bash-variable
-	* strip the install list (eg remove glibc, vim)
-	* add any other kernel / kernel options (eg kernel-firmware)
+	* support yum plugins, such as versionlock - in yum.conf:-
+		* plugins Either '0' or '1'. Global switch to enable or disable yum plugins. Default is '0' (plugins disabled). See the PLUGINS section of the yum(8) man for more information on installing yum plugins.
+		* pluginpath A list of directories where yum should look for plugin modules. Default is '/usr/share/yum-plugins' and '/usr/lib/yum-plugins'.
+		* pluginconfpath A list of directories where yum should look for plugin configuration files. Default is '/etc/yum/pluginconf.d'.
 * Metadata
 	* qemu-kvm needs boot order
 	* virtualbox and OVF need boot-order
@@ -252,6 +252,10 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 * Hypervisors
 	* Support KVM / RHEV
 	* Support Xen / AWS
+	* Support DigitalOcean
+	* Support Linode (Xen)
+	* Support pvgrub
+	* Support UEFI boot
 * performance
 	* support parallel machine building (using bash background jobs) (note that there's a max of 10 loopback devices; we use several per machine)
 		* Look at 2nd comment on https://www.linuxquestions.org/questions/red-hat-31/how-to-increase-the-loop-devices-number-541717/

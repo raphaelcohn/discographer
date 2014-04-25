@@ -413,11 +413,6 @@ function virtualbox_xml_VirtualBox_Machine_StorageControllers()
 			local disk
 			for disk in "${machine_disks[@]}"
 			do
-					
-					# Disk id - where from?
-					
-				xml_end "AttachedDevice"
-				
 				if [ "$configuration_machine_diskControllerKind" != "IDE" ]; then
 					port=$count
 				else

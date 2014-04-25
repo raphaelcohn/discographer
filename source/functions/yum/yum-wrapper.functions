@@ -1,4 +1,4 @@
-function yum_wrapper_generic()
+function yum_wrapper_program()
 {
 	local -r programName="$1"
 	shift 1
@@ -21,27 +21,36 @@ function yum_wrapper_generic()
 	"$programName" ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@" 2>>"$yum_cacheYumLogPath"/"$programName".err.log
 }
 
-function yum_wrapper_repoquery()
-{
-	# yum makecache must be run first! or use --tempcache
-	yum_wrapper_generic repoquery --tree-requires --all "$@"
-}
-
-function yum_wrapper_downloader()
-{
-	local -r destinationPath="$1"
-	shift 1
-	
-	yum_wrapper_generic yumdownloader --resolve --destdir "$destinationPath" "$@"
-}
-
 function yum_wrapper()
 {
-	yum_wrapper_generic yum "$@"
+	local -r architecture="$1"
+	shift 1
+	yum_wrapper_program yum --arch="$architecture" "$@"
 }
 
-function yum_wrapper_install()
+function yum_wrapper_programRepoquery()
 {
+	local -r architecture="$1"
+	shift 1
+	
+	# yum makecache must be run first! or use --tempcache
+	yum_wrapper_program repoquery --tree-requires --all --arch="$architecture" "$@"
+}
+
+function yum_wrapper_programYumdownloader()
+{
+	local -r destinationPath="$1"
+	local -r architecture="$2"
+	shift 2
+	
+	yum_wrapper_program yumdownloader --archlist="$architecture" --destdir "$destinationPath" "$@" 1>>"$yum_cacheYumLogPath"/yumdownloader.out.log
+}
+
+function yum_wrapper_programYumInstall()
+{
+	local -r architecture="$1"
+	shift 1
+	
 	declare -a yumPackageNames=("$@")
 	if [ ${#yumPackageNames[@]} -eq 0 ]; then
 		return 0
@@ -49,17 +58,20 @@ function yum_wrapper_install()
 
 	# We install packages individually like this so that if a package doesn't exist, we don't get an unintelligible error
 	# It does make installation slower
+	
 	local yumPackageName
 	for yumPackageName in "${yumPackageNames[@]}"
 	do
-		yum_wrapper install "$yumPackageName"
+		yum_wrapper "$architecture" install "$yumPackageName"
 	done
 }
 
-function yum_wrapper_localInstall()
+function yum_wrapper_programYumLocalinstall()
 {
 	local -r rpmsFolder="$1"
-	shift 1
+	local -r architecture="$2"
+	shift 2
+	
 	declare -a yumRpmFiles="$@"
 	if [ ${#yumRpmFiles[@]} -eq 0 ]; then
 		return 0
@@ -70,7 +82,7 @@ function yum_wrapper_localInstall()
 		local yumRpmFile
 		for yumRpmFile in "${yumRpmFiles[@]}"
 		do
-			yum_wrapper localinstall "$yumRpmFile"
+			yum_wrapper "$architecture" localinstall "$yumRpmFile"
 		done
 		
 	popd 1>/dev/null 2>/dev/null

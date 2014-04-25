@@ -3,25 +3,19 @@ configuration_machine_distributionMajorRevision=6
 configuration_machine_distributionReleaseRpm=${configuration_machine_distribution}-release-${configuration_machine_distributionMajorRevision}-5.el6.centos.11.1.x86_64.rpm
 configuration_machine_distributionReleaseRpmUrl=http://mirror.centos.org/centos/${configuration_machine_distributionMajorRevision}/os/x86_64/Packages/${configuration_machine_distributionReleaseRpm}
 
-configuration_machine_networkKind=NAT
+configuration_machine_uuid=fc257547-2062-44cd-9735-13b1994ced19
+configuration_machine_lastStateChangeTimestamp=2014-03-13T17:30:21Z
+configuration_machine_architecture=x86_64
 configuration_machine_cpusCount=1
 configuration_machine_memoryMegabytes=2048
-
+configuration_machine_networkKind=NAT
 configuration_machine_diskControllerKind=SATA
 configuration_machine_diskControllerImplementation=AHCI
 
-configuration_machine_kernelAdditionalOptions="selinux=0 vga=773"
-configuration_machine_forceDefaultBoot=no
-
-# Can we get this from configuration_machine_distribution?
-configuration_machine_operatingSystemId=94
-configuration_machine_operatingSystemName=Ubuntu_64
-
+configuration_machine_bootKernelAdditionalOptions="selinux=0 vga=773"
+configuration_machine_bootWithoutInteraction=no
 
 configuration_machine_hypervisorName=virtualbox
 configuration_machine_hypervisorDiskFormat=vdi
 configuration_machine_hypervisorMetadataFormat=native
 
-configuration_machine_hypervisorOvfSystemType=virtualbox-2.2
-configuration_machine_uuid=fc257547-2062-44cd-9735-13b1994ced19
-configuration_machine_lastStateChangeTimestamp=2014-03-13T17:30:21Z

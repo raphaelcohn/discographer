@@ -201,3 +201,81 @@ function hypervisor_validateHypervisorNameAndOutputFormat()
 		;;
 	esac
 }
+
+function hypervsisor_findVirtualSystemType()
+{
+	case "$configuration_machine_hypervisorName" in
+	
+		vmware)
+			configuration_machine_hypervisorOvfSystemType=vmx-7
+		;;
+	
+		virtualbox)
+			configuration_machine_hypervisorOvfSystemType=virtualbox-2.2
+		;;
+	
+		*)
+			configuration_machine_hypervisorOvfSystemType=virtualbox-2.2
+		;;
+	
+	esac
+}
+
+# Operating system names are based on VBoxManage list ostypes
+# They could be based on http://support.theenterprisecloud.com/kb/default.asp?SID=&Lang=1&id=1077
+# IDs are CIM_OperatingSystem.OsType
+# A partial list is at  http://msdn.microsoft.com/en-us/library/aa387937%28v=vs.85%29.aspx
+# A fuller but hard to parse list is at http://schemas.dmtf.org/wbem/cim-html/2.34.0/CIM_OperatingSystem.html, reformated in docs/OSType.txt
+# Also in http://www.dmtf.org/sites/default/files/cim/cim_schema_v28/mofs/System28_OperatingSystem.mof
+function hypervisor_findOperatingSystemIdAndName()
+{
+	case "$configuration_machine_architecture" in
+		
+		x864_64)
+			# 102 if other
+			configuration_machine_operatingSystemId=101
+			case "$configuration_machine_hypervisorName" in
+				
+				vmware)
+					configuration_machine_operatingSystemName=otherLinux64Guest
+				;;
+				
+				virtualbox)
+					configuration_machine_operatingSystemName=Linux_64
+				;;
+				
+				*)
+					configuration_machine_operatingSystemName=Linux_64
+				;;
+				
+			esac
+			
+		;;
+		
+		i386|i686)
+			# 1 if other
+			configuration_machine_operatingSystemId=36
+			case "$configuration_machine_hypervisorName" in
+				
+				vmware)
+					configuration_machine_operatingSystemName=otherLinuxGuest
+				;;
+				
+				virtualbox)
+					configuration_machine_operatingSystemName=Linux
+				;;
+				
+				*)
+					configuration_machine_operatingSystemName=Linux
+				;;
+				
+			esac
+		;;
+		
+		*)
+			informationMessage FAIL "Unsupported configuration_machine_architecture $configuration_machine_architecture"
+			exitError 1
+		;;
+		
+	esac
+}

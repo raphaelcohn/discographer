@@ -213,11 +213,11 @@ function ovf2_xml_Envelope_VirtualSystem_VirtualHardwareSection_ItemMemory()
 		
 		instanceId=$((instanceId+1))
 		
-		xml_value rasd:AllocationUnits "MegaBytes"
 		xml_value rasd:Caption "${configuration_machine_memoryMegabytes} MB of memory"
 		xml_value rasd:Description "Memory Size"
 		xml_value rasd:InstanceID "${instanceId}"
 		xml_value rasd:ResourceType "4"
+		xml_value rasd:AllocationUnits "MegaBytes"
 		xml_value rasd:VirtualQuantity "${configuration_machine_memoryMegabytes}"
 		
 	xml_end "Item"

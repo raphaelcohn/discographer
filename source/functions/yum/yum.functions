@@ -130,7 +130,7 @@ yum_functions+=(yum_installYumRepositories)
 
 function yum_prepareYumCache()
 {
-	yum_wrapper makecache
+	yum_wrapper makecache 1>/dev/null
 }
 yum_functions+=(yum_prepareYumCache)
 
@@ -142,37 +142,43 @@ yum_functions+=(yum_alDependenciesForPackagesMachineGroup)
 
 function yum_installMachineGroupRpms()
 {
-	yum_localrepo_install "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath"
+	yum_localrepo_install x86_64 "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath"
 }
 yum_functions+=(yum_installMachineGroupRpms)
 
 function yum_installMachineGroupLocalRpms()
 {
-	yum_wrapper_localInstall "$machine_group_configPath"/rpms "${machine_group_rpmFiles[@]}"
+	if [ ${#machine_group_rpmFiles[@]} -eq 0 ]; then
+		return 0
+	fi
+	yum_wrapper_programYumLocalinstall "$configuration_machine_architecture" "$machine_group_configPath"/rpms "${machine_group_rpmFiles[@]}"
 }
 yum_functions+=(yum_installMachineGroupLocalRpms)
 
 function yum_alDependenciesForPackagesMachine()
 {
-	yum_localrepo_downloadAllDependenciesForPackagesAndRecord "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_packageNames[@]}"
+	yum_localrepo_downloadAllDependenciesForPackagesAndRecord "$configuration_machine_architecture" "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_packageNames[@]}"
 }
 yum_functions+=(yum_alDependenciesForPackagesMachine)
 
 function yum_installMachineRpms()
 {
-	yum_localrepo_install "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath"
+	yum_localrepo_install "$configuration_machine_architecture" "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath"
 }
 yum_functions+=(yum_installMachineRpms)
 
 function yum_installMachineLocalRpms()
 {
-	yum_wrapper_localInstall "${machine_configPath}"/rpms "${machine_rpmFiles[@]}"
+	if [ ${#machine_rpmFiles[@]} -eq 0 ]; then
+		return 0
+	fi
+	yum_wrapper_programYumLocalinstall "$configuration_machine_architecture" "${machine_configPath}"/rpms "${machine_rpmFiles[@]}"
 }
 yum_functions+=(yum_installMachineLocalRpms)
 
 function yum_cleanUp()
 {
-	yum_wrapper clean all
+	yum_wrapper clean all 1>/dev/null
 }
 yum_functions+=(yum_cleanUp)
 
