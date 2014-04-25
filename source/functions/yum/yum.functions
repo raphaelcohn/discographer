@@ -130,7 +130,7 @@ yum_functions+=(yum_installYumRepositories)
 
 function yum_prepareYumCache()
 {
-	yum_wrapper "$configuration_machine_architecture" makecache 1>/dev/null
+	yum_wrapper_programYum makecache 1>/dev/null
 }
 yum_functions+=(yum_prepareYumCache)
 
@@ -178,7 +178,7 @@ yum_functions+=(yum_installMachineLocalRpms)
 
 function yum_cleanUp()
 {
-	yum_wrapper clean all 1>/dev/null
+	yum_wrapper_programYum clean all 1>/dev/null
 }
 yum_functions+=(yum_cleanUp)
 
@@ -186,6 +186,6 @@ function yum_recordInstalledRpms()
 {
 	local -r reportFile="$machine_cacheArtefactsPath"/yum-installed.report.txt
 	printf "Package\tArchitecture\tVersion\tOrigin\n" >"$reportFile"
-	yum_wrapper list installed2>/dev/null | tail -n +3 | tr '\n' '|' | sed -e 's/| / /g' | tr '|' '\n' | awk -v OFS=$'\t' '{split($1,a,/\./); print a[1],a[2],$2,$3}' >>"$reportFile"
+	yum_wrapper_programYum list installed2>/dev/null | tail -n +3 | tr '\n' '|' | sed -e 's/| / /g' | tr '|' '\n' | awk -v OFS=$'\t' '{split($1,a,/\./); print a[1],a[2],$2,$3}' >>"$reportFile"
 }
 yum_functions+=(yum_recordInstalledRpms)

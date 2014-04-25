@@ -21,11 +21,9 @@ function yum_wrapper_program()
 	"$programName" ${yumVerbosity} --config="$yum_cacheYumConfFilePath" "$@" 2>>"$yum_cacheYumLogPath"/"$programName".err.log
 }
 
-function yum_wrapper()
+function yum_wrapper_programYum()
 {
-	local -r architecture="$1"
-	shift 1
-	yum_wrapper_program yum --arch="$architecture" "$@"
+	yum_wrapper_program yum "$@"
 }
 
 function yum_wrapper_programRepoquery()
@@ -34,7 +32,7 @@ function yum_wrapper_programRepoquery()
 	shift 1
 	
 	# yum makecache must be run first! or use --tempcache
-	yum_wrapper_program repoquery --tree-requires --all --arch="$architecture" "$@"
+	yum_wrapper_program repoquery --tree-requires --all --archlist="$architecture" "$@"
 }
 
 function yum_wrapper_programYumdownloader()
@@ -62,7 +60,7 @@ function yum_wrapper_programYumInstall()
 	local yumPackageName
 	for yumPackageName in "${yumPackageNames[@]}"
 	do
-		yum_wrapper "$architecture" install "$yumPackageName"
+		yum_wrapper_programYum install "$yumPackageName"
 	done
 }
 
@@ -82,7 +80,7 @@ function yum_wrapper_programYumLocalinstall()
 		local yumRpmFile
 		for yumRpmFile in "${yumRpmFiles[@]}"
 		do
-			yum_wrapper "$architecture" localinstall "$yumRpmFile"
+			yum_wrapper_programYum localinstall "$yumRpmFile"
 		done
 		
 	popd 1>/dev/null 2>/dev/null

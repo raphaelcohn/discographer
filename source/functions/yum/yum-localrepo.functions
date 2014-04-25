@@ -27,7 +27,7 @@ function yum_localrepo_install()
 		tac "$filePath" | awk '!a[$0]++' | sed 's/^.*://g' | while IFS= read -r -d$'\n' rpmFile
 		do
 			informationMessage INFO "${tab}${tab}${tab}${tab}${rpmFile} localinstall"
-			yum_wrapper --arch="$architecture" localinstall "$rpmFile".rpm 1>>"$yum_cacheYumLogPath"/yum_localrepo_install.out.log || informationMessage "WARN" "Could not install $rpmFile"
+			yum_wrapper_programYum localinstall "$rpmFile".rpm 1>>"$yum_cacheYumLogPath"/yum_localrepo_install.out.log || informationMessage "WARN" "Could not install $rpmFile"
 		done 
 		
 	popd 1>/dev/null 2>/dev/null
