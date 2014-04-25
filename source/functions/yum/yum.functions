@@ -136,42 +136,36 @@ yum_functions+=(yum_prepareYumCache)
 
 function yum_alDependenciesForPackagesMachineGroup()
 {
-	yum_localrepo_downloadAllDependenciesForPackagesAndRecord "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_group_packageNames[@]}"
+	yum_utilities_downloadAllDependenciesForPackagesAndRecord "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_group_packageNames[@]}"
 }
 yum_functions+=(yum_alDependenciesForPackagesMachineGroup)
 
 function yum_installMachineGroupRpms()
 {
-	yum_localrepo_install "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath"
+	yum_utilities_install "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath"
 }
 yum_functions+=(yum_installMachineGroupRpms)
 
 function yum_installMachineGroupLocalRpms()
 {
-	if [ ${#machine_group_rpmFiles[@]} -eq 0 ]; then
-		return 0
-	fi
 	yum_wrapper_programYumLocalinstall "$machine_group_configPath"/rpms "${machine_group_rpmFiles[@]}"
 }
 yum_functions+=(yum_installMachineGroupLocalRpms)
 
 function yum_alDependenciesForPackagesMachine()
 {
-	yum_localrepo_downloadAllDependenciesForPackagesAndRecord "$configuration_machine_architecture" "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_packageNames[@]}"
+	yum_utilities_downloadAllDependenciesForPackagesAndRecord "$configuration_machine_architecture" "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_packageNames[@]}"
 }
 yum_functions+=(yum_alDependenciesForPackagesMachine)
 
 function yum_installMachineRpms()
 {
-	yum_localrepo_install "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath"
+	yum_utilities_install "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath"
 }
 yum_functions+=(yum_installMachineRpms)
 
 function yum_installMachineLocalRpms()
 {
-	if [ ${#machine_rpmFiles[@]} -eq 0 ]; then
-		return 0
-	fi
 	yum_wrapper_programYumLocalinstall "${machine_configPath}"/rpms "${machine_rpmFiles[@]}"
 }
 yum_functions+=(yum_installMachineLocalRpms)

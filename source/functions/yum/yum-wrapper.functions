@@ -41,27 +41,8 @@ function yum_wrapper_programYumdownloader()
 	local -r architecture="$2"
 	shift 2
 	
-	yum_wrapper_program yumdownloader --archlist="$architecture" --destdir "$destinationPath" "$@" 1>>"$yum_cacheYumLogPath"/yumdownloader.out.log
-}
-
-function yum_wrapper_programYumInstall()
-{
-	local -r architecture="$1"
-	shift 1
-	
-	declare -a yumPackageNames=("$@")
-	if [ ${#yumPackageNames[@]} -eq 0 ]; then
-		return 0
-	fi
-
-	# We install packages individually like this so that if a package doesn't exist, we don't get an unintelligible error
-	# It does make installation slower
-	
-	local yumPackageName
-	for yumPackageName in "${yumPackageNames[@]}"
-	do
-		yum_wrapper_programYum install "$yumPackageName"
-	done
+	# 1>>"$yum_cacheYumLogPath"/yumdownloader.out.log
+	yum_wrapper_program yumdownloader --archlist="$architecture" --destdir "$destinationPath" "$@"
 }
 
 function yum_wrapper_programYumLocalinstall()
@@ -69,17 +50,18 @@ function yum_wrapper_programYumLocalinstall()
 	local -r rpmsFolder="$1"
 	shift 1
 	
-	declare -a yumRpmFiles="$@"
-	if [ ${#yumRpmFiles[@]} -eq 0 ]; then
+	if [ $# -eq 0 ]; then
 		return 0
 	fi
 	
 	pushd "$rpmsFolder" 1>/dev/null 2>/dev/null
 		
 		local yumRpmFile
-		for yumRpmFile in "${yumRpmFiles[@]}"
+		for yumRpmFile in "$@"
 		do
-			yum_wrapper_programYum localinstall "$yumRpmFile"
+			informationMessage INFO "${tab}${tab}${tab}${tab}${yumRpmFile} localinstall"
+			# 1>>"$yum_cacheYumLogPath"/yum.out.log
+			yum_wrapper_programYum localinstall "$yumRpmFile" || informationMessage "WARN" "Could not install $yumRpmFile"
 		done
 		
 	popd 1>/dev/null 2>/dev/null

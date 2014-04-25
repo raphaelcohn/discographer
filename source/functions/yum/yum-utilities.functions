@@ -1,0 +1,29 @@
+function yum_utilities_downloadAllDependenciesForPackagesAndRecord()
+{
+	local -r architecture="$1"
+	local -r filePath="$2"
+	local -r downloadsPath="$3"
+	shift 3
+	
+	yum_wrapper_programRepoquery "$architecture" "$@" | sed 's/\\_//g' | sed -e 's/| *//g' | sed 's/^ *//g' | awk '{print $1}' >"$filePath"
+	
+	declare -a rpms
+	mapfile -t rpms < <(sort --unique "$filePath")
+	yum_wrapper_programYumdownloader "$architecture" "$downloadsPath" "${rpms[@]}"
+}
+
+function yum_utilities_install()
+{
+	local -r filePath="$1"
+	local -r downloadsPath="$2"
+	
+	pushd "$downloadsPath" 1>/dev/null 2>/dev/null
+		
+		local yumRpmFile
+		tac "$filePath" | awk '!a[$0]++' | sed 's/^.*://g' | while IFS= read -r -d$'\n' yumRpmFile
+		do
+			yum_wrapper_programYumLocalinstall "$yumRpmFile".rpm
+		done 
+		
+	popd 1>/dev/null 2>/dev/null
+}
