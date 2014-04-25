@@ -17,13 +17,9 @@ function yum_utilities_install()
 	local -r filePath="$1"
 	local -r downloadsPath="$2"
 	
-	pushd "$downloadsPath" 1>/dev/null 2>/dev/null
-		
-		local yumRpmFile
-		tac "$filePath" | awk '!a[$0]++' | sed 's/^.*://g' | while IFS= read -r -d$'\n' yumRpmFile
-		do
-			yum_wrapper_programYumLocalinstall "$yumRpmFile".rpm
-		done 
-		
-	popd 1>/dev/null 2>/dev/null
+	local yumRpmFile
+	tac "$filePath" | awk '!a[$0]++' | sed 's/^.*://g' | while IFS= read -r -d$'\n' yumRpmFile
+	do
+		yum_wrapper_programYumLocalinstall "$downloadsPath" "$yumRpmFile".rpm
+	done
 }

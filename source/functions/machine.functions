@@ -344,6 +344,8 @@ machine_functions+=(machine_determinKernelAdditionalOptions)
 
 function machine_determineKernelAndInitRd()
 {
+	ls -la "$machine_cacheDisksMountPath"
+	ls -la "$machine_cacheDisksMountPath"/boot
 	pushd "$machine_cacheDisksMountPath" 1>/dev/null 2>/dev/null
 		
 		machineKernelAbsolutePath=""

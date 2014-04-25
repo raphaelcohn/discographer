@@ -1,6 +1,9 @@
 function trapHandlers_runAll()
 {
+	# Done to make sure we're not got a cwd that prevents us unmounting
+	cd /
 	informationMessage INFO "trapHandlers_runAll"
+	/usr/sbin/lsof
 	exiting=yes
 	local trapHandler
 	for trapHandler in "${trapHandlers[@]}"

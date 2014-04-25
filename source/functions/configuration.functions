@@ -48,7 +48,9 @@ function configuration_readPackageFiles()
 		local packageFile
 		for packageFile in *."$packageFileExtension"
 		do
-			echo "$packageFile"
+			if [ -e "$packageFile" ]; then
+				echo "$packageFile"
+			fi
 		done
 	popd  1>/dev/null 2>/dev/null
 }
