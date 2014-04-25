@@ -134,11 +134,11 @@ function yum_prepareYumCache()
 }
 yum_functions+=(yum_prepareYumCache)
 
-function yum_alDependenciesForPackagesMachineGroup()
+function yum_allDependenciesForPackagesMachineGroup()
 {
-	yum_utilities_downloadAllDependenciesForPackagesAndRecord "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_group_packageNames[@]}"
+	yum_utilities_downloadAllDependenciesForPackagesAndRecord "$configuration_machine_architecture" "$yum_cacheMachineGroupPackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_group_packageNames[@]}"
 }
-yum_functions+=(yum_alDependenciesForPackagesMachineGroup)
+yum_functions+=(yum_allDependenciesForPackagesMachineGroup)
 
 function yum_installMachineGroupRpms()
 {
@@ -152,11 +152,11 @@ function yum_installMachineGroupLocalRpms()
 }
 yum_functions+=(yum_installMachineGroupLocalRpms)
 
-function yum_alDependenciesForPackagesMachine()
+function yum_allDependenciesForPackagesMachine()
 {
 	yum_utilities_downloadAllDependenciesForPackagesAndRecord "$configuration_machine_architecture" "$yum_cacheMachinePackagesListPath" "$yum_cacheDownloadedRpmsPath" "${machine_packageNames[@]}"
 }
-yum_functions+=(yum_alDependenciesForPackagesMachine)
+yum_functions+=(yum_allDependenciesForPackagesMachine)
 
 function yum_installMachineRpms()
 {
