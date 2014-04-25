@@ -130,7 +130,7 @@ yum_functions+=(yum_installYumRepositories)
 
 function yum_prepareYumCache()
 {
-	yum_wrapper makecache 1>/dev/null
+	yum_wrapper "$configuration_machine_architecture" makecache 1>/dev/null
 }
 yum_functions+=(yum_prepareYumCache)
 
