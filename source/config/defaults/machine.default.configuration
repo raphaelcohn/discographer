@@ -1,6 +1,7 @@
 configuration_machine_distribution=centos
 configuration_machine_distributionMajorRevision=6
-configuration_machine_distributionReleaseRpm=${configuration_machine_distribution}-release-${configuration_machine_distributionMajorRevision}-5.el6.centos.11.1.x86_64.rpm
+configuration_machine_distributionReleaseRpmName=${configuration_machine_distribution}-release-${configuration_machine_distributionMajorRevision}-5
+configuration_machine_distributionReleaseRpm=${configuration_machine_distributionReleaseRpmName}.el6.centos.11.1.x86_64.rpm
 configuration_machine_distributionReleaseRpmUrl=http://mirror.centos.org/centos/${configuration_machine_distributionMajorRevision}/os/x86_64/Packages/${configuration_machine_distributionReleaseRpm}
 
 configuration_machine_uuid=fc257547-2062-44cd-9735-13b1994ced19

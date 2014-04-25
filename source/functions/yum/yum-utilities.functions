@@ -5,7 +5,8 @@ function yum_utilities_downloadAllDependenciesForPackagesAndRecord()
 	local -r downloadsPath="$3"
 	shift 3
 	
-	yum_wrapper_programRepoquery "noarch,${architecture}" "$@" | sed 's/\\_//g' | sed -e 's/| *//g' | sed 's/^ *//g' | awk '{print $1}' >"$filePath"
+	# repoquery has an incomplete tree because of circular dependencies (eg glibc)
+	yum_wrapper_programRepoquery "noarch,${architecture}" "$@" | sed 's/^ //g' | sed 's/\\_/| /g' | sed 's/ \[.*\]$//g' | sed 's/|   //g' >"$filePath"
 	
 	declare -a rpms
 	mapfile -t rpms < <(sort --unique "$filePath")
@@ -17,9 +18,9 @@ function yum_utilities_install()
 	local -r filePath="$1"
 	local -r downloadsPath="$2"
 	
-	local yumRpmFile
-	tac "$filePath" | awk '!a[$0]++' | sed 's/^.*://g' | while IFS= read -r -d$'\n' yumRpmFile
-	do
-		yum_wrapper_programYumLocalinstall "$downloadsPath" "$yumRpmFile".rpm
-	done
+	set -x
+	# remove any installed package - as this will cause failure
+	declare -a rpms
+	mapfile -t rpms < <(grep -v "^${configuration_machine_distributionReleaseRpmName}" "$filePath" | sed 's/^.*://g' "$filePath" | sed 's/$/.rpm/g')
+	yum_wrapper_programYumLocalinstall "$downloadsPath" "${rpms[@]}"
 }

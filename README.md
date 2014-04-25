@@ -205,6 +205,7 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 * 
 * Mixed Resources
 	* Have a file detailing installer-kind, package / resource name, source URL (if remote), version (if any), arch (if any), size, crypto hashes, any keys / sigs
+		* linux-brew (like homebrew)
 		* RPM (rpm-url)
 		* RPM (yum-install)
 		* RPM (yum-localinstall)
