@@ -67,8 +67,7 @@ function yum_wrapper_programYumInstall()
 function yum_wrapper_programYumLocalinstall()
 {
 	local -r rpmsFolder="$1"
-	local -r architecture="$2"
-	shift 2
+	shift 1
 	
 	declare -a yumRpmFiles="$@"
 	if [ ${#yumRpmFiles[@]} -eq 0 ]; then
