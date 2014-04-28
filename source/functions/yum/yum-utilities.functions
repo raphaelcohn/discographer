@@ -21,5 +21,6 @@ function yum_utilities_install()
 	# || true because yum hates already installed packages...
 	declare -a rpms
 	mapfile -t rpms < <(sed 's/^.*://g' "$filePath" | sed 's/$/.rpm/g')
-	yum_wrapper_programYumLocalinstall "$downloadsPath" "${rpms[@]}" || true
+	printf '\n\n*******************\n%s\n\n*******************\n' "yum install" >>"$yum_cacheYumLogPath"/yum.out.log
+	yum_wrapper_programYumLocalinstall "$downloadsPath" "${rpms[@]}" 1>>"$yum_cacheYumLogPath"/yum.out.log || true
 }

@@ -1,4 +1,4 @@
-function disk_boot_findFileLike()
+function boot_findFileLike()
 {
 	local -r starstWith="$1"
 	local -r endsWidth="$2"

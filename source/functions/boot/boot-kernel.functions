@@ -1,0 +1,116 @@
+boot_kernel_functions=()
+
+boot_kernel_fileNameKernel=""
+function boot_kernel_determineKernel()
+{
+	declare -a FUNCTION_RESULT=()
+	boot_findFileLike "${configuration_boot_kernel_bootKernelLike}-" ".${configuration_boot_kernel_architecture}"
+	boot_kernel_fileNameKernel="${FUNCTION_RESULT[0]}"
+}
+boot_kernel_functions+=(boot_kernel_determineKernel)
+
+# dracut -f /boot/initramfs-2.6.32-358.el6.x86_64.img 2.6.32-358.el6.x86_64
+# --hostonly to cut down the initramfs size?
+
+boot_kernel_fileNameInitRamdisk=""
+function boot_kernel_determineInitRamdisk()
+{
+	declare -a FUNCTION_RESULT=()
+	boot_findFileLike "${configuration_boot_kernel_bootInitRamdiskLike}-" ".img"
+	boot_kernel_fileNameInitRamdisk="${FUNCTION_RESULT[0]}"
+}
+boot_kernel_functions+=(boot_kernel_determineInitRamdisk)
+
+boot_kernel_rootDiskFilesystemUuid=""
+function boot_kernel_determineRootDiskUuid()
+{
+	boot_kernel_rootDiskFilesystemUuid=""
+	local disk
+	for disk in "${boot_kernel_disks[@]}"
+	do
+		if [ "${boot_kernel_configuration_disksMountPoint["$disk"]}" = "/" ]; then
+			boot_kernel_rootDiskFilesystemUuid="${boot_kernel_configuration_disksUuid["$disk"]}"
+			break
+		fi
+	done
+	
+	if [ -z "$boot_kernel_rootDiskFilesystemUuid" ]; then
+		informationMessage FAIL "Could not find machine root disk UUID (do you have a root disk)?"
+		exitError 1
+	fi
+}
+boot_kernel_functions+=(boot_kernel_determineRootDiskUuid)
+
+boot_kernel_options=""
+function boot_kernel_determinKernelAdditionalOptions()
+{
+	local bootKernelOptions="root=UUID=${boot_kernel_rootDiskFilesystemUuid}"
+	if [ -n "$configuration_boot_kernel_bootKernelAdditionalOptions" ]; then
+		boot_kernel_options="${bootKernelOptions} ${configuration_boot_kernel_bootKernelAdditionalOptions}"
+	else
+		boot_kernel_options="${bootKernelOptions}"
+	fi
+}
+boot_kernel_functions+=(boot_kernel_determinKernelAdditionalOptions)
+
+function boot_kernel_copyKernelIfUnpartitioned()
+{
+	if [ "$configuration_boot_kernel_hypervisorDiskFormat" != "unpartitioned" ]; then
+		return 0
+	fi
+	
+	cp "${boot_kernel_cacheDisksMountPath}${configuration_boot_kernel_bootFolderPath}"/"$boot_kernel_fileNameKernel" "$boot_kernel_cacheArtefactsPath"/"$boot_kernel_fileNameKernel"
+	ln -s "$boot_kernel_fileNameKernel" "$boot_kernel_cacheArtefactsPath"/${configuration_boot_kernel_bootKernelLike}
+}
+boot_kernel_functions+=(boot_kernel_copyKernelIfUnpartitioned)
+
+function boot_kernel_copyInitRamdiskIfUnpartitioned()
+{
+	if [ "$configuration_boot_kernel_hypervisorDiskFormat" != "unpartitioned" ]; then
+		return 0
+	fi
+	
+	cp "${boot_kernel_cacheDisksMountPath}${configuration_boot_kernel_bootFolderPath}"/"$boot_kernel_fileNameInitRamdisk" "$boot_kernel_cacheArtefactsPath"/"$boot_kernel_fileNameInitRamdisk"
+	ln -s "$boot_kernel_fileNameInitRamdisk" "$boot_kernel_cacheArtefactsPath"/${configuration_boot_kernel_bootInitRamdiskLike}.img
+}
+boot_kernel_functions+=(boot_kernel_copyInitRamdiskIfUnpartitioned)
+
+function boot_kernel_installExtLinux()
+{
+	# Values match man partx (except for unpartitioned)
+	case "$machineHypervisorDiskPartioning" in
+		
+		unpartitioned)
+			return 0
+		;;
+		
+		bsd|solaris|unixware)
+			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported for extlinux"
+			exitError 1
+		;;
+		
+		gpt)
+			informationMessage FAIL "GPT partitioning is unsupported at this time for extlinux"
+			exitError 1
+		;;
+		
+		dos)
+			:
+		;;
+	
+	esac
+	
+	local disk
+	for disk in "$boot_kernel_disks"
+	do
+		if [ "${boot_kernel_configuration_disksBootable["$disk"]}" = "yes" ]; then
+			local boot_extlinux_function
+			for boot_extlinux_function in "${boot_extlinux_functions[@]}"
+			do
+				informationMessage INFO "${tab}${tab}${tab}${disk} ${boot_extlinux_function}"
+				$boot_extlinux_function
+			done
+		fi
+	done
+}
+boot_kernel_functions+=(boot_kernel_installExtLinux)

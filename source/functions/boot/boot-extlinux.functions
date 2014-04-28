@@ -1,6 +1,6 @@
-extlinux_functions=()
+boot_extlinux_functions=()
 
-function extlinux_verify()
+function boot_extlinux_verify()
 {
 	case "${machine_configuration_disksFilesystemType["$disk"]}" in
 
@@ -19,9 +19,9 @@ function extlinux_verify()
 
 	esac
 }
-extlinux_functions+=(extlinux_verify)
+boot_extlinux_functions+=(boot_extlinux_verify)
 
-function extlinux_determineSyslinuxSharePath()
+function boot_extlinux_determineSyslinuxSharePath()
 {
 	case "$pathName" in
 		
@@ -40,27 +40,27 @@ function extlinux_determineSyslinuxSharePath()
 	
 	esac
 }
-extlinux_functions+=(extlinux_determineSyslinuxSharePath)
+boot_extlinux_functions+=(boot_extlinux_determineSyslinuxSharePath)
 
-function extlinux_determineInstallPath()
+function boot_extlinux_determineInstallPath()
 {
-	extlinux_installPath="$machine_cacheDisksMountPath"/boot/extlinux
+	boot_extlinux_installPath="$machine_cacheDisksMountPath"/boot/extlinux
 }
-extlinux_functions+=(extlinux_determineInstallPath)
+boot_extlinux_functions+=(boot_extlinux_determineInstallPath)
 
-function extlinux_makePath()
+function boot_extlinux_makePath()
 {
-	mkdir -m 0755 -p "$extlinux_installPath"
+	mkdir -m 0755 -p "$boot_extlinux_installPath"
 }
-extlinux_functions+=(extlinux_makePath)
+boot_extlinux_functions+=(boot_extlinux_makePath)
 
-function extlinux_installMenuModules()
+function boot_extlinux_installMenuModules()
 {
-	cp "$syslinuxSharePath"/{menu,vesamenu}.c32 "$extlinux_installPath"
+	cp "$syslinuxSharePath"/{menu,vesamenu}.c32 "$boot_extlinux_installPath"
 }
-extlinux_functions+=(extlinux_installMenuModules)
+boot_extlinux_functions+=(boot_extlinux_installMenuModules)
 
-function extlinux_createConfiguration()
+function boot_extlinux_createConfiguration()
 {
 	if [ "$configuration_machine_bootWithoutInteraction" = "yes" ]; then
 		local -r prompt=0
@@ -72,7 +72,7 @@ function extlinux_createConfiguration()
 		local -r allowOptions=1
 	fi
 	
-	cat >"$extlinux_installPath"/extlinux.conf <<-EOF
+	cat >"$boot_extlinux_installPath"/extlinux.conf <<-EOF
 		# Wait 50 1/10s of second (5s) before booting
 		UI menu
 		PROMPT ${prompt}
@@ -84,25 +84,25 @@ function extlinux_createConfiguration()
 		TOTALTIMEOUT 3000
 		DEFAULT linux
 		LABEL linux
-		      SAY Booting the kernel ${machine_kernelFileName} with initrd ${machine_initramfsFileName}
-		      KERNEL /boot/${machine_kernelFileName}
-		      INITRD /boot/${machine_initramfsFileName}
-		      APPEND ${machine_bootKernelOptions}
+		      SAY Booting the kernel ${boot_kernel_fileNameKernel} with initrd ${boot_kernel_fileNameInitRamdisk}
+		      KERNEL /boot/${boot_kernel_fileNameKernel}
+		      INITRD /boot/${boot_kernel_fileNameInitRamdisk}
+		      APPEND ${boot_kernel_options}
 	EOF
 }
-extlinux_functions+=(extlinux_createConfiguration)
+boot_extlinux_functions+=(boot_extlinux_createConfiguration)
 
-function extlinux_install()
+function boot_extlinux_install()
 {
-	extlinux --install "$extlinux_installPath"
+	extlinux --install "$boot_extlinux_installPath"
 }
-extlinux_functions+=(extlinux_install)
+boot_extlinux_functions+=(boot_extlinux_install)
 
-function extlinux_installMasterBootRecord()
+function boot_extlinux_installMasterBootRecord()
 {
 	# Or boot from partition one
 	#printf '\1' | cat "$syslinuxSharePath"/altmbr.bin - | dd bs=440 count=1 iflag=fullblock conv=notrunc of="${machine_derived_disksDiskImagePath["$disk"]}"
 	dd bs=440 count=1 conv=notrunc if="$syslinuxSharePath"/mbr.bin of="${machine_derived_disksDiskImagePath["$disk"]}" status=none 1>/dev/null 2>/dev/null
 	#cat "$syslinuxSharePath"/mbr.bin >"${machine_derived_disksDiskImagePath["$disk"]}"
 }
-extlinux_functions+=(extlinux_installMasterBootRecord)
+boot_extlinux_functions+=(boot_extlinux_installMasterBootRecord)

@@ -295,7 +295,7 @@ function machine_installFsTab()
 }
 machine_functions+=(machine_installFsTab)
 
-function machine_installRpmsFromYum()
+function machine_yumFunctions()
 {
 	local yum_function
 	for yum_function in "${yum_functions[@]}"
@@ -304,7 +304,7 @@ function machine_installRpmsFromYum()
 		$yum_function
 	done
 }
-machine_functions+=(machine_installRpmsFromYum)
+machine_functions+=(machine_yumFunctions)
 
 function machine_sourceMachineGenerators()
 {
@@ -322,117 +322,16 @@ function machine_installOverlays()
 }
 machine_functions+=(machine_installOverlays)
 
-machine_kernelFileName=""
-function machine_determineKernel()
+function machine_bootKernelFunctions()
 {
-	declare -a FUNCTION_RESULT=()
-	disk_boot_findFileLike "${configuration_machine_bootKernelLike}-" ".${configuration_machine_architecture}"
-	machine_kernelFileName="${FUNCTION_RESULT[0]}"
-}
-machine_functions+=(machine_determineKernel)
-
-machine_initramfsFileName=""
-function machine_determineInitRamdisk()
-{
-	declare -a FUNCTION_RESULT=()
-	disk_boot_findFileLike "${configuration_machine_bootInitRamdiskLike}-" ".img"
-	machine_initramfsFileName="${FUNCTION_RESULT[0]}"
-}
-machine_functions+=(machine_determineInitRamdisk)
-
-machine_rootDiskFilesystemUuid=""
-function machine_determineRootDiskUuid()
-{
-	machine_rootDiskFilesystemUuid=""
-	local disk
-	for disk in "${machine_disks[@]}"
+	local boot_kernel_function
+	for boot_kernel_function in "${boot_kernel_functions[@]}"
 	do
-		if [ "${machine_configuration_disksMountPoint["$disk"]}" = "/" ]; then
-			machine_rootDiskFilesystemUuid="${machine_configuration_disksUuid["$disk"]}"
-			break
-		fi
-	done
-	
-	if [ -z "$machine_rootDiskFilesystemUuid" ]; then
-		informationMessage FAIL "Could not find machine root disk UUID (do you have a root disk)?"
-		exitError 1
-	fi
-}
-machine_functions+=(machine_determineRootDiskUuid)
-
-machine_bootKernelOptions=""
-function machine_determinKernelAdditionalOptions()
-{
-	local bootKernelOptions="root=UUID=${machine_rootDiskFilesystemUuid}"
-	if [ -n "$configuration_machine_bootKernelAdditionalOptions" ]; then
-		machine_bootKernelOptions="${bootKernelOptions} ${configuration_machine_bootKernelAdditionalOptions}"
-	else
-		machine_bootKernelOptions="${bootKernelOptions}"
-	fi
-}
-machine_functions+=(machine_determinKernelAdditionalOptions)
-
-function machine_copyKernelIfUnpartitioned()
-{
-	if [ "$configuration_machine_hypervisorDiskFormat" != "unpartitioned" ]; then
-		return 0
-	fi
-	
-	cp "${machine_cacheDisksMountPath}${configuration_machine_bootFolderPath}"/"$machine_kernelFileName" "$machine_cacheArtefactsPath"/"$machine_kernelFileName"
-	ln -s "$machine_kernelFileName" "$machine_cacheArtefactsPath"/${configuration_machine_bootKernelLike}
-}
-machine_functions+=(machine_copyKernelIfUnpartitioned)
-
-function machine_copyInitRamdiskIfUnpartitioned()
-{
-	if [ "$configuration_machine_hypervisorDiskFormat" != "unpartitioned" ]; then
-		return 0
-	fi
-	
-	cp "${machine_cacheDisksMountPath}${configuration_machine_bootFolderPath}"/"$machine_initramfsFileName" "$machine_cacheArtefactsPath"/"$machine_initramfsFileName"
-	ln -s "$machine_initramfsFileName" "$machine_cacheArtefactsPath"/${configuration_machine_bootInitRamdiskLike}.img
-}
-machine_functions+=(machine_copyInitRamdiskIfUnpartitioned)
-
-function machine_installExtLinux()
-{
-	# Values match man partx (except for unpartitioned)
-	case "$machineHypervisorDiskPartioning" in
-		
-		unpartitioned)
-			return 0
-		;;
-		
-		bsd|solaris|unixware)
-			informationMessage FAIL "$machineHypervisorDiskPartioning partitioning is not supported for extlinux"
-			exitError 1
-		;;
-		
-		gpt)
-			informationMessage FAIL "GPT partitioning is unsupported at this time for extlinux"
-			exitError 1
-		;;
-		
-		dos)
-			:
-		;;
-	
-	esac
-	
-	local disk
-	for disk in "$machine_disks"
-	do
-		if [ "${machine_configuration_disksBootable["$disk"]}" = "yes" ]; then
-			local extlinux_function
-			for extlinux_function in "${extlinux_functions[@]}"
-			do
-				informationMessage INFO "${tab}${tab}${tab}${disk} ${extlinux_function}"
-				$extlinux_function
-			done
-		fi
+		informationMessage INFO "${tab}${tab}${tab}${boot_kernel_function}"
+		$boot_kernel_function
 	done
 }
-machine_functions+=(machine_installExtLinux)
+machine_functions+=(machine_bootKernelFunctions)
 
 function machine_suidGuidWhitelist()
 {

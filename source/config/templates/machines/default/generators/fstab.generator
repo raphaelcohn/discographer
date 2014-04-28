@@ -1,0 +1,19 @@
+function generator_machine_fstab()
+{
+	local -r ourOverlayPath="$machine_cacheOverlaysGeneratedPath"/fstab
+
+	mkdir -m 0755 -p "$ourOverlayPath"
+
+	local -r fstabFile="$ourOverlayPath"/fstab
+	while IFS=' ' read -r mountPoint disk
+	do
+		echo UUID=${machine_configuration_disksUuid["$disk"]} ${mountPoint} ${machine_configuration_disksFilesystemType["$disk"]} ${machine_configuration_disksMountOptions["$disk"]} ${machine_configuration_disksDumpOptions["$disk"]} ${machine_configuration_disksDumpOptions["$disk"]} >>"$fstabFile"
+	done < <(mounting_sortDiskMountPointsInForwardOrder)
+
+	cat >>"$fstabFile" <<-EOF
+		tmpfs /dev/shm tmpfs defaults 0 0
+		devpts /dev/pts devpts gid=5,mode=620  0 0
+		sysfs /sys sysfs defaults 0 0
+		proc /proc proc defaults 0 0
+	EOF
+}
