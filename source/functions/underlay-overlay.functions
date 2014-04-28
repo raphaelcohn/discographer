@@ -129,3 +129,24 @@ function underlay_overlay_installFilesystem()
 	popd 1>/dev/null 2>/dev/null
 }
 
+function underlay_overlay_createFstab()
+{
+	local -r etcPath="$machine_cacheDisksMountPath"/etc
+	mkdir -m 0755 -p "$etcPath"
+	
+	local -r fstabFile="$etcPath"/fstab
+	local disk
+	(
+		for disk in "${machine_diskMountPointsInForwardDiskOrder[@]}"
+		do
+			echo UUID=${machine_configuration_disksUuid["$disk"]} ${mountPoint} ${machine_configuration_disksFilesystemType["$disk"]} ${machine_configuration_disksMountOptions["$disk"]} ${machine_configuration_disksDumpOptions["$disk"]} ${machine_configuration_disksDumpOptions["$disk"]}
+		done
+		
+		cat <<-EOF
+			tmpfs /dev/shm tmpfs defaults 0 0
+			devpts /dev/pts devpts gid=5,mode=620 0 0
+			sysfs /sys sysfs defaults 0 0
+			proc /proc proc defaults 0 0
+		EOF
+	) >"$fstabFile"
+}

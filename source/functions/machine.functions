@@ -287,6 +287,14 @@ function machine_installUnderlays()
 }
 machine_functions+=(machine_installUnderlays)
 
+# required for the yum kernel installer to work!
+# effectively a generated underlay
+function machine_installFsTab()
+{
+	underlay_overlay_createFstab
+}
+machine_functions+=(machine_installFsTab)
+
 function machine_installRpmsFromYum()
 {
 	local yum_function
@@ -314,90 +322,77 @@ function machine_installOverlays()
 }
 machine_functions+=(machine_installOverlays)
 
+machine_kernelFileName=""
+function machine_determineKernel()
+{
+	declare -a FUNCTION_RESULT=()
+	disk_boot_findFileLike "${configuration_machine_bootKernelLike}-" ".${configuration_machine_architecture}"
+	machine_kernelFileName="${FUNCTION_RESULT[0]}"
+}
+machine_functions+=(machine_determineKernel)
+
+machine_initramfsFileName=""
+function machine_determineInitRamdisk()
+{
+	declare -a FUNCTION_RESULT=()
+	disk_boot_findFileLike "${configuration_machine_bootInitRamdiskLike}-" ".img"
+	machine_initramfsFileName="${FUNCTION_RESULT[0]}"
+}
+machine_functions+=(machine_determineInitRamdisk)
+
+machine_rootDiskFilesystemUuid=""
 function machine_determineRootDiskUuid()
 {
-	machineRootDiskFilesystemUuid=""
+	machine_rootDiskFilesystemUuid=""
 	local disk
 	for disk in "${machine_disks[@]}"
 	do
 		if [ "${machine_configuration_disksMountPoint["$disk"]}" = "/" ]; then
-			machineRootDiskFilesystemUuid="${machine_configuration_disksUuid["$disk"]}"
+			machine_rootDiskFilesystemUuid="${machine_configuration_disksUuid["$disk"]}"
 			break
 		fi
 	done
 	
-	if [ -z "$machineRootDiskFilesystemUuid" ]; then
+	if [ -z "$machine_rootDiskFilesystemUuid" ]; then
 		informationMessage FAIL "Could not find machine root disk UUID (do you have a root disk)?"
 		exitError 1
 	fi
 }
 machine_functions+=(machine_determineRootDiskUuid)
 
+machine_bootKernelOptions=""
 function machine_determinKernelAdditionalOptions()
 {
-	local machineKernelOptions="root=UUID=${machineRootDiskFilesystemUuid}"
+	local bootKernelOptions="root=UUID=${machine_rootDiskFilesystemUuid}"
 	if [ -n "$configuration_machine_bootKernelAdditionalOptions" ]; then
-		machineKernelOptions="${machineKernelOptions} ${configuration_machine_bootKernelAdditionalOptions}"
+		machine_bootKernelOptions="${bootKernelOptions} ${configuration_machine_bootKernelAdditionalOptions}"
+	else
+		machine_bootKernelOptions="${bootKernelOptions}"
 	fi
 }
 machine_functions+=(machine_determinKernelAdditionalOptions)
 
-function machine_determineKernelAndInitRd()
-{
-	ls -la "$machine_cacheDisksMountPath"
-	ls -la "$machine_cacheDisksMountPath"/boot
-	pushd "$machine_cacheDisksMountPath" 1>/dev/null 2>/dev/null
-		
-		machineKernelAbsolutePath=""
-		local file
-		for file in boot/vmlinuz-*.x86_64
-		do
-			if [ -f "$file" ]; then
-				machineKernelAbsolutePath="/${file}"
-				break
-			fi
-		done
-		
-		if [ -z "$machineKernelAbsolutePath" ]; then
-			informationMessage FAIL "Could not find kernel in /boot"
-			exitError 1
-		fi
-		
-		machineInitramfsAbsolutePath=""
-		local file
-		for file in boot/initramfs-*.img
-		do
-			if [ -f "$file" ]; then
-				machineInitramfsAbsolutePath="/${file}"
-				break
-			fi
-		done
-		
-		if [ -z "$machineInitramfsAbsolutePath" ]; then
-			informationMessage FAIL "Could not find initramfs in /boot"
-			exitError 1
-		fi
-	
-	popd 1>/dev/null 2>/dev/null
-	
-	machineKernelFileName="$(purebash_basename "$machineKernelAbsolutePath")"
-	machineInitramfsFileName="$(purebash_basename "$machineInitramfsAbsolutePath")"
-}
-machine_functions+=(machine_determineKernelAndInitRd)
-
-function machine_copyKernelAndInitRdForUnpartitioned()
+function machine_copyKernelIfUnpartitioned()
 {
 	if [ "$configuration_machine_hypervisorDiskFormat" != "unpartitioned" ]; then
 		return 0
 	fi
 	
-	cp "${machine_cacheDisksMountPath}${machineKernelAbsolutePath}" "$machine_cacheArtefactsPath"/"$machineKernelFileName"
-	ln -s "$machineKernelFileName" "$machine_cacheArtefactsPath"/vmlinuz
-	
-	cp "${machine_cacheDisksMountPath}${machineInitramfsAbsolutePath}" "$machine_cacheArtefactsPath"/"$machineInitramfsFileName"
-	ln -s "$machineInitramfsFileName" "$machine_cacheArtefactsPath"/initramfs.img
+	cp "${machine_cacheDisksMountPath}${configuration_machine_bootFolderPath}"/"$machine_kernelFileName" "$machine_cacheArtefactsPath"/"$machine_kernelFileName"
+	ln -s "$machine_kernelFileName" "$machine_cacheArtefactsPath"/${configuration_machine_bootKernelLike}
 }
-machine_functions+=(machine_copyKernelAndInitRdForUnpartitioned)
+machine_functions+=(machine_copyKernelIfUnpartitioned)
+
+function machine_copyInitRamdiskIfUnpartitioned()
+{
+	if [ "$configuration_machine_hypervisorDiskFormat" != "unpartitioned" ]; then
+		return 0
+	fi
+	
+	cp "${machine_cacheDisksMountPath}${configuration_machine_bootFolderPath}"/"$machine_initramfsFileName" "$machine_cacheArtefactsPath"/"$machine_initramfsFileName"
+	ln -s "$machine_initramfsFileName" "$machine_cacheArtefactsPath"/${configuration_machine_bootInitRamdiskLike}.img
+}
+machine_functions+=(machine_copyInitRamdiskIfUnpartitioned)
 
 function machine_installExtLinux()
 {

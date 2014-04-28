@@ -1,0 +1,31 @@
+function disk_boot_findFileLike()
+{
+	local -r starstWith="$1"
+	local -r endsWidth="$2"
+	set -x
+	ls -la "$machine_cacheDisksMountPath"
+	ls -la "${machine_cacheDisksMountPath}${configuration_machine_bootFolderPath}"
+	
+	local file
+	local -i found=0
+	pushd "${machine_cacheDisksMountPath}${configuration_machine_bootFolderPath}" 1>/dev/null 2>/dev/null
+		
+		for file in ${starstWith}*${endsWith}
+		do
+			if [ -f "$file" ]; then
+				found=1
+				break
+			fi
+		done
+		
+		if [ $found -eq 0 ]; then
+			informationMessage FAIL "Could not find initramfs in /boot"
+			exitError 1
+		fi
+	
+	popd 1>/dev/null 2>/dev/null
+	
+	FUNCTION_RESULT+=("$(purebash_basename "$file")")
+	
+	set +x
+}

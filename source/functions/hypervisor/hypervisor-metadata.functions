@@ -49,9 +49,9 @@ function hypervisor_metadata_qemu()
 				    exec -a "qemu-kvm-${machineName}" qemu-kvm \
 				        -smp ${configuration_machine_cpusCount} \
 				        -m ${configuration_machine_memoryMegabytes} \
-				        -kernel "${machineKernelFileName}" \
-				        -initrd "${machineInitramfsFileName}" \
-				        -append "${machineKernelOptions}"
+				        -kernel "${machine_kernelFileName}" \
+				        -initrd "${machine_initramfsFileName}" \
+				        -append "${machine_bootKernelOptions}"
 			EOF
 			local disk
 			for disk in "${machine_disks[@]}"

@@ -18,9 +18,8 @@ function yum_utilities_install()
 	local -r filePath="$1"
 	local -r downloadsPath="$2"
 	
-	set -x
-	# remove any installed package - as this will cause failure
+	# || true because yum hates already installed packages...
 	declare -a rpms
-	mapfile -t rpms < <(grep -v "^${configuration_machine_distributionReleaseRpmName}" "$filePath" | sed 's/^.*://g' "$filePath" | sed 's/$/.rpm/g')
-	yum_wrapper_programYumLocalinstall "$downloadsPath" "${rpms[@]}"
+	mapfile -t rpms < <(sed 's/^.*://g' "$filePath" | sed 's/$/.rpm/g')
+	yum_wrapper_programYumLocalinstall "$downloadsPath" "${rpms[@]}" || true
 }

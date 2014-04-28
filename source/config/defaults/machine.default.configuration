@@ -13,6 +13,9 @@ configuration_machine_networkKind=NAT
 configuration_machine_diskControllerKind=SATA
 configuration_machine_diskControllerImplementation=AHCI
 
+configuration_machine_bootFolderPath=/boot
+configuration_machine_bootKernelLike=vmlinuz
+configuration_machine_bootInitRamdiskLike=initramfs
 configuration_machine_bootKernelAdditionalOptions="selinux=0 vga=773"
 configuration_machine_bootWithoutInteraction=no
 

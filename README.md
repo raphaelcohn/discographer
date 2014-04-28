@@ -196,6 +196,11 @@ The wrapper uses a cache per machine. To remove the cache for a machine, delete 
 * native not supported for vmware, parallels
 	* http://tad-do.net/2012/01/30/converting-virtualbox-to-vmware-esxi/  VirtualBox to VMWare
 * We are installing 32-bit (i686) packages
+
+
+
+FIX THIS FIRST THING - check if || true still needed on yum install
+
 * + /sbin/new-kernel-pkg --package kernel --install 2.6.32-431.11.2.el6.x86_64
 	* awk: cmd. line:1: fatal: cannot open file `/etc/fstab' for reading (No such file or directory)
 	* Caused by /etc/fstab not existing when installing the kernel - so we'd need to run a generator before installation

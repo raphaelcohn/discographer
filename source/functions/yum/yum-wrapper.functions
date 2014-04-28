@@ -56,13 +56,9 @@ function yum_wrapper_programYumLocalinstall()
 	
 	pushd "$rpmsFolder" 1>/dev/null 2>/dev/null
 		
-		local yumRpmFile
-		for yumRpmFile in "$@"
-		do
-			informationMessage INFO "${tab}${tab}${tab}${tab}${yumRpmFile} localinstall"
-			# 1>>"$yum_cacheYumLogPath"/yum.out.log
-			yum_wrapper_programYum localinstall "$yumRpmFile" || informationMessage "WARN" "Could not install $yumRpmFile"
-		done
+		informationMessage INFO "${tab}${tab}${tab}${tab} localinstall $@"
+		# 1>>"$yum_cacheYumLogPath"/yum.out.log
+		yum_wrapper_programYum localinstall "$@"
 		
 	popd 1>/dev/null 2>/dev/null
 }

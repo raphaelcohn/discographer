@@ -84,10 +84,10 @@ function extlinux_createConfiguration()
 		TOTALTIMEOUT 3000
 		DEFAULT linux
 		LABEL linux
-		      SAY Booting the kernel ${machineKernelFileName} with initrd ${machineInitramfsFileName}
-		      KERNEL ${machineKernelAbsolutePath}
-		      INITRD ${machineInitramfsAbsolutePath}
-		      APPEND ${machineKernelOptions}
+		      SAY Booting the kernel ${machine_kernelFileName} with initrd ${machine_initramfsFileName}
+		      KERNEL /boot/${machine_kernelFileName}
+		      INITRD /boot/${machine_initramfsFileName}
+		      APPEND ${machine_bootKernelOptions}
 	EOF
 }
 extlinux_functions+=(extlinux_createConfiguration)
