@@ -1,6 +1,6 @@
 #!/bin/bash -
 set -e
 
-rsync -a --quiet --delete --exclude=.gitignore --exclude=cache /media/psf/supermin-wrapper/ ~/supermin-wrapper/
-mkdir -m 0755 -p ~/supermin-wrapper/source/cache
-exec ~/supermin-wrapper/source/supermin-wrapper -v -d examples
+rsync -a --quiet --delete --exclude=.gitignore --exclude=cache /media/psf/discographer/ ~/discographer/
+mkdir -m 0755 -p ~/discographer/source/cache
+exec ~/discographer/source/discographer -v -d examples

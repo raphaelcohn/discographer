@@ -1,15 +1,16 @@
-# supermin-wrapper
+# discographer
 
 This program is intended to be friendly to a Continuous Integration / Delivery build pipeline. It should be used after a versioned RPM repository has been produced in order to create reproducible machine images, suitable for use as Phoenix (immutable) servers. As much as possible, it allows one to capture configuration in source control. Where it can't be, it allows the use of scriptlets to generate it.
 
-A wrapper around supermin that creates virtual machine images (disk images) based on a set of repositories. Machine settings are captured in source control and are defined using a mixture of RPM repositories, packages to install, local files to install and programs to generate files to install.
+Discographer creates virtual machine images (disk images) based on a set of repositories. Machine settings are captured in source control and are defined using a mixture of RPM repositories, packages to install, local files to install and programs to generate files to install.
 
+Please note: This README is dated and will be rewritten as soon as practicable.
 
 ## Syntax Notes
 
-The syntax `${variable}` is used in this document to refer to variables. These refer to the values set when calling supermin-wrapper:-
+The syntax `${variable}` is used in this document to refer to variables. These refer to the values set when calling discographer:-
 
-See `supermin-wrapper -h` for more detailed help. For reference, the variables we refer to are:-
+See `discographer -h` for more detailed help. For reference, the variables we refer to are:-
 
 * `${configPath}`, which is the location of all configuration (machines, etc)
 * `${cachePath}`, which is the location of a cache, normally at `${configPath}/cache`
@@ -24,7 +25,7 @@ The variable `${machineGroupName}` is used to refer to a group of machines. This
 
 
 ### Configuration
-If a file `/etc/supermin-wrapper/configuration` exists, then this is loaded by sourcing - the path variables listed above are replaced and need not be specified on the command line. If the file `~/.supermin-wrapper` exists, then this is sourced after any file `/etc/supermin-wrapper/configuration`.
+If a file `/etc/discographer/configuration` exists, then this is loaded by sourcing - the path variables listed above are replaced and need not be specified on the command line. If the file `~/.discographer` exists, then this is sourced after any file `/etc/discographer/configuration`.
 
 
 ## Machine templates
@@ -108,7 +109,7 @@ Root overlays are hierarchal folders and files that will overlay in `/` in the b
 
 Root overlays are folders or symlinks in `${configPath}/${machineGroupName}/machines/${machineName}/root-overlays`
 
-Due to the design of the supermin-wrapper, any files starting with a period (`.`) (also known as hidden files) in the root of the overlay are not copied. This ensures things like `.gitignore` files are not copied in. Ordinarily, this shouldn't be an issue, because it is exceedingly rare for hidden files to exist in the root (`/`) of a Linux server.
+Due to the design of the discographer, any files starting with a period (`.`) (also known as hidden files) in the root of the overlay are not copied. This ensures things like `.gitignore` files are not copied in. Ordinarily, this shouldn't be an issue, because it is exceedingly rare for hidden files to exist in the root (`/`) of a Linux server.
 
 Root overlay folders may be named anything, and are applied in alphanumeric order to the file system image. However, there are three conventional names:-
 
@@ -116,14 +117,14 @@ Root overlay folders may be named anything, and are applied in alphanumeric orde
 * `fixed`, files that are checked into source control and applied without changes
 * `generated`, a folder (which should contain a `.gitignore` if using Git), in which generated files can be placed
 
-File generation could be a process before `supermin-wrapper` is invoked, or using generator-scriptlets (see below).
+File generation could be a process before `discographer` is invoked, or using generator-scriptlets (see below).
 
 Please note that most source control systems do not preserve file owners or users or permissions, apart from execute. Please also note that files are installed as-is from root-overlays. That means symlinks will not be substituted (but kept as is; consequently, it is recommended that they be relative), and the behaviour of hard links is undefined.
 
 
 ### Generator Scriptlets
 
-Generator scriptlets are sniplets of bash code that supermin-wrapper sources for each machine or machine-group and executes. They can be used to create hostname files, hosts, install SSH private keys, etc. They execute before the root overlays are applied. Conventionally, the output of the sniplets should be placed into the root-overlay `${configPath}/${machineGroupName}/machines/${machineName}/root-overlays/generated`, but this isn't required; any folder in `${configPath}/${machineGroupName}/machines/${machineName}/root-overlays` will do.
+Generator scriptlets are sniplets of bash code that discographer sources for each machine or machine-group and executes. They can be used to create hostname files, hosts, install SSH private keys, etc. They execute before the root overlays are applied. Conventionally, the output of the sniplets should be placed into the root-overlay `${configPath}/${machineGroupName}/machines/${machineName}/root-overlays/generated`, but this isn't required; any folder in `${configPath}/${machineGroupName}/machines/${machineName}/root-overlays` will do.
 
 Generator scriptlets are run in the order they appear to bash globbing in the folder `${configPath}/${machineGroupName}/machines/${machineName}/generator-scriptlets`. They may be either files or symlinks (conventionally, to files in `${configPath}/templates/machines/generator-scriptlets`, but one can just symlink `${configPath}/templates/machines/generator-scriptlets` to `${configPath}/${machineGroupName}/machines/${machineName}/generator-scriptlets` and run all supplied).
 
@@ -158,16 +159,6 @@ Output consists of machine images, intermediate files, cached package data and l
 
 ### Machine images
 
-Machine images are created in a folder at `${cachePath}/$[machineGroup}/${machineName}/built-appliance`. Three files are normally present:-
-
-    kernel
-    initrd
-    root
-
-The file `root` is an ext2 raw disk image (ie `dd`-friendly), and can be inspected by mounting it loopback (`sudo mount -o loop -t ext2 ${cachePath}/$[machineGroup}/${machineName}/built-appliance/root `/mnt/my/path`). The `kernel` and `initrd` are simply copied from the build machine. They are not built. These files can be used without further ado by QEMU: `qemu-kvm -m 512 -kernel `${cachePath}/$[machineGroup}/${machineName}/built-appliance/kernel` -initrd `${cachePath}/$[machineGroup}/${machineName}/built-appliance/initrd` -append 'vga=773 selinux=0' -drive file=`${cachePath}/$[machineGroup}/${machineName}/built-appliance/root`,format=raw,if=virtio`
-
-If the command-line option `-o yes-chroot` is used, then instead the folder `${configPath}/${machineGroupName}/machines/${machineName}/built-appliance` will contain a complete root file system on the current disk. This option doesn't work if running as root, apparently because of a bug in supermin (to do with option specified to tar).
-
 
 ### Intermediate Files
 
@@ -186,7 +177,6 @@ A yum log is contained in `${cachePath}/$[machineGroup}/${machineName}/yum/log`.
 
 ### Clearing the cache
 
-The wrapper uses a cache per machine. To remove the cache for a machine, delete the folder `${cachePath}/$[machineGroup}/${machineName}`. To remove the entire cache, delete `${cachePath}`. Please note that lock files (`supermin.UID.lock`) are in `${cachePath}`, so it can only be safely removed if no instances of supermin (and by implication, supermin-wrapper), are running. The supermin-wrapper will automatically delete machines from the cache that are not defined in `${configPath}/${machineGroupName}/machines`.
 
 # BUGS
 

@@ -101,7 +101,7 @@ function ovf2_xml_Envelope_VirtualSystem_ProductSection()
 		xml_value Vendor "raphaelcohn"
 		xml_value Version "${machineVersion}"
 		xml_value ProductUr "${machineUrl}"
-		xml_value VendorUrl "http://github.com/raphaelcohn/supermin-wrapper"
+		xml_value VendorUrl "http://github.com/raphaelcohn/discographer"
 		
 	xml_end "ProductSection"
 }
